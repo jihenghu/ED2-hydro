@@ -204,10 +204,65 @@ module pft_coms
 
    !----- Specifies photosynthetic pathway.  3 corresponds to C3, 4 corresponds to C4. ----!
    integer, dimension(n_pft) :: photosyn_pathway
+
    !=======================================================================================!
    !=======================================================================================!
+   !     Plant hydrodynamic properties                                                     !
+   !---------------------------------------------------------------------------------------!
 
+   !---- Maximum stem water conductivity    [kg H2O/m2/s]
+   real, dimension(n_pft) :: Ks_stem
 
+   !---- Water potential at which 50% of stem conductance is lost [m]
+   real, dimension(n_pft) :: psi50
+
+   !---- Exponent to calculate stem cavitation effect [--]
+   real, dimension(n_pft) :: Ks_stem_b
+
+   !---- Leaf water capacitance     [kg H2O/m2/m]
+   real, dimension(n_pft) :: Cap_leaf
+
+   !---- Stem water capacitance     [kg H2O/m3/m]
+   real, dimension(n_pft) :: Cap_stem
+
+   !---- Fraction of water conducting area/xylem over total tree cross-sectional area
+   real, dimension(n_pft) :: xylem_fraction
+
+   !---- The ratio of vessel length to plant height [unitless]
+   real, dimension(n_pft) :: vessel_curl_factor
+
+   !---- Specific root area     [m2/kgC]
+   real, dimension(n_pft) :: SRA
+
+   !---- Root distribution factor           [unitless]
+   real, dimension(n_pft) :: root_beta
+
+   !---- Leaf turgor loss point     [m]
+   real, dimension(n_pft) :: TLP
+
+   !---- Threshold of consecutive wet days to grow new leaves   [# of days]
+   integer, dimension(n_pft) :: high_psi_threshold
+
+   !---- Threshold of consecutive dry days to grow new leaves   [# of days]
+   integer, dimension(n_pft) :: low_psi_threshold
+
+   !---- Rate of leaf shedding if low_psi_threshold is crossed  [unitless]
+   real, dimension(n_pft) :: leaf_shed_rate
+
+   !---- Rate of leaf growing if high_psi_threshold is crossed  [unitless]
+   real, dimension(n_pft) :: leaf_grow_rate
+
+   !---- Marginal water use efficiency used to optimize stomatal conductance
+   ![umol/mol/kPa]
+   real, dimension(n_pft) :: stoma_lambda  
+
+   !---- Beta factor to modify lambda under water stress [m-1]
+   real, dimension(n_pft) :: stoma_beta  
+
+   !---- Factor to modify stomatal conductance under water stress [ m]
+   real, dimension(n_pft) :: stoma_psi_b  
+   !---- Factor to modify stomatal conductance under water stress [unitless]
+   real, dimension(n_pft) :: stoma_psi_c  
 
 
 

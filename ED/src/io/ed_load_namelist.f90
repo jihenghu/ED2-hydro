@@ -92,6 +92,7 @@ subroutine copy_nl(copy_type)
                                    , maxcohort                 ! ! intent(out)
    use physiology_coms      , only : iphysiol                  & ! intent(out)
                                    , h2o_plant_lim             & ! intent(out)
+                                   , track_plant_hydro         & ! intent(out)
                                    , iddmort_scheme            & ! intent(out)
                                    , cbr_scheme                & ! intent(out)
                                    , ddmort_const              & ! intent(out)
@@ -386,6 +387,7 @@ subroutine copy_nl(copy_type)
       clump_tree                = nl%clump_tree
       clump_grass               = nl%clump_grass
       h2o_plant_lim             = nl%h2o_plant_lim
+      track_plant_hydro         = nl%track_plant_hydro
       iddmort_scheme            = nl%iddmort_scheme
       cbr_scheme                = nl%cbr_scheme
       ddmort_const              = nl%ddmort_const

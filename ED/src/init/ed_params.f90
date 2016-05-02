@@ -198,8 +198,9 @@ subroutine load_ed_ecosystem_params()
    call init_pft_repro_params()
    !----- Miscellaneous parameters that depend on the previous ones. ----------------------!
    call init_pft_derived_params()
+   !----- Plant hydrodynamic parameters, currently depend on alloc_params------------------!
+   call init_pft_hydro_params()
    !---------------------------------------------------------------------------------------!
-
 
 
    !---------------------------------------------------------------------------------------!
@@ -1900,10 +1901,132 @@ subroutine init_decomp_params()
    return
 
 end subroutine init_decomp_params
+
 !==========================================================================================!
 !==========================================================================================!
 
+subroutine init_pft_hydro_params()
+   use pft_coms       , only : SLA                       & ! intent(in)
+                             , rho                       & ! intent(in)
+                             , Cap_leaf                  & ! intent(out)
+                             , Cap_stem                  & ! intent(out)
+                             , Ks_stem                   & ! intent(out)
+                             , Ks_stem_b                 & ! intent(out)
+                             , psi50                     & ! intent(out)
+                             , root_beta                 & ! intent(out)
+                             , SRA                       & ! intent(out)
+                             , vessel_curl_factor        & ! intent(out)
+                             , xylem_fraction            & ! intent(out)
+                             , TLP                       & ! intent(out)
+                             , high_psi_threshold        & ! intent(out)
+                             , low_psi_threshold         & ! intent(out)
+                             , leaf_grow_rate            & ! intent(out)
+                             , leaf_shed_rate            & ! intent(out)
+                             , stoma_lambda              & ! intent(out)
+                             , stoma_beta                & ! intent(out)
+                             , stoma_psi_b               & ! intent(out)
+                             , stoma_psi_c               ! ! intent(out)
+   implicit none
 
+   !----------------------------------------------------------!
+   !  Capacitance is estimated from Scholz et al. 2011        !
+   !  Since the capacitance is treated as a constant in the   !
+   !  model, it should be way smaller than lab/field measured !
+   !  capacitance [Sack et al. 2003 PCE;Steppe et al. 2006    !
+   !  Tree Physiology]. Thus, here Cap_leaf is multiplied by  !
+   !  1/2 and Cap_stem is multipled by 1/3                    !
+   !                                                          !
+   !  Scholz, F. G., N. G. Phillips, et al. (2011). Hydraulic !
+   !  Capacitance: Biophysics and Functional Significance of  !
+   !  Internal Water Sources in Relation to Tree Size.        !
+   !----------------------------------------------------------!
+   Cap_leaf(1:17) = 3.0e-3 / 102.                   ! kg H2O/m2/m
+   Cap_leaf(6)    = 600. * 18.*1e-6 / 102.          ! kg H2O/m2/m
+
+   Cap_leaf(1:17) = Cap_leaf(1:17) / 2.
+
+   Cap_stem(1:17) = min(400.,max(50.,   &
+       -700. * (rho(1:17) - 0.3) + 400.))  / 102.   ! kg H2O/m3/m
+   Cap_stem(1:17) = Cap_stem(1:17) / 3.
+
+
+
+   !----------------------------------------------------------!
+   !  Xylem properties are based on meta-analysis from Xu et  !
+   !  al. 2016. New Phytologist.                              !
+   !  However, these values are derived from tropical dry     !
+   !  forests...                                              !
+   !----------------------------------------------------------!
+   Ks_stem(1:17) = exp(-2.455 * rho(1:17) + 2.348 + 0.5 * 0.6186) / 102.    ! kg H2O/m2/s
+   Ks_stem_b(1:17) = 4.
+   psi50(1:17) = (-3.0 * rho(1:17) - 0.599) * 102.                          ! m
+
+   xylem_fraction(1)      =  1.0
+   xylem_fraction(2:4)    =  0.7
+   xylem_fraction(5)      =  1.0
+   xylem_fraction(6:8)    =  0.1
+   xylem_fraction(9:11)   =  0.5
+   xylem_fraction(12:16)  =  1.0
+   xylem_fraction(17)     =  0.1
+
+   vessel_curl_factor(1:17) = 1.5   ! somewhat arbitrary...
+
+
+   !----------------------------------------------------------!
+   !  Belowground properties are based on (1) Jackson et al.  !
+   !  1996 Oecologia and (2) Metcalfe et al. 2008             !
+   !                                                          !
+   !  Jackson, R. B., J. Canadell, et al. (1996). "A global   !
+   !    analysis of root distributions for terrestrial        !
+   !    biomes." Oecologia 108(3): 389-411.                   !
+   !  Metcalfe, D. B., P. Meir, et al. (2008). "The effects   !
+   !    of water availability on root growth and morphology   !
+   !    in an Amazon rainforest." Plant and Soil              !
+   !    311(1-2):189-199.                                     !
+   !----------------------------------------------------------!
+   SRA(1:17)            =   24. * 2.  ! m2/kgC  --> this is Amazon data...
+
+   root_beta(1:17)      =   0.96 ** (200)
+   root_beta(1:4)       =   0.99 ** (200) ! for test only
+   ! The exponent 200 is because, the maximum rooting depth is ~ 200cm in the
+   ! Jackson paper, we need to normalize that effect...
+
+   !----------------------------------------------------------!
+   ! Parameters related with new drought phenology driven     !
+   !   by plant hydrodyanmics                                 !
+   !----------------------------------------------------------!
+   TLP(1:17)            =   102. * (-4.59 + 0.62 * log(SLA(1:17)) - 1.15 * log(rho(1:17)))
+   ! From meta-analysis in Xu et al. 2016 New Phytologist
+
+   high_psi_threshold(1:17)   = 10    ! somewhat arbitrary
+   low_psi_threshold(1:17)    = 10    ! somewhat arbitrary
+   leaf_shed_rate(1:17)       = 1./20.    ! somewhat arbitrary
+   leaf_grow_rate(1:17)       = 1./20.    ! somewhat arbitrary
+
+   !----------------------------------------------------------!
+   ! Parameters related with optimiaztion-based stomatal      !
+   !   conductance scheme                                     !
+   !----------------------------------------------------------!
+   stoma_lambda(1:17)         = max(3.,(rho(1:17) - 0.25) * 15. + 3.)
+   stoma_beta(1:17)           = min(-0.1,(rho(1:17) - 0.25) * -1.5 - 0.1) / 102. 
+   
+   !----------------------------------------------------------!
+   ! Parameters related with T. Powell's scheme               !
+   !----------------------------------------------------------!
+   stoma_psi_b(1:17)          = TLP(1:17)   ! default
+   stoma_psi_b(2)             = -2.83 * 102.
+   stoma_psi_b(3)             = -2.3 * 102.
+   stoma_psi_b(4)             = -2.83 * 102.
+ 
+   stoma_psi_c(1:17)          = 3.
+   stoma_psi_c(2)             = 3.
+   stoma_psi_c(3)             = 2.6
+   stoma_psi_c(4)             = 3.
+   
+
+   return 
+end subroutine init_pft_hydro_params
+!==========================================================================================!
 
 
 
@@ -2515,7 +2638,7 @@ subroutine init_pft_alloc_params()
    rho(3)     = 0.71   ! 0.60
    rho(4)     = 0.90   ! 0.87
    rho(5)     = 0.20   ! Copied from C4 grass
-   rho(6:11)  = 0.00   ! Currently not used
+   rho(6:11)  = 0.54   ! Updated for hydrodynamic calculations (Xu-Powell-Knox)
    rho(12:13) = 0.20
    rho(14:15) = 0.20
    rho(16)    = 0.20
@@ -3372,6 +3495,15 @@ subroutine init_pft_leaf_params()
          phenology(12:15) = 4
          phenology(16)    = 4
          phenology(17)    = 0
+      case (4)  ! new drought phenology driven by plant hydrodyanmics
+         phenology(1)     = 5
+         phenology(2:4)   = 5
+         phenology(5)     = 5
+         phenology(6:8)   = 0
+         phenology(9:11)  = 2
+         phenology(12:15) = 5
+         phenology(16)    = 5
+         phenology(17)    = 0
       end select
       !------------------------------------------------------------------------------------!
    case (1)
@@ -3407,6 +3539,15 @@ subroutine init_pft_leaf_params()
          phenology(9:11)  = 2
          phenology(12:15) = 0
          phenology(16)    = 0
+         phenology(17)    = 0
+      case (4)  ! new drought phenology driven by plant hydrodyanmics
+         phenology(1)     = 5
+         phenology(2:4)   = 5
+         phenology(5)     = 5
+         phenology(6:8)   = 0
+         phenology(9:11)  = 2
+         phenology(12:15) = 5
+         phenology(16)    = 5
          phenology(17)    = 0
       end select
       !------------------------------------------------------------------------------------!

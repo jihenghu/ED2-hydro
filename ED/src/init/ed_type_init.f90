@@ -67,6 +67,18 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    cpatch%sla(ico) = sla(cpatch%pft(ico))
    !---------------------------------------------------------------------------------------!
 
+   !---------------------------------------------------------------------------------------!
+   !     Start the leaf/stem wate rpotential with -10. m [-0.1 MPa]. This is a reasonable  !
+   ! predawn value.  Water fluxes are intiated as 0.                                       !
+   !---------------------------------------------------------------------------------------!
+   cpatch%psi_leaf      (ico) = -10.
+   cpatch%psi_stem      (ico) = -10.
+   cpatch%water_flux_rl (ico) = 0.
+   cpatch%water_flux_sr (ico) = 0.
+   cpatch%high_psi_days (ico) = 0
+   cpatch%low_psi_days  (ico) = 0
+   cpatch%last_gJ       (ico) = 0.
+   cpatch%last_gV       (ico) = 0.
 
    !---------------------------------------------------------------------------------------!
    !     Start the fraction of open stomata with 1., since this is the most likely value   !
@@ -299,6 +311,16 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    cpatch%fmean_intercepted_aw    (ico) = 0.0
    cpatch%fmean_wshed_wg          (ico) = 0.0
 
+   !-------------    Plant Hydrodynamics    -----------------------------------------------!
+   cpatch%fmean_psi_leaf        (ico) = 0.0
+   cpatch%fmean_psi_stem        (ico) = 0.0
+   cpatch%fmean_water_flux_rl   (ico) = 0.0
+   cpatch%fmean_water_flux_sr   (ico) = 0.0
+   cpatch%dmax_psi_leaf         (ico) = 0.0
+   cpatch%dmin_psi_leaf         (ico) = 0.0
+   cpatch%dmax_psi_stem         (ico) = 0.0
+   cpatch%dmin_psi_stem         (ico) = 0.0
+
    cpatch%fmean_lai               (ico) = 0.0
    cpatch%fmean_bdead             (ico) = 0.0
    !---------------------------------------------------------------------------------------!
@@ -478,6 +500,11 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%mmsqu_transp              (ico) = 0.0
       cpatch%mmsqu_sensible_wc         (ico) = 0.0
       cpatch%mmsqu_vapor_wc            (ico) = 0.0
+      !-------------    Plant Hydrodynamics    --------------------------------------------!
+      cpatch%mmean_dmax_psi_leaf     (ico) = 0.0
+      cpatch%mmean_dmin_psi_leaf     (ico) = 0.0
+      cpatch%mmean_dmax_psi_stem     (ico) = 0.0
+      cpatch%mmean_dmin_psi_stem     (ico) = 0.0
    end if
    !---------------------------------------------------------------------------------------!
 

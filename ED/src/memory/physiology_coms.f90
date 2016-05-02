@@ -79,6 +79,8 @@ module physiology_coms
    ! H2O_PLANT_LIM -- this determines whether plant photosynthesis can be limited by       !
    !                  soil moisture, the FSW, defined as FSW = Supply / (Demand + Supply). !
    !                                                                                       !
+   !        Note that TRACK_PLANT_HYDRO must be turned on for 3 and 4                      !
+   !                                                                                       !
    !                  Demand is always the transpiration rates in case soil moisture is    !
    !                  not limiting (the psi_0 term times LAI).  The supply is determined   !
    !                  by Kw * nplant * Broot * Available_Water, and the definition of      !
@@ -92,10 +94,28 @@ module physiology_coms
    !                      where psi is the matric potentital at layer k, z is the layer    !
    !                      depth, H it the crown height and psi_fc and psi_wp are the       !
    !                      matric potentials at wilting point and field capacity.           !
+   !                  3.  FSW is calculated from leaf water potential and TLP using a      !
+   !                      sigmoidal function [T. Powell]                                   !
+   !                  4.  FSW is forced to be 1. Instead, water stress will be included    !
+   !                      by applying a down-regulation factor to phtosynthetic parameters.!
+   !                      The change of photosynthetic parameters will propagate           !
+   !                      into stomatal conductance through an optimization                !
+   !                      basedscheme. This is only available for C3 plants now            !
    !---------------------------------------------------------------------------------------!
    integer               :: h2o_plant_lim 
    !---------------------------------------------------------------------------------------!
 
+   !---------------------------------------------------------------------------------------!
+   ! TRACK_PLANT_HYDRO -- this determines whether the model tracks plant hydrodynamics,    !
+   !                  i.e. leaf/stem water potential, sapflow and soil-root water flow.    !
+   !                  Soil water extraction scheme is also different when plant hydro-     !
+   !                  dynamics is tracked. See Xu et al. 2016 New Phytologist paper for    !
+   !                  details                                                              !
+   !                  0.  Do not track hydrodynamics                                       !
+   !                  1.  Track hydrodynamics                                              !
+   !---------------------------------------------------------------------------------------!
+   integer               :: track_plant_hydro
+   !---------------------------------------------------------------------------------------!
 
 
    !---------------------------------------------------------------------------------------!

@@ -1575,6 +1575,13 @@ module average_utils
                   cpatch%fmean_vapor_wc          (ico) = 0.0
                   cpatch%fmean_intercepted_aw    (ico) = 0.0
                   cpatch%fmean_wshed_wg          (ico) = 0.0
+
+                  !------ Plant Hydro dynamics-----------!
+                  cpatch%fmean_psi_leaf        (ico) = 0.0
+                  cpatch%fmean_psi_stem        (ico) = 0.0
+                  cpatch%fmean_water_flux_rl   (ico) = 0.0
+                  cpatch%fmean_water_flux_sr   (ico) = 0.0
+                  
                   cpatch%fmean_lai               (ico) = 0.0
                   cpatch%fmean_bdead             (ico) = 0.0
                end do cohortloop
@@ -3164,6 +3171,14 @@ module average_utils
                   cpatch%today_gpp_mlmax (ico) = 0.0
                   cpatch%today_leaf_resp    (ico) = 0.0
                   cpatch%today_root_resp    (ico) = 0.0
+
+               !------Plant Hydrodynamics ------------!
+!               cpatch%dmax_psi_leaf         (ico) = 0.0
+!               cpatch%dmin_psi_leaf         (ico) = 0.0
+!               cpatch%dmax_psi_stem         (ico) = 0.0
+!               cpatch%dmin_psi_stem         (ico) = 0.0
+
+
                end do
                !---------------------------------------------------------------------------!
             end do
@@ -4555,6 +4570,22 @@ module average_utils
                                                        - cpatch%root_maintenance    (ico)  &
                                                        - cpatch%leaf_drop           (ico)  &
                                                        ) / yr_day * ndaysi
+
+               !--------------------    Plant Hydrodynamics   --------------------------------!
+               cpatch%mmean_dmax_psi_leaf     (ico) = cpatch%mmean_dmax_psi_leaf     (ico) &
+                                                    + cpatch%dmax_psi_leaf           (ico) &
+                                                    * ndaysi
+               cpatch%mmean_dmin_psi_leaf     (ico) = cpatch%mmean_dmin_psi_leaf     (ico) &
+                                                    + cpatch%dmin_psi_leaf           (ico) &
+                                                    * ndaysi
+               cpatch%mmean_dmax_psi_stem     (ico) = cpatch%mmean_dmax_psi_stem     (ico) &
+                                                    + cpatch%dmax_psi_stem           (ico) &
+                                                    * ndaysi
+               cpatch%mmean_dmin_psi_stem     (ico) = cpatch%mmean_dmin_psi_stem     (ico) &
+                                                    + cpatch%dmin_psi_stem           (ico) &
+                                                    * ndaysi
+ 
+
                   !------------------------------------------------------------------------!
 
 
@@ -5513,6 +5544,13 @@ module average_utils
                   case (1)
                      cpatch%mmean_cb             (ico) = cpatch%bstorage(ico)
                   end select
+
+                  !----------- Plant Hydrodynamics---------!
+                  cpatch%mmean_dmax_psi_leaf     (ico) = 0.0
+                  cpatch%mmean_dmin_psi_leaf     (ico) = 0.0
+                  cpatch%mmean_dmax_psi_stem     (ico) = 0.0
+                  cpatch%mmean_dmin_psi_stem     (ico) = 0.0
+
                   cpatch%mmean_gpp               (ico) = 0.0
                   cpatch%mmean_npp               (ico) = 0.0
                   cpatch%mmean_leaf_resp         (ico) = 0.0

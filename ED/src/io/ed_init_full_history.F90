@@ -4452,6 +4452,11 @@ subroutine fill_history_patch(cpatch,paco_index,ncohorts_global)
                      ,'FIRST_CENSUS              ',dsetrank,iparallel,.true. ,foundvar)
    call hdf_getslab_i(cpatch%new_recruit_flag                                              &
                      ,'NEW_RECRUIT_FLAG          ',dsetrank,iparallel,.true. ,foundvar)
+   !------------   For new drought-phenology driven by leaf water potential----!
+   call hdf_getslab_i(cpatch%high_psi_days                                                 &
+                     ,'HIGH_PSI_DAYS             ',dsetrank,iparallel,.true. ,foundvar)
+   call hdf_getslab_i(cpatch%low_psi_days                                                  &
+                     ,'LOW_PSI_DAYS              ',dsetrank,iparallel,.true. ,foundvar)
    !---------------------------------------------------------------------------------------!
    !---------------------------------------------------------------------------------------!
    !---------------------------------------------------------------------------------------!
@@ -4710,6 +4715,31 @@ subroutine fill_history_patch(cpatch,paco_index,ncohorts_global)
                      ,'VM_BAR                    ',dsetrank,iparallel,.true. ,foundvar)
    call hdf_getslab_r(cpatch%sla                                                           &
                      ,'SLA                       ',dsetrank,iparallel,.true. ,foundvar)
+
+   call hdf_getslab_r(cpatch%psi_leaf                                                      &
+                     ,'PSI_LEAF                  ',dsetrank,iparallel,.true. ,foundvar)
+   call hdf_getslab_r(cpatch%psi_stem                                                      &
+                     ,'PSI_STEM                  ',dsetrank,iparallel,.true. ,foundvar)
+   call hdf_getslab_r(cpatch%water_flux_rl                                                 &
+                     ,'WATER_FLUX_RL             ',dsetrank,iparallel,.true. ,foundvar)
+   call hdf_getslab_r(cpatch%water_flux_sr                                                 &
+                     ,'WATER_FLUX_SR             ',dsetrank,iparallel,.true. ,foundvar)
+   call hdf_getslab_r(cpatch%last_gJ                                                       &
+                     ,'LAST_GJ                   ',dsetrank,iparallel,.true. ,foundvar)
+   call hdf_getslab_r(cpatch%last_gV                                                       &
+                     ,'LAST_GV                   ',dsetrank,iparallel,.true. ,foundvar)
+
+   ! Dmax and Dmin, Plant Hydrodyanmics, these vars will be included
+   ! disregarding the writing flags....
+   call hdf_getslab_r(cpatch%dmax_psi_leaf                                              &
+                      ,'DMAX_PSI_LEAF_CO          ',dsetrank,iparallel,.false.,foundvar)
+   call hdf_getslab_r(cpatch%dmin_psi_leaf                                              &
+                      ,'DMIN_PSI_LEAF_CO          ',dsetrank,iparallel,.false.,foundvar)
+   call hdf_getslab_r(cpatch%dmax_psi_stem                                              &
+                      ,'DMAX_PSI_STEM_CO          ',dsetrank,iparallel,.false.,foundvar)
+   call hdf_getslab_r(cpatch%dmin_psi_stem                                              &
+                      ,'DMIN_PSI_STEM_CO          ',dsetrank,iparallel,.false.,foundvar)
+
    !----- Daily means. --------------------------------------------------------------------!
    if (writing_long) then
       call hdf_getslab_r(cpatch%dmean_nppleaf                                              &
@@ -4852,7 +4882,7 @@ subroutine fill_history_patch(cpatch,paco_index,ncohorts_global)
       call hdf_getslab_r(cpatch%dmean_wshed_wg                                             &
                         ,'DMEAN_WSHED_WG_CO         ',dsetrank,iparallel,.false.,foundvar)
    end if
-   !----- Daily means. --------------------------------------------------------------------!
+   !----- Monthly means. --------------------------------------------------------------------!
    if (writing_eorq) then
       call hdf_getslab_r(cpatch%mmean_lai                                                  &
                         ,'MMEAN_LAI_CO              ',dsetrank,iparallel,.false.,foundvar)
@@ -4870,6 +4900,18 @@ subroutine fill_history_patch(cpatch,paco_index,ncohorts_global)
                         ,'MMEAN_LEAF_DROP_CO        ',dsetrank,iparallel,.false.,foundvar)
       call hdf_getslab_r(cpatch%mmean_cb                                                   &
                         ,'MMEAN_CB_CO               ',dsetrank,iparallel,.false.,foundvar)
+
+      !---------------  Plant Hydrodynamics            -----------------
+      call hdf_getslab_r(cpatch%mmean_dmax_psi_leaf                                        &
+                        ,'MMEAN_DMAX_PSI_LEAF_CO    ',dsetrank,iparallel,.false.,foundvar)
+      call hdf_getslab_r(cpatch%mmean_dmin_psi_leaf                                        &
+                        ,'MMEAN_DMIN_PSI_LEAF_CO    ',dsetrank,iparallel,.false.,foundvar)
+      call hdf_getslab_r(cpatch%mmean_dmax_psi_stem                                        &
+                        ,'MMEAN_DMAX_PSI_STEM_CO    ',dsetrank,iparallel,.false.,foundvar)
+      call hdf_getslab_r(cpatch%mmean_dmin_psi_stem                                        &
+                        ,'MMEAN_DMIN_PSI_STEM_CO    ',dsetrank,iparallel,.false.,foundvar)
+
+
       call hdf_getslab_r(cpatch%mmean_gpp                                                  &
                         ,'MMEAN_GPP_CO              ',dsetrank,iparallel,.false.,foundvar)
       call hdf_getslab_r(cpatch%mmean_npp                                                  &

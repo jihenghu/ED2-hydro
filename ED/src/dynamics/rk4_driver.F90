@@ -323,6 +323,9 @@ module rk4_driver
                                  , tend                 & ! intent(inout)
                                  , dtrk4                & ! intent(inout)
                                  , dtrk4i               ! ! intent(inout)
+      use plant_hydro_dyn , only : update_plant_hydrodynamics !subroutine 
+      use physiology_coms , only : track_plant_hydro    !   intent(in)
+ 
       implicit none
       !----- Arguments --------------------------------------------------------------------!
       type(sitetype)        , target      :: csite
@@ -374,6 +377,11 @@ module rk4_driver
       initp%cpwp = initp%can_rhos * initp%cpwp * dtrk4i
       initp%wpwp = initp%can_rhos * initp%wpwp * dtrk4i
       
+      if (track_plant_hydro == 1) then
+          ! track plant hydrodynamics
+          call update_plant_hydrodynamics(csite,initp,ipa,tend-tbeg)
+      endif
+
       
       !------------------------------------------------------------------------------------!
       ! Move the state variables from the integrated patch to the model patch.             !

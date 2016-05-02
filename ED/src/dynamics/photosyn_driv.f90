@@ -15,6 +15,9 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
                              , water_conductance  & ! intent(in)
                              , include_pft        & ! intent(in)
                              , vm0                & ! intent(in)
+                             , photosyn_pathway   & ! intent(in)
+                             , stoma_psi_b        & ! intent(in)
+                             , stoma_psi_c        & ! intent(in)
                              , leaf_turnover_rate ! ! intent(in)
    use soil_coms      , only : soil               & ! intent(in)
                              , slz                & ! intent(in)
@@ -33,11 +36,14 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
                              , frqsum             ! ! intent(in)
    use met_driver_coms, only : met_driv_state     ! ! structure
    use physiology_coms, only : print_photo_debug  & ! intent(in)
-                             , h2o_plant_lim      ! ! intent(in)
+                             , h2o_plant_lim      & ! intent(in)
+                             , track_plant_hydro  ! ! intent(in)
    use phenology_coms , only : llspan_inf         ! ! intent(in)
    use farq_leuning   , only : lphysiol_full      ! ! sub-routine
    use allometry      , only : h2crownbh          ! ! function
    use therm_lib      , only : qslif              ! ! function
+   use farq_katul     , only : katul_lphys        ! ! sub-routine
+
    implicit none
    !----- Arguments -----------------------------------------------------------------------!
    type(sitetype)            , target      :: csite             ! Current site
@@ -313,38 +319,74 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
             !    Notice that the units that are per unit area are per m² of leaf, not the  !
             ! patch area.                                                                  !
             !------------------------------------------------------------------------------!
-            call lphysiol_full(            & !
-               csite%can_prss(ipa)         & ! Canopy air pressure              [       Pa]
-             , csite%can_rhos(ipa)         & ! Canopy air density               [    kg/m³]
-             , can_ssh                     & ! Canopy air sp. humidity          [    kg/kg]
-             , csite%can_co2(ipa)          & ! Canopy air CO2 mixing ratio      [ µmol/mol]
-             , ipft                        & ! Plant functional type            [      ---]
-             , csite%par_l_max(ipa)        & ! Absorbed photos. active rad.     [ W/m²leaf]
-             , cpatch%leaf_temp(tuco)      & ! Leaf temperature                 [        K]
-             , cpatch%lint_shv(tuco)       & ! Leaf intercellular spec. hum.    [    kg/kg]
-             , green_leaf_factor(ipft)     & ! Greenness rel. to on-allometry   [      ---]
-             , leaf_aging_factor(ipft)     & ! Ageing parameter to scale VM     [      ---]
-             , llspan_tuco                 & ! Leaf life span                   [       yr]
-             , vm0_tuco                    & ! Average Vm function              [µmol/m²/s]
-             , cpatch%leaf_gbw(tuco)       & ! Aerodyn. condct. of water vapour [  kg/m²/s]
-             , csite%A_o_max(ipft,ipa)     & ! Photosynthesis rate     (open)   [µmol/m²/s]
-             , csite%A_c_max(ipft,ipa)     & ! Photosynthesis rate     (closed) [µmol/m²/s]
-             , d_A_light_max               & ! Photosynthesis rate     (light)  [µmol/m²/s]
-             , d_A_rubp_max                & ! Photosynthesis rate     (RuBP)   [µmol/m²/s]
-             , d_A_co2_max                 & ! Photosynthesis rate     (CO2)    [µmol/m²/s]
-             , d_gsw_open                  & ! Stom. condct. of water  (open)   [  kg/m²/s]
-             , d_gsw_closed                & ! Stom. condct. of water  (closed) [  kg/m²/s]
-             , d_lsfc_shv_open             & ! Leaf sfc. sp. humidity  (open)   [    kg/kg]
-             , d_lsfc_shv_closed           & ! Leaf sfc. sp. humidity  (closed) [    kg/kg]
-             , d_lsfc_co2_open             & ! Leaf sfc. CO2 mix. rat. (open)   [ µmol/mol]
-             , d_lsfc_co2_closed           & ! Leaf sfc. CO2 mix. rat. (closed) [ µmol/mol]
-             , d_lint_co2_open             & ! Intercellular CO2       (open)   [ µmol/mol]
-             , d_lint_co2_closed           & ! Intercellular CO2       (closed) [ µmol/mol]
-             , leaf_resp                   & ! Leaf respiration rate            [µmol/m²/s]
-             , vm                          & ! Max. capacity of Rubisco         [µmol/m²/s]
-             , compp                       & ! Gross photo. compensation point  [ µmol/mol]
-             , limit_flag                  & ! Photosynthesis limitation flag   [      ---]
-             )
+            if (h2o_plant_lim == 4 .and. photosyn_pathway(ipft) == 3) then
+               call katul_lphys(              & !
+                     csite%can_prss(ipa)         & ! Canopy air pressure              [       Pa]
+                     , csite%can_rhos(ipa)         & ! Canopy air density               [    kg/m³]
+                     , can_ssh                     & ! Canopy air sp. humidity          [    kg/kg]
+                     , csite%can_co2(ipa)          & ! Canopy air CO2 mixing ratio      [ µmol/mol]
+                     , ipft                        & ! Plant functional type            [      ---]
+                     , csite%par_l_max(ipa)        & ! Absorbed photos. active rad.     [ W/m²leaf]
+                     , cpatch%leaf_temp(tuco)      & ! Leaf temperature                 [        K]
+                     , cpatch%lint_shv(tuco)       & ! Leaf intercellular spec. hum.    [    kg/kg]
+                     , green_leaf_factor(ipft)     & ! Greenness rel. to on-allometry   [      ---]
+                     , leaf_aging_factor(ipft)     & ! Ageing parameter to scale VM     [      ---]
+                     , llspan_tuco                 & ! Leaf life span                   [       yr]
+                     , vm0_tuco                    & ! Average Vm function              [µmol/m²/s]
+                     , cpatch%leaf_gbw(tuco)       & ! Aerodyn. condct. of water vapour [  kg/m²/s]
+                     , cpatch%psi_leaf(tuco)       & ! Leaf water potential             [        m]
+                     , cpatch%last_gV (tuco)       & ! Rubisco-limited gsc last time    [µmol/m²/s]
+                     , cpatch%last_gJ (tuco)       & ! Light-limited gsc last time      [µmol/m²/s]
+                     , csite%A_o_max(ipft,ipa)     & ! Photosynthesis rate     (open)   [µmol/m²/s]
+                     , csite%A_c_max(ipft,ipa)     & ! Photosynthesis rate     (closed) [µmol/m²/s]
+                     , d_gsw_open                  & ! Stom. condct. of water  (open)   [  kg/m²/s]
+                     , d_gsw_closed                & ! Stom. condct. of water  (closed) [  kg/m²/s]
+                     , d_lsfc_shv_open             & ! Leaf sfc. sp. humidity  (open)   [    kg/kg]
+                     , d_lsfc_shv_closed           & ! Leaf sfc. sp. humidity  (closed) [    kg/kg]
+                     , d_lsfc_co2_open             & ! Leaf sfc. CO2 mix. rat. (open)   [ µmol/mol]
+                     , d_lsfc_co2_closed           & ! Leaf sfc. CO2 mix. rat. (closed) [ µmol/mol]
+                     , d_lint_co2_open             & ! Intercellular CO2       (open)   [ µmol/mol]
+                     , d_lint_co2_closed           & ! Intercellular CO2       (closed) [ µmol/mol]
+                     , leaf_resp                   & ! Leaf respiration rate            [µmol/m²/s]
+                     , vm                          & ! Max. capacity of Rubisco         [µmol/m²/s]
+                     , compp                       & ! Gross photo. compensation point  [ µmol/mol]
+                     , limit_flag                  & ! Photosynthesis limitation flag   [      ---]
+                     )
+            else
+               
+               call lphysiol_full(            & !
+                     csite%can_prss(ipa)         & ! Canopy air pressure              [       Pa]
+                     , csite%can_rhos(ipa)         & ! Canopy air density               [    kg/m³]
+                     , can_ssh                     & ! Canopy air sp. humidity          [    kg/kg]
+                     , csite%can_co2(ipa)          & ! Canopy air CO2 mixing ratio      [ µmol/mol]
+                     , ipft                        & ! Plant functional type            [      ---]
+                     , csite%par_l_max(ipa)        & ! Absorbed photos. active rad.     [ W/m²leaf]
+                     , cpatch%leaf_temp(tuco)      & ! Leaf temperature                 [        K]
+                     , cpatch%lint_shv(tuco)       & ! Leaf intercellular spec. hum.    [    kg/kg]
+                     , green_leaf_factor(ipft)     & ! Greenness rel. to on-allometry   [      ---]
+                     , leaf_aging_factor(ipft)     & ! Ageing parameter to scale VM     [      ---]
+                     , llspan_tuco                 & ! Leaf life span                   [       yr]
+                     , vm0_tuco                    & ! Average Vm function              [µmol/m²/s]
+                     , cpatch%leaf_gbw(tuco)       & ! Aerodyn. condct. of water vapour [  kg/m²/s]
+                     , csite%A_o_max(ipft,ipa)     & ! Photosynthesis rate     (open)   [µmol/m²/s]
+                     , csite%A_c_max(ipft,ipa)     & ! Photosynthesis rate     (closed) [µmol/m²/s]
+                     , d_A_light_max               & ! Photosynthesis rate     (light)  [µmol/m²/s]
+                     , d_A_rubp_max                & ! Photosynthesis rate     (RuBP)   [µmol/m²/s]
+                     , d_A_co2_max                 & ! Photosynthesis rate     (CO2)    [µmol/m²/s]
+                     , d_gsw_open                  & ! Stom. condct. of water  (open)   [  kg/m²/s]
+                     , d_gsw_closed                & ! Stom. condct. of water  (closed) [  kg/m²/s]
+                     , d_lsfc_shv_open             & ! Leaf sfc. sp. humidity  (open)   [    kg/kg]
+                     , d_lsfc_shv_closed           & ! Leaf sfc. sp. humidity  (closed) [    kg/kg]
+                     , d_lsfc_co2_open             & ! Leaf sfc. CO2 mix. rat. (open)   [ µmol/mol]
+                     , d_lsfc_co2_closed           & ! Leaf sfc. CO2 mix. rat. (closed) [ µmol/mol]
+                     , d_lint_co2_open             & ! Intercellular CO2       (open)   [ µmol/mol]
+                     , d_lint_co2_closed           & ! Intercellular CO2       (closed) [ µmol/mol]
+                     , leaf_resp                   & ! Leaf respiration rate            [µmol/m²/s]
+                     , vm                          & ! Max. capacity of Rubisco         [µmol/m²/s]
+                     , compp                       & ! Gross photo. compensation point  [ µmol/mol]
+                     , limit_flag                  & ! Photosynthesis limitation flag   [      ---]
+                     )
+            end if
          end if
       end do
          
@@ -396,38 +438,76 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
             !    Notice that the units that are per unit area are per m² of leaf, not the  !
             ! patch area.                                                                  !
             !------------------------------------------------------------------------------!
-            call lphysiol_full(            & !
-               csite%can_prss(ipa)         & ! Canopy air pressure              [       Pa]
-             , csite%can_rhos(ipa)         & ! Canopy air density               [    kg/m³]
-             , csite%can_shv(ipa)          & ! Canopy air sp. humidity          [    kg/kg]
-             , csite%can_co2(ipa)          & ! Canopy air CO2 mixing ratio      [ µmol/mol]
-             , ipft                        & ! Plant functional type            [      ---]
-             , leaf_par                    & ! Absorbed photos. active rad.     [ W/m²leaf]
-             , cpatch%leaf_temp(ico)       & ! Leaf temperature                 [        K]
-             , cpatch%lint_shv(ico)        & ! Leaf intercellular spec. hum.    [    kg/kg]
-             , green_leaf_factor(ipft)     & ! Greenness rel. to on-allometry   [      ---]
-             , leaf_aging_factor(ipft)     & ! Ageing parameter to scale VM     [      ---]
-             , cpatch%llspan(ico)          & ! Leaf life span                   [       yr]
-             , cpatch%vm_bar(ico)          & ! Average Vm function              [µmol/m²/s]
-             , cpatch%leaf_gbw(ico)        & ! Aerodyn. condct. of water vapour [  kg/m²/s]
-             , cpatch%A_open(ico)          & ! Photosynthesis rate     (open)   [µmol/m²/s]
-             , cpatch%A_closed(ico)        & ! Photosynthesis rate     (closed) [µmol/m²/s]
-             , cpatch%A_light(ico)         & ! Photosynthesis rate     (light)  [µmol/m²/s]
-             , cpatch%A_rubp(ico)          & ! Photosynthesis rate     (RuBP)   [µmol/m²/s]
-             , cpatch%A_co2(ico)           & ! Photosynthesis rate     (CO2)    [µmol/m²/s]
-             , cpatch%gsw_open(ico)        & ! Stom. condct. of water  (open)   [  kg/m²/s]
-             , cpatch%gsw_closed(ico)      & ! Stom. condct. of water  (closed) [  kg/m²/s]
-             , cpatch%lsfc_shv_open(ico)   & ! Leaf sfc. sp. humidity  (open)   [    kg/kg] 
-             , cpatch%lsfc_shv_closed(ico) & ! Leaf sfc. sp. humidity  (closed) [    kg/kg]
-             , cpatch%lsfc_co2_open(ico)   & ! Leaf sfc. CO2 mix. rat. (open)   [ µmol/mol]
-             , cpatch%lsfc_co2_closed(ico) & ! Leaf sfc. CO2 mix. rat. (closed) [ µmol/mol]
-             , cpatch%lint_co2_open(ico)   & ! Intercellular CO2       (open)   [ µmol/mol]
-             , cpatch%lint_co2_closed(ico) & ! Intercellular CO2       (closed) [ µmol/mol]
-             , leaf_resp                   & ! Leaf respiration rate            [µmol/m²/s]
-             , vm                          & ! Max. capacity of Rubisco         [µmol/m²/s]
-             , compp                       & ! Gross photo. compensation point  [ µmol/mol]
-             , limit_flag                  & ! Photosynthesis limitation flag   [      ---]
-             )
+
+            if (h2o_plant_lim == 4 .and. photosyn_pathway(ipft) == 3) then
+               call katul_lphys(            & !
+                     csite%can_prss(ipa)         & ! Canopy air pressure              [       Pa]
+                     , csite%can_rhos(ipa)         & ! Canopy air density               [    kg/m³]
+                     , csite%can_shv(ipa)          & ! Canopy air sp. humidity          [    kg/kg]
+                     , csite%can_co2(ipa)          & ! Canopy air CO2 mixing ratio      [ µmol/mol]
+                     , ipft                        & ! Plant functional type            [      ---]
+                     , leaf_par                    & ! Absorbed photos. active rad.     [ W/m²leaf]
+                     , cpatch%leaf_temp(ico)       & ! Leaf temperature                 [        K]
+                     , cpatch%lint_shv(ico)        & ! Leaf intercellular spec. hum.    [    kg/kg]
+                     , green_leaf_factor(ipft)     & ! Greenness rel. to on-allometry   [      ---]
+                     , leaf_aging_factor(ipft)     & ! Ageing parameter to scale VM     [      ---]
+                     , cpatch%llspan(ico)          & ! Leaf life span                   [       yr]
+                     , cpatch%vm_bar(ico)          & ! Average Vm function              [µmol/m²/s]
+                     , cpatch%leaf_gbw(ico)        & ! Aerodyn. condct. of water vapour [  kg/m²/s]
+                     , cpatch%psi_leaf(ico)        & ! Leaf water potential             [        m]
+                     , cpatch%last_gV (ico)        & ! Rubisco-limited gsc last time    [µmol/m²/s]
+                     , cpatch%last_gJ (ico)        & ! Light-limited gsc last time      [µmol/m²/s]
+                     , cpatch%A_open(ico)          & ! Photosynthesis rate     (open)   [µmol/m²/s]
+                     , cpatch%A_closed(ico)        & ! Photosynthesis rate     (closed) [µmol/m²/s]
+                     , cpatch%gsw_open(ico)        & ! Stom. condct. of water  (open)   [  kg/m²/s]
+                     , cpatch%gsw_closed(ico)      & ! Stom. condct. of water  (closed) [  kg/m²/s]
+                     , cpatch%lsfc_shv_open(ico)   & ! Leaf sfc. sp. humidity  (open)   [    kg/kg] 
+                     , cpatch%lsfc_shv_closed(ico) & ! Leaf sfc. sp. humidity  (closed) [    kg/kg]
+                     , cpatch%lsfc_co2_open(ico)   & ! Leaf sfc. CO2 mix. rat. (open)   [ µmol/mol]
+                     , cpatch%lsfc_co2_closed(ico) & ! Leaf sfc. CO2 mix. rat. (closed) [ µmol/mol]
+                     , cpatch%lint_co2_open(ico)   & ! Intercellular CO2       (open)   [ µmol/mol]
+                     , cpatch%lint_co2_closed(ico) & ! Intercellular CO2       (closed) [ µmol/mol]
+                     , leaf_resp                   & ! Leaf respiration rate            [µmol/m²/s]
+                     , vm                          & ! Max. capacity of Rubisco         [µmol/m²/s]
+                     , compp                       & ! Gross photo. compensation point  [ µmol/mol]
+                     , limit_flag                  & ! Photosynthesis limitation flag   [      ---]
+                     )
+            else
+
+               call lphysiol_full(            & !
+                     csite%can_prss(ipa)         & ! Canopy air pressure              [       Pa]
+                     , csite%can_rhos(ipa)         & ! Canopy air density               [    kg/m³]
+                     , csite%can_shv(ipa)          & ! Canopy air sp. humidity          [    kg/kg]
+                     , csite%can_co2(ipa)          & ! Canopy air CO2 mixing ratio      [ µmol/mol]
+                     , ipft                        & ! Plant functional type            [      ---]
+                     , leaf_par                    & ! Absorbed photos. active rad.     [ W/m²leaf]
+                     , cpatch%leaf_temp(ico)       & ! Leaf temperature                 [        K]
+                     , cpatch%lint_shv(ico)        & ! Leaf intercellular spec. hum.    [    kg/kg]
+                     , green_leaf_factor(ipft)     & ! Greenness rel. to on-allometry   [      ---]
+                     , leaf_aging_factor(ipft)     & ! Ageing parameter to scale VM     [      ---]
+                     , cpatch%llspan(ico)          & ! Leaf life span                   [       yr]
+                     , cpatch%vm_bar(ico)          & ! Average Vm function              [µmol/m²/s]
+                     , cpatch%leaf_gbw(ico)        & ! Aerodyn. condct. of water vapour [  kg/m²/s]
+                     , cpatch%A_open(ico)          & ! Photosynthesis rate     (open)   [µmol/m²/s]
+                     , cpatch%A_closed(ico)        & ! Photosynthesis rate     (closed) [µmol/m²/s]
+                     , cpatch%A_light(ico)         & ! Photosynthesis rate     (light)  [µmol/m²/s]
+                     , cpatch%A_rubp(ico)          & ! Photosynthesis rate     (RuBP)   [µmol/m²/s]
+                     , cpatch%A_co2(ico)           & ! Photosynthesis rate     (CO2)    [µmol/m²/s]
+                     , cpatch%gsw_open(ico)        & ! Stom. condct. of water  (open)   [  kg/m²/s]
+                     , cpatch%gsw_closed(ico)      & ! Stom. condct. of water  (closed) [  kg/m²/s]
+                     , cpatch%lsfc_shv_open(ico)   & ! Leaf sfc. sp. humidity  (open)   [    kg/kg] 
+                     , cpatch%lsfc_shv_closed(ico) & ! Leaf sfc. sp. humidity  (closed) [    kg/kg]
+                     , cpatch%lsfc_co2_open(ico)   & ! Leaf sfc. CO2 mix. rat. (open)   [ µmol/mol]
+                     , cpatch%lsfc_co2_closed(ico) & ! Leaf sfc. CO2 mix. rat. (closed) [ µmol/mol]
+                     , cpatch%lint_co2_open(ico)   & ! Intercellular CO2       (open)   [ µmol/mol]
+                     , cpatch%lint_co2_closed(ico) & ! Intercellular CO2       (closed) [ µmol/mol]
+                     , leaf_resp                   & ! Leaf respiration rate            [µmol/m²/s]
+                     , vm                          & ! Max. capacity of Rubisco         [µmol/m²/s]
+                     , compp                       & ! Gross photo. compensation point  [ µmol/mol]
+                     , limit_flag                  & ! Photosynthesis limitation flag   [      ---]
+                     )
+
+            endif
 
             !----- Convert leaf respiration to [µmol/m²ground/s] --------------------------!
             cpatch%leaf_respiration(ico) = leaf_resp * cpatch%lai (ico)
@@ -472,6 +552,16 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
                else
                   cpatch%fsw(ico) = 1.0 / (1.0 + water_demand / cpatch%water_supply(ico))
                end if
+
+            case (3,4)
+                if (h2o_plant_lim == 4 .and. photosyn_pathway(ipft) == 3) then
+                    cpatch%fsw(ico) = 1.0
+                else
+                    cpatch%fsw(ico) = EXP(          &
+                        -(cpatch%psi_leaf(ico) / stoma_psi_b(ipft)) ** stoma_psi_c(ipft))
+                endif
+                
+
             end select
             !------------------------------------------------------------------------------!
 

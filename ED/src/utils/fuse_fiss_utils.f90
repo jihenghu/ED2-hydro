@@ -1524,7 +1524,33 @@ module fuse_fiss_utils
                                 + cpatch%sla         (donc) * dnplant
       !------------------------------------------------------------------------------------!
 
+      !------------------------------------------------------------------------------------!
+      !    Plant hydrodynamic variables. For simplicity, all the variables are scaled by   !
+      ! nplant                                               XXT
+      !------------------------------------------------------------------------------------!
+      cpatch%psi_leaf(recc)  = cpatch%psi_leaf(recc)*rnplant &
+                             + cpatch%psi_leaf(donc)*dnplant
 
+      cpatch%psi_stem(recc)  = cpatch%psi_stem(recc)*rnplant &
+                             + cpatch%psi_stem(donc)*dnplant
+
+      cpatch%water_flux_rl(recc)  = cpatch%water_flux_rl(recc)*rnplant &
+                                  + cpatch%water_flux_rl(donc)*dnplant
+
+      cpatch%water_flux_sr(recc)  = cpatch%water_flux_sr(recc)*rnplant &
+                                  + cpatch%water_flux_sr(donc)*dnplant
+
+      cpatch%high_psi_days(recc)  = nint(cpatch%high_psi_days(recc)*rnplant & 
+                                         + cpatch%high_psi_days(donc)*dnplant )
+
+      cpatch%low_psi_days(recc)  = nint(cpatch%low_psi_days(recc)*rnplant & 
+                                        + cpatch%low_psi_days(donc)*dnplant )
+
+      cpatch%last_gJ (recc)  = cpatch%last_gJ(recc)*rnplant & 
+                             + cpatch%last_gJ(donc)*dnplant
+
+      cpatch%last_gV (recc)  = cpatch%last_gV(recc)*rnplant &
+                             + cpatch%last_gV(donc)*dnplant
 
       !------------------------------------------------------------------------------------!
       !------------------------------------------------------------------------------------!
@@ -1612,6 +1638,43 @@ module fuse_fiss_utils
                                              + cpatch%fmean_par_level_diffu (donc)         &
                                              * dnplant
          !---------------------------------------------------------------------------------!
+
+         !----------------         Plant Hydrodynamics     -----------------------------------!
+         ! For simplicity, all the plant hydrodynamic variables are weighted by nplant now    !
+
+         cpatch%fmean_psi_leaf        (recc) = ( cpatch%fmean_psi_leaf        (recc)          &
+               * rnplant                                      & 
+               + cpatch%fmean_psi_leaf        (donc)          &
+               * dnplant
+         cpatch%fmean_psi_stem        (recc) = ( cpatch%fmean_psi_stem        (recc)          &
+               * rnplant                                      & 
+               + cpatch%fmean_psi_stem        (donc)          &
+               * dnplant
+         cpatch%fmean_water_flux_rl   (recc) = ( cpatch%fmean_water_flux_rl   (recc)          &
+               * rnplant                                      &
+               + cpatch%fmean_water_flux_rl   (donc)          &
+               * dnplant
+         cpatch%fmean_water_flux_sr   (recc) = ( cpatch%fmean_water_flux_sr   (recc)          &
+               * rnplant                                      &
+               + cpatch%fmean_water_flux_sr   (donc)          &
+               * dnplant
+         cpatch%dmax_psi_leaf         (recc) = ( cpatch%dmax_psi_leaf         (recc)          &
+               * rnplant                                      &
+               + cpatch%dmax_psi_leaf         (donc)          &
+               * dnplant
+         cpatch%dmin_psi_leaf         (recc) = ( cpatch%dmin_psi_leaf         (recc)          &
+               * rnplant                                      &
+               + cpatch%dmin_psi_leaf         (donc)          &
+               * dnplant
+         cpatch%dmax_psi_stem         (recc) = ( cpatch%dmax_psi_stem         (recc)          &
+               * rnplant                                      &
+               + cpatch%dmax_psi_stem         (donc)          &
+               * dnplant
+         cpatch%dmin_psi_stem         (recc) = ( cpatch%dmin_psi_stem         (recc)          &
+               * rnplant                                      &
+               + cpatch%dmin_psi_stem         (donc)          &
+               * dnplant
+         !------------------------------------------------------------------------------------!
 
 
 
@@ -2233,7 +2296,28 @@ module fuse_fiss_utils
                                              * rnplant                                     &
                                              + cpatch%mmean_par_level_diffu (donc)         &
                                              * dnplant
+
+         !-----------------       Plant Hydrodynamics      --------------------------------!
+         cpatch%mmean_dmax_psi_leaf   (recc) = ( cpatch%mmean_dmax_psi_leaf   (recc)       &
+                                               * rnplant                                   &
+                                               + cpatch%mmean_dmax_psi_leaf   (donc)       &
+                                               * dnplant
+         cpatch%mmean_dmin_psi_leaf   (recc) = ( cpatch%mmean_dmin_psi_leaf   (recc)       &
+                                               * rnplant                                   &
+                                               + cpatch%mmean_dmin_psi_leaf   (donc)       &
+                                               * dnplant
+         cpatch%mmean_dmax_psi_stem   (recc) = ( cpatch%mmean_dmax_psi_stem   (recc)       &
+                                               * rnplant                                   &
+                                               + cpatch%mmean_dmax_psi_stem   (donc)       &
+                                               * dnplant
+         cpatch%mmean_dmin_psi_stem   (recc) = ( cpatch%mmean_dmin_psi_stem   (recc)       &
+                                               * rnplant                                   &
+                                               + cpatch%mmean_dmin_psi_stem   (donc)       &
+                                               * dnplant
          !---------------------------------------------------------------------------------!
+
+         !---------------------------------------------------------------------------------!
+
 
 
 

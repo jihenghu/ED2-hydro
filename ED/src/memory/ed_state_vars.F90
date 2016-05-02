@@ -480,6 +480,24 @@ module ed_state_vars
       real, pointer, dimension(:) :: vm_bar
       real, pointer, dimension(:) :: sla
 
+      ! Related with plant hydrodynamics
+      ! leaf/stem water potential [m]
+      real, pointer, dimension(:) :: psi_leaf
+      real, pointer, dimension(:) :: psi_stem
+      ! water flux from root to leaf and from soil to root  [kg H2O/s]
+      real, pointer, dimension(:) :: water_flux_rl
+      real, pointer, dimension(:) :: water_flux_sr
+      ! consecutive wet/dry days defined by psi_leaf to drive drought-phenology
+      ! [number of days]
+      integer, pointer, dimension(:) :: high_psi_days
+      integer, pointer, dimension(:) :: low_psi_days
+
+      ! optimized stomatal conductance for CO2 during last timestep
+      ! used to speed up optimization calculations [umol/m2/s]
+      real, pointer, dimension(:)    :: last_gV
+      real, pointer, dimension(:)    :: last_gJ
+
+
       !------------------------------------------------------------------------------------!
       ! These are diagnostic variables, averaged over various time scales.                 !
       ! FMEAN -- averaged over FRQSUM (the least between FRQFAST, FRQSTATE and one day).   !
@@ -556,7 +574,11 @@ module ed_state_vars
       real,pointer,dimension(:)   :: fmean_vapor_wc         ! Wood evaporation  [  kg/m2g/s]
       real,pointer,dimension(:)   :: fmean_intercepted_aw   ! Wood interception [  kg/m2g/s]
       real,pointer,dimension(:)   :: fmean_wshed_wg         ! Wood shedding     [  kg/m2g/s]
-      real,pointer,dimension(:)   :: fmean_lai		    ! LAI  		[     m2/m2]
+      real,pointer,dimension(:) :: fmean_psi_leaf         ! Leaf water potential[        m]
+      real,pointer,dimension(:) :: fmean_psi_stem         ! Stem water potential[        m]
+      real,pointer,dimension(:) :: fmean_water_flux_rl    ! Root-leaf water flow[ kg H2O/s]
+      real,pointer,dimension(:) :: fmean_water_flux_sr    ! Soil-root water flow[ kg H2O/s]
+       real,pointer,dimension(:)   :: fmean_lai		    ! LAI  		[     m2/m2]
       real,pointer,dimension(:)	  :: fmean_bdead	    ! Bdead		[     kg/pl]
       !----- Variables without sub-daily averages. ----------------------------------------!
       real,pointer,dimension(:)   :: dmean_nppleaf          ! Leaf NPP          [ kgC/pl/yr]
@@ -566,6 +588,11 @@ module ed_state_vars
       real,pointer,dimension(:)   :: dmean_nppseeds         ! Seed NPP          [ kgC/pl/yr]
       real,pointer,dimension(:)   :: dmean_nppwood          ! Wood NPP          [ kgC/pl/yr]
       real,pointer,dimension(:)   :: dmean_nppdaily         ! Daily NPP         [ kgC/pl/yr]
+      real,pointer,dimension(:) :: dmax_psi_leaf          ! Daily max leaf psi  [        m]
+      real,pointer,dimension(:) :: dmax_psi_stem          ! Daily max stem psi  [        m]
+      real,pointer,dimension(:) :: dmin_psi_leaf          ! Daily min leaf psi  [        m]
+      real,pointer,dimension(:) :: dmin_psi_stem          ! Daily min stem psi  [        m]
+
       !----- Monthly means of variables that are integrated daily. ------------------------!
       real,pointer,dimension(:)   :: mmean_lai              ! Leaf area index   [   m2l/m2g]
       real,pointer,dimension(:)   :: mmean_bleaf            ! Leaf biomass      [    kgC/pl]
@@ -576,6 +603,12 @@ module ed_state_vars
       real,pointer,dimension(:)   :: mmean_root_maintenance ! Root mainten.     [ kgC/pl/yr]
       real,pointer,dimension(:)   :: mmean_leaf_drop        ! Leaf drop         [ kgC/pl/yr]
       real,pointer,dimension(:)   :: mmean_cb               ! 12-mon C balance  [    kgC/pl]
+      real,pointer,dimension(:)   :: mmean_dmax_psi_leaf    ! Daily max leaf psi[        m]
+      real,pointer,dimension(:)   :: mmean_dmin_psi_leaf    ! Daily min leaf psi[        m]
+      real,pointer,dimension(:)   :: mmean_dmax_psi_stem    ! Daily max stem psi[        m]
+      real,pointer,dimension(:)   :: mmean_dmin_psi_stem    ! Daily min stem psi[        m]
+
+
       !----- Daily mean (same units as fast mean). ----------------------------------------!
       real,pointer,dimension(:)     :: dmean_gpp
       real,pointer,dimension(:)     :: dmean_npp
@@ -4619,6 +4652,14 @@ module ed_state_vars
       allocate(cpatch%llspan                       (                    ncohorts))
       allocate(cpatch%vm_bar                       (                    ncohorts))
       allocate(cpatch%sla                          (                    ncohorts))
+      allocate(cpatch%psi_leaf                     (                    ncohorts))
+      allocate(cpatch%psi_stem                     (                    ncohorts))
+      allocate(cpatch%water_flux_rl                (                    ncohorts))
+      allocate(cpatch%water_flux_sr                (                    ncohorts))
+      allocate(cpatch%high_psi_days                (                    ncohorts))
+      allocate(cpatch%low_psi_days                 (                    ncohorts))
+      allocate(cpatch%last_gV                      (                    ncohorts))
+      allocate(cpatch%last_gJ                      (                    ncohorts))
       allocate(cpatch%fmean_gpp                    (                    ncohorts))
       allocate(cpatch%fmean_npp                    (                    ncohorts))
       allocate(cpatch%fmean_leaf_resp              (                    ncohorts))
@@ -4685,7 +4726,15 @@ module ed_state_vars
       allocate(cpatch%fmean_wshed_wg               (                    ncohorts))
       allocate(cpatch%fmean_lai                    (                    ncohorts))
       allocate(cpatch%fmean_bdead                  (                    ncohorts))
-
+      !----- plant hydrodynamic vars---------------!
+      allocate(cpatch%fmean_psi_leaf               (        ncohorts))
+      allocate(cpatch%fmean_psi_stem               (        ncohorts))
+      allocate(cpatch%fmean_water_flux_rl          (        ncohorts))
+      allocate(cpatch%fmean_water_flux_sr          (        ncohorts))
+      allocate(cpatch%dmax_psi_leaf                (        ncohorts))
+      allocate(cpatch%dmin_psi_leaf                (        ncohorts))
+      allocate(cpatch%dmax_psi_stem                (        ncohorts))
+      allocate(cpatch%dmin_psi_stem                (        ncohorts))
 
       if (writing_long) then
          allocate(cpatch%dmean_nppleaf             (                    ncohorts))
@@ -4771,6 +4820,12 @@ module ed_state_vars
          allocate(cpatch%mmean_root_maintenance    (                    ncohorts))
          allocate(cpatch%mmean_leaf_drop           (                    ncohorts))
          allocate(cpatch%mmean_cb                  (                    ncohorts))
+         !---- plant hydrodynamic variables  -----------!
+         allocate(cpatch%mmean_dmax_psi_leaf       (        ncohorts))
+         allocate(cpatch%mmean_dmin_psi_leaf       (        ncohorts))
+         allocate(cpatch%mmean_dmax_psi_stem       (        ncohorts))
+         allocate(cpatch%mmean_dmin_psi_stem       (        ncohorts))
+
          allocate(cpatch%mmean_gpp                 (                    ncohorts))
          allocate(cpatch%mmean_npp                 (                    ncohorts))
          allocate(cpatch%mmean_leaf_resp           (                    ncohorts))
@@ -6415,6 +6470,14 @@ module ed_state_vars
       nullify(cpatch%llspan                )
       nullify(cpatch%vm_bar                )
       nullify(cpatch%sla                   )
+      nullify(cpatch%psi_leaf              )
+      nullify(cpatch%psi_stem              )
+      nullify(cpatch%water_flux_rl         )
+      nullify(cpatch%water_flux_sr         )
+      nullify(cpatch%high_psi_days         )
+      nullify(cpatch%low_psi_days          )
+      nullify(cpatch%last_gV               )
+      nullify(cpatch%last_gJ               )
       nullify(cpatch%fmean_gpp             )
       nullify(cpatch%fmean_npp             )
       nullify(cpatch%fmean_leaf_resp       )
@@ -6479,6 +6542,15 @@ module ed_state_vars
       nullify(cpatch%fmean_vapor_wc        )
       nullify(cpatch%fmean_intercepted_aw  )
       nullify(cpatch%fmean_wshed_wg        )
+      !---- plant hydrodynamics variables--!
+      nullify(cpatch%fmean_psi_leaf        )
+      nullify(cpatch%fmean_psi_stem        )
+      nullify(cpatch%fmean_water_flux_rl   )
+      nullify(cpatch%fmean_water_flux_sr   )
+      nullify(cpatch%dmax_psi_leaf         )
+      nullify(cpatch%dmin_psi_leaf         )
+      nullify(cpatch%dmax_psi_stem         )
+      nullify(cpatch%dmin_psi_stem         )
       nullify(cpatch%fmean_lai             )
       nullify(cpatch%fmean_bdead           )
       nullify(cpatch%dmean_nppleaf         )
@@ -6561,6 +6633,11 @@ module ed_state_vars
       nullify(cpatch%mmean_root_maintenance)
       nullify(cpatch%mmean_leaf_drop       )
       nullify(cpatch%mmean_cb              )
+      !---- plant hydrodynamics variables--!
+      nullify(cpatch%mmean_dmax_psi_leaf   )
+      nullify(cpatch%mmean_dmin_psi_leaf   )
+      nullify(cpatch%mmean_dmax_psi_stem   )
+      nullify(cpatch%mmean_dmin_psi_stem   )
       nullify(cpatch%mmean_gpp             )
       nullify(cpatch%mmean_npp             )
       nullify(cpatch%mmean_leaf_resp       )
@@ -10080,6 +10157,14 @@ module ed_state_vars
          opatch%llspan                (oco) = ipatch%llspan                (ico)
          opatch%vm_bar                (oco) = ipatch%vm_bar                (ico)
          opatch%sla                   (oco) = ipatch%sla                   (ico)
+         opatch%psi_stem              (oco) = ipatch%psi_stem              (ico)
+         opatch%psi_leaf              (oco) = ipatch%psi_leaf              (ico)
+         opatch%water_flux_rl         (oco) = ipatch%water_flux_rl         (ico)
+         opatch%water_flux_sr         (oco) = ipatch%water_flux_sr         (ico)
+         opatch%high_psi_days         (oco) = ipatch%high_psi_days         (ico)
+         opatch%low_psi_days          (oco) = ipatch%low_psi_days          (ico)
+         opatch%last_gV               (oco) = ipatch%last_gV               (ico)
+         opatch%last_gJ               (oco) = ipatch%last_gJ               (ico)
          opatch%fmean_gpp             (oco) = ipatch%fmean_gpp             (ico)
          opatch%fmean_npp             (oco) = ipatch%fmean_npp             (ico)
          opatch%fmean_leaf_resp       (oco) = ipatch%fmean_leaf_resp       (ico)
@@ -10145,6 +10230,15 @@ module ed_state_vars
          opatch%fmean_wshed_wg        (oco) = ipatch%fmean_wshed_wg        (ico)
          opatch%fmean_lai             (oco) = ipatch%fmean_lai             (ico)
          opatch%fmean_bdead           (oco) = ipatch%fmean_bdead           (ico)
+         !------------------- Plant Hydodynamics ------------------------------------------!
+         opatch%fmean_psi_leaf        (oco) = ipatch%fmean_psi_leaf        (ico)
+         opatch%fmean_psi_stem        (oco) = ipatch%fmean_psi_stem        (ico)
+         opatch%fmean_water_flux_rl   (oco) = ipatch%fmean_water_flux_rl   (ico)
+         opatch%fmean_water_flux_sr   (oco) = ipatch%fmean_water_flux_sr   (ico)
+         opatch%dmax_psi_leaf         (oco) = ipatch%dmax_psi_leaf         (ico)
+         opatch%dmin_psi_leaf         (oco) = ipatch%dmin_psi_leaf         (ico)
+         opatch%dmax_psi_stem         (oco) = ipatch%dmax_psi_stem         (ico)
+         opatch%dmin_psi_stem         (oco) = ipatch%dmin_psi_stem         (ico)
          !---------------------------------------------------------------------------------!
 
 
@@ -10275,6 +10369,12 @@ module ed_state_vars
             opatch%mmean_root_maintenance(oco) = ipatch%mmean_root_maintenance(ico)
             opatch%mmean_leaf_drop       (oco) = ipatch%mmean_leaf_drop       (ico)
             opatch%mmean_cb              (oco) = ipatch%mmean_cb              (ico)
+            !----- Plant Hydrodynamics ----------------------------------------------------!
+            opatch%mmean_dmax_psi_leaf   (oco) = ipatch%mmean_dmax_psi_leaf   (ico)
+            opatch%mmean_dmin_psi_leaf   (oco) = ipatch%mmean_dmin_psi_leaf   (ico)
+            opatch%mmean_dmax_psi_stem   (oco) = ipatch%mmean_dmax_psi_stem   (ico)
+            opatch%mmean_dmin_psi_stem   (oco) = ipatch%mmean_dmin_psi_stem   (ico)
+            !------------------------------------------------------------------------------!
             opatch%mmean_gpp             (oco) = ipatch%mmean_gpp             (ico)
             opatch%mmean_npp             (oco) = ipatch%mmean_npp             (ico)
             opatch%mmean_leaf_resp       (oco) = ipatch%mmean_leaf_resp       (ico)
@@ -24562,6 +24662,23 @@ module ed_state_vars
            var_len,var_len_global,max_ptrs,'NEW_RECRUIT_FLAG :40:hist') 
          call metadata_edio(nvar,igr,'No metadata available','[NA]','NA') 
       end if
+
+      !---------------  For new drought phenology driven by leaf water  potential-
+      if (associated(cpatch%high_psi_days)) then
+         nvar=nvar+1
+           call vtable_edio_i(npts,cpatch%high_psi_days,nvar,igr,init,cpatch%coglob_id, &
+           var_len,var_len_global,max_ptrs,'HIGH_PSI_DAYS :40:hist:dail:dcyc') 
+         call metadata_edio(nvar,igr,'No metadata available','[-]','NA') 
+      end if
+
+      if (associated(cpatch%low_psi_days)) then
+         nvar=nvar+1
+           call vtable_edio_i(npts,cpatch%low_psi_days,nvar,igr,init,cpatch%coglob_id, &
+           var_len,var_len_global,max_ptrs,'LOW_PSI_DAYS :40:hist:dail:dcyc') 
+         call metadata_edio(nvar,igr,'No metadata available','[-]','NA') 
+      end if
+
+
       !------------------------------------------------------------------------------------!
 
       return
@@ -25423,6 +25540,49 @@ module ed_state_vars
            var_len,var_len_global,max_ptrs,'SLA :41:hist') 
          call metadata_edio(nvar,igr,'No metadata available','[NA]','NA') 
       end if
+
+      if (associated(cpatch%psi_leaf)) then
+         nvar=nvar+1
+           call vtable_edio_r(npts,cpatch%psi_leaf,nvar,igr,init,cpatch%coglob_id, &
+           var_len,var_len_global,max_ptrs,'PSI_LEAF :41:hist') 
+         call metadata_edio(nvar,igr,'No metadata available','[NA]','NA') 
+      end if
+
+      if (associated(cpatch%psi_stem)) then
+         nvar=nvar+1
+           call vtable_edio_r(npts,cpatch%psi_stem,nvar,igr,init,cpatch%coglob_id, &
+           var_len,var_len_global,max_ptrs,'PSI_STEM :41:hist') 
+         call metadata_edio(nvar,igr,'No metadata available','[NA]','NA') 
+      end if
+
+      if (associated(cpatch%water_flux_rl)) then
+         nvar=nvar+1
+           call vtable_edio_r(npts,cpatch%water_flux_rl,nvar,igr,init,cpatch%coglob_id, &
+           var_len,var_len_global,max_ptrs,'WATER_FLUX_RL :41:hist') 
+         call metadata_edio(nvar,igr,'No metadata available','[NA]','NA') 
+      end if
+
+      if (associated(cpatch%water_flux_sr)) then
+         nvar=nvar+1
+           call vtable_edio_r(npts,cpatch%water_flux_sr,nvar,igr,init,cpatch%coglob_id, &
+           var_len,var_len_global,max_ptrs,'WATER_FLUX_SR :41:hist') 
+         call metadata_edio(nvar,igr,'No metadata available','[NA]','NA') 
+      end if
+
+      if (associated(cpatch%last_gJ)) then
+         nvar=nvar+1
+           call vtable_edio_r(npts,cpatch%last_gJ,nvar,igr,init,cpatch%coglob_id, &
+           var_len,var_len_global,max_ptrs,'LAST_GJ :41:hist') 
+         call metadata_edio(nvar,igr,'No metadata available','[NA]','NA') 
+      end if
+
+      if (associated(cpatch%last_gV)) then
+         nvar=nvar+1
+           call vtable_edio_r(npts,cpatch%last_gV,nvar,igr,init,cpatch%coglob_id, &
+           var_len,var_len_global,max_ptrs,'LAST_GV :41:hist') 
+         call metadata_edio(nvar,igr,'No metadata available','[NA]','NA') 
+      end if
+
       !------------------------------------------------------------------------------------!
 
       return
@@ -26035,6 +26195,45 @@ module ed_state_vars
                            ,'Sub-daily mean - Wood shedding'                               &
                            ,'[    kg/m2/s]','(icohort)'            )
       end if
+
+      !-------------- Plant Hydrodynamics -------------------------------------------------!
+      if (associated(cpatch%fmean_psi_leaf        )) then
+         nvar = nvar+1
+         call vtable_edio_r(npts,cpatch%fmean_psi_leaf                                     &
+                           ,nvar,igr,init,cpatch%coglob_id,var_len,var_len_global,max_ptrs &
+                           ,'FMEAN_PSI_LEAF_CO          :41:'//trim(fast_keys)     )
+         call metadata_edio(nvar,igr                                                       &
+                           ,'Sub-daily mean - Leaf water potential'                        &
+                           ,'[          m]','(icohort)'            )
+      end if
+      if (associated(cpatch%fmean_psi_stem        )) then
+         nvar = nvar+1
+         call vtable_edio_r(npts,cpatch%fmean_psi_stem                                     &
+                           ,nvar,igr,init,cpatch%coglob_id,var_len,var_len_global,max_ptrs &
+                           ,'FMEAN_PSI_STEM_CO          :41:'//trim(fast_keys)     )
+         call metadata_edio(nvar,igr                                                       &
+                           ,'Sub-daily mean - Stem water potential'                        &
+                           ,'[          m]','(icohort)'            )
+      end if
+      if (associated(cpatch%fmean_water_flux_rl   )) then
+         nvar = nvar+1
+         call vtable_edio_r(npts,cpatch%fmean_water_flux_rl                                &
+                           ,nvar,igr,init,cpatch%coglob_id,var_len,var_len_global,max_ptrs &
+                           ,'FMEAN_WATER_FLUX_RL_CO     :41:'//trim(fast_keys)     )
+         call metadata_edio(nvar,igr                                                       &
+                           ,'Sub-daily mean - Root to leaf water flux'                     &
+                           ,'[   kg H2O/s]','(icohort)'            )
+      end if
+      if (associated(cpatch%fmean_water_flux_sr   )) then
+         nvar = nvar+1
+         call vtable_edio_r(npts,cpatch%fmean_water_flux_sr                                &
+                           ,nvar,igr,init,cpatch%coglob_id,var_len,var_len_global,max_ptrs &
+                           ,'FMEAN_WATER_FLUX_SR_CO     :41:'//trim(fast_keys)     )
+         call metadata_edio(nvar,igr                                                       &
+                           ,'Sub-daily mean - Soil to root water flux'                     &
+                           ,'[   kg H2O/s]','(icohort)'            )
+      end if
+
       !------------------------------------------------------------------------------------!
 
       return
@@ -26720,6 +26919,47 @@ module ed_state_vars
                            ,'Daily mean - Wood shedding'                                   &
                            ,'[    kg/m2/s]','(icohort)'            )
       end if
+
+     end if
+     !---------------   Plant Hydrodynamics   --------------------------------------------!
+     if (associated(cpatch%dmax_psi_leaf         )) then
+         nvar = nvar+1
+         call vtable_edio_r(npts,cpatch%dmax_psi_leaf                                      &
+                           ,nvar,igr,init,cpatch%coglob_id,var_len,var_len_global,max_ptrs &
+                           ,'DMAX_PSI_LEAF_CO           :41:'//trim(dail_keys)     )
+         call metadata_edio(nvar,igr                                                       &
+                           ,'Daily maximum - leaf water potential'                         &
+                           ,'[          m]','(icohort)'            )
+      end if
+      if (associated(cpatch%dmin_psi_leaf         )) then
+         nvar = nvar+1
+         call vtable_edio_r(npts,cpatch%dmin_psi_leaf                                      &
+                           ,nvar,igr,init,cpatch%coglob_id,var_len,var_len_global,max_ptrs &
+                           ,'DMIN_PSI_LEAF_CO           :41:'//trim(dail_keys)     )
+         call metadata_edio(nvar,igr                                                       &
+                           ,'Daily minimum - leaf water potential'                         &
+                           ,'[          m]','(icohort)'            )
+      end if
+      if (associated(cpatch%dmax_psi_stem         )) then
+         nvar = nvar+1
+         call vtable_edio_r(npts,cpatch%dmax_psi_stem                                      &
+                           ,nvar,igr,init,cpatch%coglob_id,var_len,var_len_global,max_ptrs &
+                           ,'DMAX_PSI_STEM_CO           :41:'//trim(dail_keys)     )
+         call metadata_edio(nvar,igr                                                       &
+                           ,'Daily maximum - stem water potential'                         &
+                           ,'[          m]','(icohort)'            )
+      end if
+      if (associated(cpatch%dmin_psi_stem         )) then
+         nvar = nvar+1
+         call vtable_edio_r(npts,cpatch%dmin_psi_stem                                      &
+                           ,nvar,igr,init,cpatch%coglob_id,var_len,var_len_global,max_ptrs &
+                           ,'DMIN_PSI_STEM_CO           :41:'//trim(dail_keys)     )
+         call metadata_edio(nvar,igr                                                       &
+                           ,'Daily minimum - stem water potential'                         &
+                           ,'[          m]','(icohort)'            )
+      end if
+
+
       !------------------------------------------------------------------------------------!
 
       return
@@ -27479,6 +27719,46 @@ module ed_state_vars
                            ,'Monthly mean - Net primary productivity - total'              &
                            ,'[  kgC/m2/yr]','(icohort)'            )
       end if
+
+      !------------ Plant Hydrodynamics ---------------------------------------------------!
+      if (associated(cpatch%mmean_dmax_psi_leaf   )) then
+         nvar = nvar+1
+         call vtable_edio_r(npts,cpatch%mmean_dmax_psi_leaf                                &
+                           ,nvar,igr,init,cpatch%coglob_id,var_len,var_len_global,max_ptrs &
+                           ,'MMEAN_DMAX_PSI_LEAF_CO     :41:'//trim(eorq_keys))
+         call metadata_edio(nvar,igr                                                       &
+                           ,'Monthly mean - Daily maximum leaf water potential'            &
+                           ,'[          m]','(icohort)'            )
+      end if
+      if (associated(cpatch%mmean_dmin_psi_leaf   )) then
+         nvar = nvar+1
+         call vtable_edio_r(npts,cpatch%mmean_dmin_psi_leaf                                &
+                           ,nvar,igr,init,cpatch%coglob_id,var_len,var_len_global,max_ptrs &
+                           ,'MMEAN_DMIN_PSI_LEAF_CO     :41:'//trim(eorq_keys))
+         call metadata_edio(nvar,igr                                                       &
+                           ,'Monthly mean - Daily minimum leaf water potential'            &
+                           ,'[          m]','(icohort)'            )
+      end if
+      if (associated(cpatch%mmean_dmax_psi_stem   )) then
+         nvar = nvar+1
+         call vtable_edio_r(npts,cpatch%mmean_dmax_psi_stem                                &
+                           ,nvar,igr,init,cpatch%coglob_id,var_len,var_len_global,max_ptrs &
+                           ,'MMEAN_DMAX_PSI_STEM_CO     :41:'//trim(eorq_keys))
+         call metadata_edio(nvar,igr                                                       &
+                           ,'Monthly mean - Daily maximum stem water potential'            &
+                           ,'[          m]','(icohort)'            )
+      end if
+      if (associated(cpatch%mmean_dmin_psi_stem   )) then
+         nvar = nvar+1
+         call vtable_edio_r(npts,cpatch%mmean_dmin_psi_stem                                &
+                           ,nvar,igr,init,cpatch%coglob_id,var_len,var_len_global,max_ptrs &
+                           ,'MMEAN_DMIN_PSI_STEM_CO     :41:'//trim(eorq_keys))
+         call metadata_edio(nvar,igr                                                       &
+                           ,'Monthly mean - Daily minimum stem water potential'            &
+                           ,'[          m]','(icohort)'            )
+      end if
+
+
       if (associated(cpatch%mmsqu_gpp             )) then
          nvar = nvar+1
          call vtable_edio_r(npts,cpatch%mmsqu_gpp                                          &

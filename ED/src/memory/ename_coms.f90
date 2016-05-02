@@ -158,6 +158,7 @@ module ename_coms
       real                                              :: clump_tree
       real                                              :: clump_grass
       integer                                           :: h2o_plant_lim
+      integer                                           :: track_plant_hydro
       integer                                           :: iddmort_scheme
       integer                                           :: cbr_scheme
       real                                              :: ddmort_const
@@ -427,6 +428,7 @@ module ename_coms
       enl%clump_tree                = undef_real
       enl%clump_grass               = undef_real
       enl%h2o_plant_lim             = undef_integer
+      enl%track_plant_hydro         = undef_integer
       enl%iddmort_scheme            = undef_integer
       enl%cbr_scheme                = undef_integer
       enl%ddmort_const              = undef_real

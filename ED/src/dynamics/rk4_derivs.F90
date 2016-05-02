@@ -364,6 +364,23 @@ subroutine leaftw_derivs(mzg,mzs,initp,dinitp,csite,ipa,dt,is_hybrid)
                                         + rk4aux(ibuff)%avail_h2o_lyr(k)
          !---------------------------------------------------------------------------------!
       end do
+
+    case (3,4)
+      !------------------------------------------------------------------------------------!
+      !     We do not need available water factor. However, to be compatible with the old  !
+      ! scheme, we assign a positive value for all layers                                  !
+      !------------------------------------------------------------------------------------!
+      do k = mzg, klsl, -1
+         rk4aux(ibuff)%avail_h2o_lyr(k) = 1.0                                                     
+         !---------------------------------------------------------------------------------!
+
+
+         !----- Add the factor from this layer to the integral. ---------------------------!
+         rk4aux(ibuff)%avail_h2o_int(k) = rk4aux(ibuff)%avail_h2o_int(k+1) + &
+               rk4aux(ibuff)%avail_h2o_lyr(k)
+         !---------------------------------------------------------------------------------!
+      end do
+
       !------------------------------------------------------------------------------------!
    end select
    !---------------------------------------------------------------------------------------!
@@ -883,6 +900,8 @@ subroutine canopy_derivs_two(mzg,initp,dinitp,csite,ipa,hflxsc,wflxsc,qwflxsc,hf
    use canopy_struct_dynamics, only : vertical_vel_flux8   ! ! function
    use pft_coms              , only : water_conductance    ! ! intent(in)
    use budget_utils          , only : compute_netrad       ! ! function
+   use physiology_coms       , only : track_plant_hydro    ! ! intent(in)
+
    !$ use omp_lib
 
    implicit none
@@ -1485,8 +1504,13 @@ subroutine canopy_derivs_two(mzg,initp,dinitp,csite,ipa,hflxsc,wflxsc,qwflxsc,hf
 
 
          !----- We need to extract water from the soil equal to the transpiration. --------!
-         rk4aux(ibuff)%extracted_water(ico,kroot) = transp                                 &
-                                                  + rk4aux(ibuff)%extracted_water(ico,kroot)
+         ! extract transpirational demand from soil only if we are not tracking
+         ! plant hydrodynamics. Otherwise, the extraction is conducted in
+         ! plant_hydro_dyn.f90   --XXT
+         if (track_plant_hydro == 0) then
+            rk4aux(ibuff)%extracted_water(ico,kroot) = transp                              &
+                  + rk4aux(ibuff)%extracted_water(ico,kroot)
+         end if
          !---------------------------------------------------------------------------------!
 
 

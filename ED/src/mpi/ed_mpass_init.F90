@@ -225,6 +225,7 @@ subroutine ed_masterput_nl(par_run)
                                    , maxcohort                 ! ! intent(in)
    use physiology_coms      , only : iphysiol                  & ! intent(in)
                                    , h2o_plant_lim             & ! intent(in)
+                                   , track_plant_hydro         & ! intent(in)
                                    , iddmort_scheme            & ! intent(in)
                                    , cbr_scheme                & ! intent(in)
                                    , ddmort_const              & ! intent(in)
@@ -539,7 +540,8 @@ subroutine ed_masterput_nl(par_run)
    call MPI_Bcast(min_site_area,1,MPI_REAL,mainnum,MPI_COMM_WORLD,ierr)
    call MPI_Bcast(min_patch_area,1,MPI_REAL,mainnum,MPI_COMM_WORLD,ierr)
 
-  
+   call MPI_Bcast(track_plant_hydro,1,MPI_INTEGER,mainnum,MPI_COMM_WORLD,ierr)
+
    call MPI_Bcast(ioptinpt,str_len,MPI_CHARACTER,mainnum,MPI_COMM_WORLD,ierr)
 
    call MPI_Bcast(zrough,1,MPI_REAL,mainnum,MPI_COMM_WORLD,ierr)
@@ -1389,6 +1391,7 @@ subroutine ed_nodeget_nl
                                    , maxcohort                 ! ! intent(out)
    use physiology_coms      , only : iphysiol                  & ! intent(out)
                                    , h2o_plant_lim             & ! intent(out)
+                                   , track_plant_hydro         & ! intent(out)
                                    , iddmort_scheme            & ! intent(out)
                                    , cbr_scheme                & ! intent(out)
                                    , ddmort_const              & ! intent(out)
@@ -1709,6 +1712,7 @@ subroutine ed_nodeget_nl
    call MPI_Bcast(min_site_area,1,MPI_REAL,master_num,MPI_COMM_WORLD,ierr)
    call MPI_Bcast(min_patch_area,1,MPI_REAL,master_num,MPI_COMM_WORLD,ierr)
 
+   call MPI_Bcast(track_plant_hydro,1,MPI_INTEGER,master_num,MPI_COMM_WORLD,ierr)
   
    call MPI_Bcast(ioptinpt,str_len,MPI_CHARACTER,master_num,MPI_COMM_WORLD,ierr)
 
