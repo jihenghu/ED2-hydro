@@ -3097,6 +3097,7 @@ module disturbance_utils
                                 , ibigleaf                 ! ! intent(in)
       use fuse_fiss_utils, only : sort_cohorts             ! ! sub-routine
       use ed_therm_lib   , only : calc_veg_hcap            ! ! function
+      use plant_hydro_dyn, only : update_veg_water_int   ! ! function  
       use consts_coms    , only : t3ple                    & ! intent(in)
                                 , pio4                     ! ! intent(in)
       use allometry      , only : h2dbh                    & ! function
@@ -3232,14 +3233,22 @@ module disturbance_utils
       cpatch%wood_fliq    (nc) = 0.0
       !------------------------------------------------------------------------------------!
 
+      !---------------------------------------------------------------------------!
+      ! XXT. We need to update vegetation internal water after biomass change     !
+      !---------------------------------------------------------------------------!
+      call update_veg_water_int(cpatch,nc)
+      !---------------------------------------------------------------------------!
+
       !----- Because we assigned no water, the internal energy is simply hcap*T. ----------!
-      call calc_veg_hcap(cpatch%bleaf(nc),cpatch%bdead(nc),cpatch%bsapwooda(nc)            &
+      call calc_veg_hcap(cpatch%bleaf(nc),cpatch%broot(nc)                                 &
+                        ,cpatch%bdead(nc),cpatch%bsapwooda(nc)                             &
                         ,cpatch%nplant(nc),cpatch%pft(nc)                                  &
+                        ,cpatch%leaf_rwc(nc),cpatch%wood_rwc(nc)                           &
                         ,cpatch%leaf_hcap(nc),cpatch%wood_hcap(nc))
 
-      cpatch%leaf_energy(nc) = cmtl2uext(cpatch%leaf_hcap (nc),cpatch%leaf_water(nc)       &
+      cpatch%leaf_energy(nc) = cmtl2uext(cpatch%leaf_hcap (nc),cpatch%leaf_water(nc) &
                                         ,cpatch%leaf_temp (nc),cpatch%leaf_fliq (nc))
-      cpatch%wood_energy(nc) = cmtl2uext(cpatch%wood_hcap (nc),cpatch%wood_water(nc)       &
+      cpatch%wood_energy(nc) = cmtl2uext(cpatch%wood_hcap (nc),cpatch%wood_water(nc) &
                                         ,cpatch%wood_temp (nc),cpatch%wood_fliq (nc))
       call is_resolvable(csite,np,nc)
       !------------------------------------------------------------------------------------!

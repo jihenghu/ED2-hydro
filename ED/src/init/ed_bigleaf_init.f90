@@ -21,6 +21,7 @@ subroutine ed_bigleaf_init(cgrid)
    use pft_coms       , only : hgt_max              & ! intent(in)
                              , dbh_bigleaf          & ! intent(in)
                              , sla                  & ! intent(in)
+                             , Vm0                  & ! intent(in)
                              , q                    & ! intent(in)
                              , qsw                  & ! intent(in)
                              , agf_bs               ! ! intent(in)
@@ -265,6 +266,7 @@ subroutine ed_bigleaf_init(cgrid)
                      cpatch%balive       (1) = cpatch%bleaf    (1) + cpatch%broot    (1)   &
                                              + cpatch%bsapwooda(1) + cpatch%bsapwoodb(1)
                      cpatch%sla          (1) = sla     (ipft)
+                     cpatch%vm0          (1) = Vm0     (ipft)
                      cpatch%nplant       (1) = lai (ipft,ilu)                              &
                                              / ( cpatch%sla(1) * cpatch%bleaf(1)           &
                                                * csite%area(ipa) )

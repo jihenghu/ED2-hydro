@@ -234,7 +234,6 @@ subroutine ed_model()
 
 
    timestep: do while (time < timmax)
-
       istp = istp + 1
 
       !------------------------------------------------------------------------------------!

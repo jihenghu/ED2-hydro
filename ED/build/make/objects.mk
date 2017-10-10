@@ -62,6 +62,7 @@ OBJ_MODEL =                        \
 	euler_driver.o             \
 	events.o                   \
 	farq_leuning.o             \
+	farq_katul.o             \
 	fatal_error.o              \
 	fire.o                     \
 	forestry.o                 \
@@ -91,6 +92,7 @@ OBJ_MODEL =                        \
 	numutils.o                 \
 	old_twostream_rad.o        \
 	optimiz_coms.o             \
+	plant_hydro_dyn.o            \
 	phenology_aux.o            \
 	phenology_coms.o           \
 	phenology_driv.o           \

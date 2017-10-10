@@ -72,6 +72,17 @@ subroutine load_ed_ecosystem_params()
    pft_name16(15) = 'C4_crop         '
    pft_name16(16) = 'Subtrop_C3_grass'
    pft_name16(17) = 'Araucaria       '
+   pft_name16(18) = 'TDF_Ds          '
+   pft_name16(19) = 'TDF_D           '
+   pft_name16(20) = 'TDF_BD          '
+   pft_name16(21) = 'TDF_E           '
+   pft_name16(22) = 'Trop_Early_t    ' ! Early tolerant
+   pft_name16(23) = 'Trop_Early_i    ' ! Early Intolerant
+   pft_name16(24) = 'Trop_Mid_t      ' ! Mid   tolerant
+   pft_name16(25) = 'Trop_Mid_i      ' ! Mid    Intolerant
+   pft_name16(26) = 'Trop_Late_t     ' ! Late tolerant
+   pft_name16(27) = 'Trop_Late_i     ' ! Late Intolerant
+   pft_name16(28:35) = 'Reserved        ' ! Reserved for other test PFTs
    !---------------------------------------------------------------------------------------!
 
 
@@ -91,6 +102,7 @@ subroutine load_ed_ecosystem_params()
    !---------------------------------------------------------------------------------------!
    is_tropical(17)    = .true.
    !---------------------------------------------------------------------------------------!
+   is_tropical(18:35) = .true.
 
 
 
@@ -104,6 +116,7 @@ subroutine load_ed_ecosystem_params()
    is_grass(12:15) = .true.
    is_grass(16)    = .true.
    is_grass(17)    = .false.
+   is_grass(18:35) = .false.
    !---------------------------------------------------------------------------------------!
 
 
@@ -194,12 +207,12 @@ subroutine load_ed_ecosystem_params()
    call init_pft_nitro_params()
    !----- Miscellaneous leaf properties. --------------------------------------------------!
    call init_pft_leaf_params()
+   !----- Plant hydrodynamic parameters, should be after leaf_params and alloc_params -----!
+   call init_pft_hydro_params()
    !----- Reproduction. -------------------------------------------------------------------!
    call init_pft_repro_params()
    !----- Miscellaneous parameters that depend on the previous ones. ----------------------!
    call init_pft_derived_params()
-   !----- Plant hydrodynamic parameters, currently depend on alloc_params------------------!
-   call init_pft_hydro_params()
    !---------------------------------------------------------------------------------------!
 
 
@@ -406,7 +419,7 @@ subroutine init_met_params()
    atm_tmp_max = 331.     ! Highest temperature ever measured, in El Azizia, Libya
    !----- Minimum and maximum acceptable air specific humidity [kg_H2O/kg_air]. -----------!
    atm_shv_min = 1.e-6    ! That corresponds to a relative humidity of 0.1% at 1000hPa
-   atm_shv_max = 3.2e-2   ! That corresponds to a dew point of 32°C at 1000hPa.
+   atm_shv_max = 10.2e-2   ! That corresponds to saturated air at 45 degC
    !----- Minimum and maximum acceptable CO2 mixing ratio [µmol/mol]. ---------------------!
    atm_co2_min = 100.     ! 
    atm_co2_max = 1100.    ! 
@@ -600,6 +613,7 @@ subroutine init_can_rad_params()
    clumping_factor(14:15) = dble(clump_grass)
    clumping_factor(16)    = dble(clump_grass)
    clumping_factor(17)    = 7.350d-1
+   clumping_factor(18:35) = dble(clump_tree )
    !---------------------------------------------------------------------------------------!
 
 
@@ -620,6 +634,7 @@ subroutine init_can_rad_params()
    orient_factor(14:15) = dble(orient_grass) ! -3.0d-1 ! CLM value for C4 grass
    orient_factor(   16) = dble(orient_grass)
    orient_factor(   17) = 1.0d-2 ! CLM value for temperate evergreen needleef
+   orient_factor(18:35) = dble(orient_tree)
    !---------------------------------------------------------------------------------------!
 
 
@@ -639,6 +654,7 @@ subroutine init_can_rad_params()
    leaf_emiss_tir(12:15) = 9.60d-1
    leaf_emiss_tir(16)    = 9.60d-1
    leaf_emiss_tir(17)    = 9.70d-1
+   leaf_emiss_tir(18:35) = 9.50d-1
    !----- Branches. -----------------------------------------------------------------------!
    wood_emiss_tir(1)     = 9.60d-1
    wood_emiss_tir(2:4)   = 9.00d-1
@@ -648,6 +664,7 @@ subroutine init_can_rad_params()
    wood_emiss_tir(12:15) = 9.60d-1
    wood_emiss_tir(16)    = 9.60d-1
    wood_emiss_tir(17)    = 9.00d-1
+   wood_emiss_tir(18:35) = 9.00d-1
    !---------------------------------------------------------------------------------------!
 
 
@@ -669,15 +686,14 @@ subroutine init_can_rad_params()
    !---------------------------------------------------------------------------------------!
    !----- Visible (PAR). ------------------------------------------------------------------!
    leaf_reflect_vis(1)     = dble(lreflect_vis)
-   leaf_reflect_vis(2)     = dble(lreflect_vis)
-   leaf_reflect_vis(3)     = dble(lreflect_vis)
-   leaf_reflect_vis(4)     = dble(lreflect_vis)
+   leaf_reflect_vis(2:4)   = dble(lreflect_vis)
    leaf_reflect_vis(5)     = 1.10d-1 ! 6.2d-2
    leaf_reflect_vis(6:11)  = 1.10d-1 ! 1.1d-1
    leaf_reflect_vis(12:13) = 1.10d-1 ! 1.1d-1
    leaf_reflect_vis(14:15) = dble(lreflect_vis)
    leaf_reflect_vis(16)    = dble(lreflect_vis)
    leaf_reflect_vis(17)    = 9.00d-2 ! 9.0d-2
+   leaf_reflect_vis(18:35) = dble(lreflect_vis)
    !----- Near infrared. ------------------------------------------------------------------!
    leaf_reflect_nir(1)     = dble(lreflect_nir)
    leaf_reflect_nir(2:4)   = dble(lreflect_nir)
@@ -687,6 +703,7 @@ subroutine init_can_rad_params()
    leaf_reflect_nir(14:15) = dble(lreflect_nir)
    leaf_reflect_nir(16)    = dble(lreflect_nir)
    leaf_reflect_nir(17)    = 5.77d-1
+   leaf_reflect_nir(18:35) = dble(lreflect_nir)
    !---------------------------------------------------------------------------------------!
 
 
@@ -708,6 +725,7 @@ subroutine init_can_rad_params()
    wood_reflect_vis(14:15) = 1.10d-1  ! 3.10d-1
    wood_reflect_vis(16)    = 1.60d-1  ! 3.10d-1
    wood_reflect_vis(17)    = 1.10d-1  ! 1.60d-1
+   wood_reflect_vis(18:35) = 1.10d-1  ! 1.60d-1
    !----- Near infrared. ------------------------------------------------------------------!
    wood_reflect_nir(1)     = 2.50d-1  ! 5.30d-1
    wood_reflect_nir(2:4)   = 2.50d-1  ! 3.90d-1
@@ -717,6 +735,7 @@ subroutine init_can_rad_params()
    wood_reflect_nir(14:15) = 2.50d-1  ! 5.30d-1
    wood_reflect_nir(16)    = 2.50d-1  ! 5.30d-1
    wood_reflect_nir(17)    = 2.50d-1  ! 3.90d-1
+   wood_reflect_nir(18:35) = 2.50d-1  ! 3.90d-1
    !---------------------------------------------------------------------------------------!
 
 
@@ -738,15 +757,14 @@ subroutine init_can_rad_params()
    !---------------------------------------------------------------------------------------!
    !----- Visible (PAR). ------------------------------------------------------------------!
    leaf_trans_vis(    1) = dble(ltrans_vis)
-   leaf_trans_vis(    2) = dble(ltrans_vis)
-   leaf_trans_vis(    3) = dble(ltrans_vis)
-   leaf_trans_vis(    4) = dble(ltrans_vis)
+   leaf_trans_vis(  2:4) = dble(ltrans_vis)
    leaf_trans_vis(    5) = 1.60d-1  ! 0.160
    leaf_trans_vis( 6:11) = 1.60d-1  ! 0.160
    leaf_trans_vis(12:13) = 1.60d-1  ! 0.160
    leaf_trans_vis(14:15) = dble(ltrans_vis)
    leaf_trans_vis(   16) = dble(ltrans_vis)
    leaf_trans_vis(   17) = 5.00d-2  ! 0.160
+   leaf_trans_vis(18:35) = dble(ltrans_vis)
    !----- Near infrared. ------------------------------------------------------------------!
    leaf_trans_nir(    1) = dble(ltrans_nir)
    leaf_trans_nir(  2:4) = dble(ltrans_nir)
@@ -756,6 +774,7 @@ subroutine init_can_rad_params()
    leaf_trans_nir(14:15) = dble(ltrans_nir)
    leaf_trans_nir(   16) = dble(ltrans_nir)
    leaf_trans_nir(   17) = 2.48d-1
+   leaf_trans_nir(18:35) = dble(ltrans_nir)
    !---------------------------------------------------------------------------------------!
 
 
@@ -772,6 +791,7 @@ subroutine init_can_rad_params()
    wood_trans_vis(14:15) = 2.20d-1
    wood_trans_vis(   16) = 2.80d-2
    wood_trans_vis(   17) = 1.00d-3
+   wood_trans_vis(18:35) = 1.00d-3
    !----- Near infrared. ------------------------------------------------------------------!
    wood_trans_nir(    1) = 2.48d-1
    wood_trans_nir(  2:4) = 1.00d-3
@@ -781,6 +801,7 @@ subroutine init_can_rad_params()
    wood_trans_nir(14:15) = 2.48d-1
    wood_trans_nir(   16) = 2.48d-1
    wood_trans_nir(   17) = 1.00d-3
+   wood_trans_nir(18:35) = 1.00d-3
    !---------------------------------------------------------------------------------------!
 
 
@@ -1528,6 +1549,7 @@ subroutine init_pft_photo_params()
    D0(14:15)                 = d0_tree
    D0(16)                    = d0_grass
    D0(17)                    = d0_tree
+   D0(18:35)                 = d0_tree
 
    Vm_low_temp(1)            =  8.0             ! c4 grass
    Vm_low_temp(2)            =  8.0             ! early tropical
@@ -1546,6 +1568,7 @@ subroutine init_pft_photo_params()
    Vm_low_temp(15)           =  8.0             ! c4 crop
    Vm_low_temp(16)           =  4.7137          ! subtropical C3 grass
    Vm_low_temp(17)           =  4.7137          ! Araucaria
+   Vm_low_temp(18:35)        =  8.0             ! Other tropical
 
    Vm_high_temp(1)           =  45.0 ! C4
    Vm_high_temp(2)           =  45.0 ! C3
@@ -1564,6 +1587,7 @@ subroutine init_pft_photo_params()
    Vm_high_temp(15)          =  45.0 ! C4
    Vm_high_temp(16)          =  45.0 ! C3
    Vm_high_temp(17)          =  45.0 ! C3
+   Vm_high_temp(18:35)       =  45.0 ! C3
 
    !---------------------------------------------------------------------------------------!
    !    Vm_decay_e is the correction term for high and low temperatures when running the   !
@@ -1571,9 +1595,9 @@ subroutine init_pft_photo_params()
    !    Vm_decay_a and Vm_decay_b are the correction terms when running the Collatz et al. !
    ! (1991).  When running Collatz, this is used for both C3 and C4 photosynthesis.        !
    !---------------------------------------------------------------------------------------!
-   Vm_decay_e(1:17)          = 0.4     !                                          [    ---]
-   Vm_decay_a(1:17)          = 220000. !                                          [  J/mol]
-   Vm_decay_b(1:17)          = 690.    !                                          [J/mol/K]
+   Vm_decay_e(1:35)          = 0.4     !                                          [    ---]
+   Vm_decay_a(1:35)          = 220000. !                                          [  J/mol]
+   Vm_decay_b(1:35)          = 690.    !                                          [J/mol/K]
    !---------------------------------------------------------------------------------------!
 
 
@@ -1596,6 +1620,9 @@ subroutine init_pft_photo_params()
       end select
    end select
    !---- Define Vm0 for all PFTs. ---------------------------------------------------------!
+   !---- This Vm0 should correspond to values for TOP CANOPY leaves in order to consider --!
+   !---- the plasticity of Vm0 to tree height. [XXT]   ------------------------------------!
+  
    Vm0(1)                    = 12.500000 * ssfact * vmfact_c4
    Vm0(2)                    = 18.750000 * ssfact * vmfact_c3
    Vm0(3)                    = 12.500000 * ssfact * vmfact_c3
@@ -1611,6 +1638,17 @@ subroutine init_pft_photo_params()
    Vm0(14:15)                = 12.500000 * ssfact * vmfact_c4
    Vm0(16)                   = 18.750000 * ssfact * vmfact_c3
    Vm0(17)                   = 15.625000 * ssfact * vmfact_c3
+   Vm0(18)                   = 55. * 0.44   ! TDF_Ds
+   Vm0(19)                   = 45. * 0.44   ! TDF_D
+   Vm0(20)                   = 35. * 0.44   ! TDF_BD
+   Vm0(21)                   = 25. * 0.44   ! TDF_E
+   Vm0(22)                   = Vm0(2)
+   Vm0(23)                   = Vm0(2)
+   Vm0(24)                   = Vm0(3)
+   Vm0(25)                   = Vm0(3)
+   Vm0(26)                   = Vm0(4)
+   Vm0(27)                   = Vm0(4)
+   Vm0(29:35)                = Vm0(3)
    !---------------------------------------------------------------------------------------!
 
 
@@ -1625,6 +1663,7 @@ subroutine init_pft_photo_params()
    vm_q10(2:13)              = q10_c3
    vm_q10(14:15)             = q10_c4
    vm_q10(16:17)             = q10_c3
+   vm_q10(18:35)             = q10_c3
    !---------------------------------------------------------------------------------------!
 
 
@@ -1648,15 +1687,18 @@ subroutine init_pft_photo_params()
    dark_respiration_factor(15)    = gamma_c4
    dark_respiration_factor(16)    = gamma_c3
    dark_respiration_factor(17)    = gamma_c3
+   dark_respiration_factor(18)    = 0.03  ! similar to gamma_c5
+   dark_respiration_factor(19:21) = 0.015 ! similar to gamma_c3
+   dark_respiration_factor(22:35) = gamma_c3
    !---------------------------------------------------------------------------------------!
 
 
    !----- Currently we assume most parameters to be the same as the Vm ones. --------------!
-   Rd_low_temp (1:17) = Vm_low_temp (1:17)
-   Rd_high_temp(1:17) = Vm_high_temp(1:17)
-   Rd_decay_e  (1:17) = Vm_decay_e  (1:17)
-   Rd_hor      (1:17) = Vm_hor      (1:17)
-   Rd_q10      (1:17) = Vm_q10      (1:17)
+   Rd_low_temp (1:35) = Vm_low_temp (1:35)
+   Rd_high_temp(1:35) = Vm_high_temp(1:35)
+   Rd_decay_e  (1:35) = Vm_decay_e  (1:35)
+   Rd_hor      (1:35) = Vm_hor      (1:35)
+   Rd_q10      (1:35) = Vm_q10      (1:35)
  
    !---------------------------------------------------------------------------------------!
    !    Respiration terms.  Here we must check whether this will run Foley-based or        !
@@ -1666,7 +1708,7 @@ subroutine init_pft_photo_params()
    select case (iphysiol)
    case (0,1)
       !------ This should be simply gamma times Vm0. --------------------------------------!
-      Rd0         (1:17) = dark_respiration_factor(1:17) * Vm0(1:17)
+      Rd0         (1:35) = dark_respiration_factor(1:35) * Vm0(1:35)
 
    case (2,3)
       !------------------------------------------------------------------------------------!
@@ -1674,8 +1716,8 @@ subroutine init_pft_photo_params()
       ! are different for Vm and respiration (at least for C3), we must convert it to the  !
       ! ratio at 15C.                                                                      !
       !------------------------------------------------------------------------------------!
-      Rd0         (1:17) = dark_respiration_factor(1:17) * Vm0(1:17)                       &
-                         * Vm_q10(1:17) / Rd_q10(1:17)
+      Rd0         (1:35) = dark_respiration_factor(1:35) * Vm0(1:35)                       &
+                         * Vm_q10(1:35) / Rd_q10(1:35)
    end select
    !---------------------------------------------------------------------------------------!
 
@@ -1699,6 +1741,7 @@ subroutine init_pft_photo_params()
    stomatal_slope(15)        = mphoto_c4
    stomatal_slope(16)        = mphoto_trc3
    stomatal_slope(17)        = mphoto_tec3
+   stomatal_slope(18:35)     = mphoto_trc3
  
    !----- Define the stomatal slope (aka the b term, given in umol/m2/s). -----------------!
    cuticular_cond(1)         = bphoto_c4
@@ -1718,6 +1761,7 @@ subroutine init_pft_photo_params()
    cuticular_cond(15)        = bphoto_c4
    cuticular_cond(16)        = bphoto_blc3
    cuticular_cond(17)        = bphoto_nlc3
+   cuticular_cond(18:35)     = bphoto_blc3
 
    quantum_efficiency(1)     = alpha_c4
    quantum_efficiency(2)     = alpha_c3
@@ -1736,6 +1780,7 @@ subroutine init_pft_photo_params()
    quantum_efficiency(15)    = alpha_c4
    quantum_efficiency(16)    = alpha_c3
    quantum_efficiency(17)    = alpha_c3
+   quantum_efficiency(18:35) = alpha_c3
 
    !---------------------------------------------------------------------------------------!
    !     The KW parameter. Medvigy et al. (2009) and Moorcroft et al. (2001), and the      !
@@ -1749,6 +1794,7 @@ subroutine init_pft_photo_params()
    water_conductance(12:15)  = kw_grass / yr_sec
    water_conductance(16)     = kw_grass / yr_sec
    water_conductance(17)     = kw_tree  / yr_sec
+   water_conductance(18:35)  = kw_tree  / yr_sec
    !---------------------------------------------------------------------------------------!
 
 
@@ -1758,6 +1804,7 @@ subroutine init_pft_photo_params()
    photosyn_pathway(6:13)    = 3
    photosyn_pathway(14:15)   = 4
    photosyn_pathway(16:17)   = 3
+   photosyn_pathway(18:35)   = 3
 
    !----- Leaf width [m].  This controls the boundary layer conductance. ------------------!
    leaf_width( 1)    = lwidth_grass
@@ -1777,6 +1824,7 @@ subroutine init_pft_photo_params()
    leaf_width(15)    = lwidth_grass
    leaf_width(16)    = lwidth_grass
    leaf_width(17)    = lwidth_nltree
+   leaf_width(18:35) = lwidth_bltree
    !---------------------------------------------------------------------------------------!
 
    return
@@ -1925,8 +1973,118 @@ subroutine init_pft_hydro_params()
                              , stoma_lambda              & ! intent(out)
                              , stoma_beta                & ! intent(out)
                              , stoma_psi_b               & ! intent(out)
-                             , stoma_psi_c               ! ! intent(out)
+                             , stoma_psi_c               & ! intent(out)
+                             , wood_rwc_min              & ! intent(out)
+                             , leaf_rwc_min              & ! intent(out)
+                             , epsilon_leaf              & ! intent(out)
+                             , epsilon_wood              & ! intent(out)
+                             , psi_osmotic_leaf          & ! intent(out)
+                             , psi_osmotic_wood          & ! intent(out)
+                             , wat_dry_ratio_grn         & ! intent(out)
+                             , wat_dry_ratio_ngrn        & ! intent(out)
+                             , leaf_psi_min              & ! intent(out)
+                             , C2B                       ! ! intent(in)
+   use physiology_coms, only : track_plant_hydro    ! ! intent(in)
+   use consts_coms    , only : wdns                 ! ! intent(in)
    implicit none
+
+
+   !- Local Variables  ---------------------------------------!
+   real                      :: rwc_tlp_wood
+   real                      :: fcap
+   real                      :: leaf_density
+   real                      :: TLP_stem
+   integer                   :: ipft
+
+   !----------------------------------------------------------!
+   ! Plant hydraulic traits are from Christofferson et al.    !
+   ! 2016. These data come from tropical species. Need to     !
+   ! update for temperate PFTs                                !
+   !----------------------------------------------------------!
+   psi_osmotic_leaf(1:35) =                                         &
+    (-0.04 - 1.51 * rho(1:35) - 0.0067 / SLA(1:35) * C2B * 1.e3)    &  ! MPa
+    * 102.                                                          !  ! convert to m
+   print*,'psi_osmotic_leaf',psi_osmotic_leaf(18:35)
+   ! tropical tolerant and intolerant, from TLP's dissertation
+   psi_osmotic_leaf(22) = -1.7 * 102.  ! average between CAX and TNF
+   psi_osmotic_leaf(23) = -2.4 * 102.  ! average between CAX and TNF
+   psi_osmotic_leaf(24) = -1.7 * 102.  ! average between CAX and TNF
+   psi_osmotic_leaf(25) = -2.4 * 102.  ! average between CAX and TNF
+   psi_osmotic_leaf(26) = -1.7 * 102.  ! average between CAX and TNF
+   psi_osmotic_leaf(27) = -2.4 * 102.  ! average between CAX and TNF
+
+
+   epsilon_leaf(1:35) = 2.5 + 37.5 / (1. + exp(-8.0 * rho(1:35) + 5.7)) ! MPa
+   leaf_rwc_min(1:35) = 0.01 * epsilon_leaf(1:35) + 0.17
+
+   ! Here the intercept for psi_osmotic_wood is 0.52 from the table but it looks like 0.52 from
+   ! the figure. Here we use -0.52
+   psi_osmotic_wood(1:35) =                                         &
+    (-0.52 - 4.16 * rho(1:35)) * 102.                                !  ! m
+
+   epsilon_wood(1:35) = sqrt(1.02 * exp(8.5 * rho(1:35)) - 2.89)    !  ! MPa
+
+   do ipft = 1,35
+        ! here we assume the capillary water to be 0. for simplicity
+        ! the resulting equation becomes as follows
+        rwc_tlp_wood = 1. - (1. - 0.75 * rho(ipft)) / (2.74 + 2.01 * rho(ipft))
+        wood_rwc_min(ipft) =                                        &
+            epsilon_wood(ipft) * (1. - rwc_tlp_wood)                &
+          / (psi_osmotic_wood(ipft) / 102.) + 1.
+   enddo
+
+   !---------------------------------------------------------------------------------------!
+   !  Redefine wat_dry_ratio as the saturated leaf water to dry mass ratio if plant        !
+   !  hydrodynamics is tracked                                                             !
+   !---------------------------------------------------------------------------------------!
+
+   ! for now, calculate leaf dry matter density using elastic modulus based on
+   ! Figure 4 from Niinemets (2001) Ecology
+
+   select case (track_plant_hydro) 
+   case (1)
+       do ipft = 1,35
+           leaf_density = max(0.1 * 1.e3,(epsilon_leaf(ipft) - 2.03) / 25.4 * 1.e3)                               ! kg/m3
+           wat_dry_ratio_grn(ipft) = (-2.32 * 1.e4 * SLA(ipft) / C2B / 1.e3 + 782. )                  &
+                * (1. / (-0.21 * log(1.e4 * SLA(ipft) / C2B / 1.e3) + 1.43) - 1.)                     &  ! kg H2O /m-3
+                / leaf_density
+
+           ! used for wood
+           wat_dry_ratio_ngrn(ipft) = (1. - rho(ipft) / 1.54) * wdns / (rho(ipft) * 1000.)
+       enddo
+
+   end select
+
+
+
+   !----------------------------------------------------------!
+   ! Parameters related with new drought phenology driven     !
+   !   by plant hydrodyanmics                                 !
+   !----------------------------------------------------------!
+   TLP(1:35)            =   102. * (-4.59 + 0.62 * log(SLA(1:35)) - 1.15 * log(rho(1:35)))
+   TLP(22)              =  -1.6 * 102.
+   TLP(23)              =  -2.4 * 102.  
+   TLP(24)              =  -1.6 * 102.
+   TLP(25)              =  -2.4 * 102.  
+   TLP(26)              =  -1.6 * 102.
+   TLP(27)              =  -2.4 * 102.  
+!   print*,'TLP',TLP(18:25)
+   ! From Xu et al. 2016, based on TDF
+   ! From meta-analysis in Xu et al. 2016 New Phytologist
+   ! compare the TDF TLP and TMF TLP
+!   print*, 'TDF TLP',TLP(18:25)
+!   do ipft = 1,25
+!       TLP(ipft) = epsilon_leaf(ipft) * (psi_osmotic_leaf(ipft) / 102.) &
+!                 / (epsilon_leaf(ipft) + psi_osmotic_leaf(ipft) / 102.) &
+!                 * 102.     ! convert to m
+!   enddo
+!   print*, 'TMF TLP', TLP(18:25)
+
+   high_psi_threshold(1:35)   = 10    ! somewhat arbitrary
+   low_psi_threshold(1:35)    = 10    ! somewhat arbitrary
+   leaf_shed_rate(1:35)       = 1./20.    ! somewhat arbitrary
+   leaf_grow_rate(1:35)       = 1./20.    ! somewhat arbitrary
+
 
    !----------------------------------------------------------!
    !  Capacitance is estimated from Scholz et al. 2011        !
@@ -1940,14 +2098,39 @@ subroutine init_pft_hydro_params()
    !  Capacitance: Biophysics and Functional Significance of  !
    !  Internal Water Sources in Relation to Tree Size.        !
    !----------------------------------------------------------!
-   Cap_leaf(1:17) = 3.0e-3 / 102.                   ! kg H2O/m2/m
-   Cap_leaf(6)    = 600. * 18.*1e-6 / 102.          ! kg H2O/m2/m
 
-   Cap_leaf(1:17) = Cap_leaf(1:17) / 2.
 
-   Cap_stem(1:17) = min(400.,max(50.,   &
-       -700. * (rho(1:17) - 0.3) + 400.))  / 102.   ! kg H2O/m3/m
-   Cap_stem(1:17) = Cap_stem(1:17) / 3.
+   Cap_leaf(1:35) = 3.0e-3 / 102. * SLA(1:35) / C2B ! kg H2O/kg biomass/m
+   Cap_leaf(6)    = 600. * 18.*1e-6 / 102.  * SLA(6) / C2B ! kg H2O/kg/m
+
+   Cap_leaf(1:35) = Cap_leaf(1:35) / 2.
+
+   Cap_stem(1:35) = min(400.,max(50.,   &
+       -700. * (rho(1:35) - 0.3) + 400.))  / 102. / (rho(1:35) * 1000.)  ! kg H2O/kg/m
+   Cap_stem(1:35) = Cap_stem(1:35) / 3.
+
+
+   !print*,'old Cap_leaf',Cap_leaf(18:25)
+   !print*,'old Cap_stem',Cap_stem(18:25)
+
+   ! calculate Cap based on linearizing the water retention curve by Bartlett et
+   ! al. 2012
+   ! Assume water retention curve is linear from 0. to 2 * TLP
+   do ipft=1,35
+        Cap_leaf(ipft) = (1. - psi_osmotic_leaf(ipft) / (2. * TLP(ipft))) &
+                         * wat_dry_ratio_grn(ipft)                      &
+                         / (2. * abs(TLP(ipft)))                        ! kg H2O/kg/m
+        TLP_stem = epsilon_wood(ipft) * (psi_osmotic_wood(ipft) / 102.) &
+                 / (epsilon_wood(ipft) + psi_osmotic_wood(ipft) / 102.) &
+                 * 102.     ! convert to m
+        Cap_stem(ipft) = (1. - psi_osmotic_wood(ipft) / (2. * TLP_stem)) &
+                         * wat_dry_ratio_ngrn(ipft)                      &
+                         / (2. * abs(TLP_stem))                        ! kg H2O/kg/m
+   enddo
+
+   leaf_psi_min(1:35) = (leaf_rwc_min(1:35) - 1.) * wat_dry_ratio_grn(1:35) &
+                      / Cap_leaf(1:35)
+
 
 
 
@@ -1957,9 +2140,30 @@ subroutine init_pft_hydro_params()
    !  However, these values are derived from tropical dry     !
    !  forests...                                              !
    !----------------------------------------------------------!
-   Ks_stem(1:17) = exp(-2.455 * rho(1:17) + 2.348 + 0.5 * 0.6186) / 102.    ! kg H2O/m2/s
-   Ks_stem_b(1:17) = 4.
-   psi50(1:17) = (-3.0 * rho(1:17) - 0.599) * 102.                          ! m
+   Ks_stem(1:35) = exp(-2.455 * rho(1:35) + 2.348 + 0.5 * 0.6186) / 102.    ! kg H2O/m2/s
+   Ks_stem(22)   = 3.3 / 102.
+   Ks_stem(23)   = 3. / 102.
+   Ks_stem(24)   = 3.3 / 102.
+   Ks_stem(25)   = 3. / 102.
+   Ks_stem(26)   = 3.3 / 102.
+   Ks_stem(27)   = 3. / 102.
+!   print*,'Ks_stem',Ks_stem(18:25)
+
+   psi50(1:35) = (-3.0 * rho(1:35) - 0.599) * 102.                          ! m
+   psi50(22)   = -1.2 * 102.
+   psi50(23)   = -2.2 * 102.
+   psi50(24)   = -1.2 * 102.
+   psi50(25)   = -2.2 * 102.
+   psi50(26)   = -1.2 * 102.
+   psi50(27)   = -2.2 * 102.
+   !print*,'old psi50',psi50(18:25)
+   !psi50(1:25) = (-(3.57 * rho(1:25)) ** 1.73 - 1.09) * 102.
+   !print*,'new psi50',psi50(18:25)
+ 
+   Ks_stem_b(1:35) = 4.
+   !Ks_stem_b(1:25) = 54.4 * (- psi50(1:25) / 102.)  ** (-1.17)
+   !print*,'new Ks_stem_b', Ks_stem_b(18:25)
+  
 
    xylem_fraction(1)      =  1.0
    xylem_fraction(2:4)    =  0.7
@@ -1968,8 +2172,9 @@ subroutine init_pft_hydro_params()
    xylem_fraction(9:11)   =  0.5
    xylem_fraction(12:16)  =  1.0
    xylem_fraction(17)     =  0.1
+   xylem_fraction(18:35)  =  0.7
 
-   vessel_curl_factor(1:17) = 1.5   ! somewhat arbitrary...
+   vessel_curl_factor(1:35) = 1.5   ! somewhat arbitrary...
 
 
    !----------------------------------------------------------!
@@ -1984,44 +2189,52 @@ subroutine init_pft_hydro_params()
    !    in an Amazon rainforest." Plant and Soil              !
    !    311(1-2):189-199.                                     !
    !----------------------------------------------------------!
-   SRA(1:17)            =   24. * 2.  ! m2/kgC  --> this is Amazon data...
+   SRA(1:35)            =   24. * 2.  ! m2/kgC  --> this is Amazon data...
 
-   root_beta(1:17)      =   0.96 ** (200)
+   root_beta(1:35)      =   0.96 ** (200)
    root_beta(1:4)       =   0.99 ** (200) ! for test only
+   root_beta(18)        =   0.95 ** (200)
+   root_beta(19)        =   0.96 ** (200)
+   root_beta(20)        =   0.97 ** (200)
+   root_beta(21)        =   0.98 ** (200)
+   root_beta(22:35)     =   0.98 ** (200)
    ! The exponent 200 is because, the maximum rooting depth is ~ 200cm in the
    ! Jackson paper, we need to normalize that effect...
-
-   !----------------------------------------------------------!
-   ! Parameters related with new drought phenology driven     !
-   !   by plant hydrodyanmics                                 !
-   !----------------------------------------------------------!
-   TLP(1:17)            =   102. * (-4.59 + 0.62 * log(SLA(1:17)) - 1.15 * log(rho(1:17)))
-   ! From meta-analysis in Xu et al. 2016 New Phytologist
-
-   high_psi_threshold(1:17)   = 10    ! somewhat arbitrary
-   low_psi_threshold(1:17)    = 10    ! somewhat arbitrary
-   leaf_shed_rate(1:17)       = 1./20.    ! somewhat arbitrary
-   leaf_grow_rate(1:17)       = 1./20.    ! somewhat arbitrary
 
    !----------------------------------------------------------!
    ! Parameters related with optimiaztion-based stomatal      !
    !   conductance scheme                                     !
    !----------------------------------------------------------!
-   stoma_lambda(1:17)         = max(3.,(rho(1:17) - 0.25) * 15. + 3.)
-   stoma_beta(1:17)           = min(-0.1,(rho(1:17) - 0.25) * -1.5 - 0.1) / 102. 
+   stoma_lambda(1:35)         = max(3.,(rho(1:35) - 0.25) * 15. + 3.)
+   stoma_lambda(18)           = 3.
+   stoma_lambda(19)           = 6.
+   stoma_lambda(20)           = 9.
+   stoma_lambda(21)           = 12.
+   stoma_beta(1:35)           = min(-0.1,(rho(1:35) - 0.25) * -1.5 - 0.1) / 102. 
+   stoma_beta(18)             = -1.0 / 102.
+   stoma_beta(19)             = -0.7 / 102.
+   stoma_beta(20)             = -0.4 / 102.
+   stoma_beta(21)             = -0.1 / 102.
+
    
    !----------------------------------------------------------!
    ! Parameters related with T. Powell's scheme               !
    !----------------------------------------------------------!
-   stoma_psi_b(1:17)          = TLP(1:17)   ! default
-   stoma_psi_b(2)             = -2.83 * 102.
-   stoma_psi_b(3)             = -2.3 * 102.
-   stoma_psi_b(4)             = -2.83 * 102.
+   stoma_psi_b(1:35)          = TLP(1:35)   ! default
+   stoma_psi_b(22)            = -1.67 * 102.
+   stoma_psi_b(23)            = -2.83 * 102.
+   stoma_psi_b(24)            = -1.67 * 102.
+   stoma_psi_b(25)            = -2.83 * 102.
+   stoma_psi_b(26)            = -1.67 * 102.
+   stoma_psi_b(27)            = -2.83 * 102.
  
-   stoma_psi_c(1:17)          = 3.
-   stoma_psi_c(2)             = 3.
-   stoma_psi_c(3)             = 2.6
-   stoma_psi_c(4)             = 3.
+   stoma_psi_c(1:35)          = 3.
+   stoma_psi_c(22)            = 3.
+   stoma_psi_c(23)            = 3.5
+   stoma_psi_c(24)            = 3.
+   stoma_psi_c(25)            = 3.5
+   stoma_psi_c(26)            = 3.
+   stoma_psi_c(27)            = 3.5
    
 
    return 
@@ -2075,6 +2288,8 @@ subroutine init_pft_resp_params()
    growth_resp_factor(15)         = onethird
    growth_resp_factor(16)         = growthresp
    growth_resp_factor(17)         = 0.4503
+   growth_resp_factor(18:21)      = 0.28  ! tuned using field data
+   growth_resp_factor(22:35)      = growthresp  
 
    leaf_turnover_rate(1)          = 2.0
    leaf_turnover_rate(2)          = 1.0
@@ -2093,6 +2308,11 @@ subroutine init_pft_resp_params()
    leaf_turnover_rate(15)         = 2.0
    leaf_turnover_rate(16)         = 2.0
    leaf_turnover_rate(17)         = onesixth
+   leaf_turnover_rate(18:21)      = 0.5
+   leaf_turnover_rate(22:23)      = 1.0
+   leaf_turnover_rate(24:25)      = 0.5
+   leaf_turnover_rate(26:27)      = onethird
+   leaf_turnover_rate(28:35)      = onethird
 
    !----- Root turnover rate.  ------------------------------------------------------------!
    root_turnover_rate(1)          = leaf_turnover_rate(1)
@@ -2112,6 +2332,11 @@ subroutine init_pft_resp_params()
    root_turnover_rate(15)         = leaf_turnover_rate(15)
    root_turnover_rate(16)         = leaf_turnover_rate(16)
    root_turnover_rate(17)         = leaf_turnover_rate(17)
+   root_turnover_rate(18:21)       = 0.5  ! Gill et al. 2000
+   root_turnover_rate(22:23)      = leaf_turnover_rate(2)  
+   root_turnover_rate(24:25)      = leaf_turnover_rate(3)  
+   root_turnover_rate(26:27)      = leaf_turnover_rate(4)  
+   root_turnover_rate(28:35)      = leaf_turnover_rate(4)  
 
    storage_turnover_rate(1)       = onethird
    storage_turnover_rate(2)       = onesixth
@@ -2130,12 +2355,15 @@ subroutine init_pft_resp_params()
    storage_turnover_rate(15)      = onethird
    storage_turnover_rate(16)      = onethird
    storage_turnover_rate(17)      = onesixth
+   storage_turnover_rate(18:21)   = 0.  ! for test
+   storage_turnover_rate(22:35)   = onesixth  ! for test
 
    f_labile(1:5)                  = 1.0
    f_labile(6:11)                 = 0.79
    f_labile(12:15)                = 1.0
    f_labile(16)                   = 1.0
    f_labile(17)                   = 0.79
+   f_labile(18:35)                = 0.79
 
    !---------------------------------------------------------------------------------------!
    !    This variable sets the contribution of roots to respiration at the reference       !
@@ -2153,6 +2381,7 @@ subroutine init_pft_resp_params()
       root_respiration_factor(14:15) = 0.528 * rrffact
       root_respiration_factor(16)    = 0.528 * rrffact
       root_respiration_factor(17)    = 0.528 * rrffact
+      root_respiration_factor(18:35) = 0.528 * rrffact
    case (2,3)
       !----- Collatz function. ------------------------------------------------------------!
       root_respiration_factor(1)     = 0.280 * rrffact
@@ -2164,6 +2393,7 @@ subroutine init_pft_resp_params()
       root_respiration_factor(14:15) = 0.280 * rrffact
       root_respiration_factor(16)    = 0.280 * rrffact
       root_respiration_factor(17)    = 0.280 * rrffact
+      root_respiration_factor(18:35) = 0.280 * rrffact
    end select
    !---------------------------------------------------------------------------------------!
 
@@ -2174,15 +2404,15 @@ subroutine init_pft_resp_params()
    ! respiration.                                                                          !
    !---------------------------------------------------------------------------------------!
    !----- Temperature [°C] below which root metabolic activity begins to rapidly decline. -!
-   rrf_low_temp(1:17)  = rd_low_temp(1:17)
+   rrf_low_temp(1:35)  = rd_low_temp(1:35)
    !----- Temperature [°C] above which root metabolic activity begins to rapidly decline. -!
-   rrf_high_temp(1:17) = rd_high_temp(1:17)
+   rrf_high_temp(1:35) = rd_high_temp(1:35)
    !----- Decay factor for the exponential correction. ------------------------------------!
-   rrf_decay_e(1:17)   = rd_decay_e(1:17)
+   rrf_decay_e(1:35)   = rd_decay_e(1:35)
    !----- Exponent for Rr in the Arrhenius equation [K]. ----------------------------------!
-   rrf_hor(1:17)       = rd_hor(1:17)
+   rrf_hor(1:35)       = rd_hor(1:35)
    !----- Base (Q10 term) for respiration in Collatz equation . ---------------------------!
-   rrf_q10(1:17)       = rd_q10(1:17)
+   rrf_q10(1:35)       = rd_q10(1:35)
    !---------------------------------------------------------------------------------------!
 
    return
@@ -2247,6 +2477,7 @@ subroutine init_pft_mort_params()
    frost_mort(12:13) = 3.0
    frost_mort(14:15) = 3.0
    frost_mort(16:17) = 3.0
+   frost_mort(18:35) = 3.0
 
 
    !---------------------------------------------------------------------------------------!
@@ -2269,6 +2500,7 @@ subroutine init_pft_mort_params()
    mort0(15) = -0.35 ! 0.0
    mort0(16) = -0.35 ! 0.0
    mort0(17) = -0.35 ! 0.0
+   mort0(18:35) = -0.35 ! 0.0
 
    mort1(1)  = 2.0 ! 10.0
    mort1(2)  = 2.0 ! 10.0
@@ -2287,6 +2519,7 @@ subroutine init_pft_mort_params()
    mort1(15) = 2.0 ! 10.0
    mort1(16) = 2.0 ! 10.0
    mort1(17) = 2.0 ! 10.0
+   mort1(18:35)  = 2.0 ! 10.0
 
    mort2(1:17) = 15.0 ! 20.0
    mort2(2)    = 15.0 ! 20.0
@@ -2305,6 +2538,7 @@ subroutine init_pft_mort_params()
    mort2(15)   = 15.0 ! 20.0
    mort2(16)   = 15.0 ! 20.0
    mort2(17)   = 15.0 ! 20.0
+   mort2(18:35)= 15.0 ! 20.0
    !---------------------------------------------------------------------------------------!
 
 
@@ -2340,6 +2574,7 @@ subroutine init_pft_mort_params()
    mort3(15) = m3_scale * ( m3_slope * (1. - rho(15) / rho( 4)) )
    mort3(16) = m3_scale * ( m3_slope * (1. - rho(16) / rho( 4)) )
    mort3(17) = 0.0043 ! Same as pines
+   mort3(18:35)  = m3_scale * ( m3_slope * (1. - rho(18:35) / rho( 4)) )
    !---------------------------------------------------------------------------------------!
 
 
@@ -2349,7 +2584,7 @@ subroutine init_pft_mort_params()
    !  mortality.                                                                           !
    !---------------------------------------------------------------------------------------!
    !cbr_severe_stress(1:17) = 0.0
-   cbr_severe_stress(1:17) = log(epsilon(1.0)) / mort2(1:17)
+   cbr_severe_stress(1:35) = log(epsilon(1.0)) / mort2(1:35)
    !---------------------------------------------------------------------------------------!
 
 
@@ -2426,6 +2661,7 @@ subroutine init_pft_mort_params()
       seedling_mortality(6:15) = 0.95
       seedling_mortality(16)   = 0.95
       seedling_mortality(17)   = 0.95
+      seedling_mortality(18:35)= 0.95
    case (1)
       select case (iallom)
       case (0,1)
@@ -2436,6 +2672,7 @@ subroutine init_pft_mort_params()
          seedling_mortality(9:11)  = onethird
          seedling_mortality(12:16) = 0.9500
          seedling_mortality(17)    = onethird
+         seedling_mortality(18:35) = onethird
       case default
          seedling_mortality(1)     = 0.9500
          seedling_mortality(2:4)   = 0.4000
@@ -2444,6 +2681,7 @@ subroutine init_pft_mort_params()
          seedling_mortality(9:11)  = 0.4000
          seedling_mortality(12:16) = 0.9500
          seedling_mortality(17)    = 0.4000
+         seedling_mortality(18:35) = 0.4000
       end select
    end select
    !---------------------------------------------------------------------------------------!
@@ -2454,7 +2692,7 @@ subroutine init_pft_mort_params()
    !      Treefall survivorship fraction.                                                  !
    !---------------------------------------------------------------------------------------!
    !----- Trees taller than treefall_hite_threshold. --------------------------------------!
-   treefall_s_gtht(1:17)    = 0.0
+   treefall_s_gtht(1:35)    = 0.0
    !----- Trees shorter than treefall_hite_threshold. -------------------------------------!
    treefall_s_ltht(1)       = 0.25
    treefall_s_ltht(2:4)     = 0.10
@@ -2463,6 +2701,7 @@ subroutine init_pft_mort_params()
    treefall_s_ltht(12:15)   = 0.25
    treefall_s_ltht(16)      = 0.25
    treefall_s_ltht(17)      = 0.10
+   treefall_s_ltht(18:35)   = 0.10
    !---------------------------------------------------------------------------------------!
 
 
@@ -2471,7 +2710,7 @@ subroutine init_pft_mort_params()
    !      Fire survivorship fraction.                                                      !
    !---------------------------------------------------------------------------------------!
    !----- Trees taller than fire_hite_threshold. ------------------------------------------!
-   fire_s_gtht(1:17)    = 0.0
+   fire_s_gtht(1:35)    = 0.0
    !----- Trees shorter than fire_hite_threshold. -----------------------------------------!
    fire_s_ltht(1)       = 0.0
    fire_s_ltht(2:4)     = 0.0
@@ -2480,6 +2719,7 @@ subroutine init_pft_mort_params()
    fire_s_ltht(12:15)   = 0.0
    fire_s_ltht(16)      = 0.0
    fire_s_ltht(17)      = 0.0
+   fire_s_ltht(18:35)   = 0.0
    !---------------------------------------------------------------------------------------!
 
    plant_min_temp(1:4)      = t00+2.5
@@ -2492,6 +2732,7 @@ subroutine init_pft_mort_params()
    plant_min_temp(14:15)    = t00+2.5
    plant_min_temp(16)       = t00-20.0
    plant_min_temp(17)       = t00-15.0
+   plant_min_temp(18:35)    = t00+2.5
 
    return
 end subroutine init_pft_mort_params
@@ -2643,6 +2884,14 @@ subroutine init_pft_alloc_params()
    rho(14:15) = 0.20
    rho(16)    = 0.20
    rho(17)    = 0.54
+   rho(18)    = 0.25
+   rho(19)    = 0.52
+   rho(20)    = 0.74
+   rho(21)    = 0.87
+   rho(22:23) = 0.53
+   rho(24:25) = 0.71
+   rho(26:27) = 0.90
+   rho(28:35) = 0.71
    !---------------------------------------------------------------------------------------!
 
 
@@ -2661,6 +2910,10 @@ subroutine init_pft_alloc_params()
    sla_slope = -0.46
 
    !----- [KIM] - new tropical parameters. ------------------------------------------------!
+   !----- [XXT] SLA values should correspond to BOTTOM CANOPY leaves in order to consdier -!
+   !----- the plasticity of SLA to tree height    -----------------------------------------!
+   
+
    SLA( 1) = 22.7 !--value from Mike Dietze: mean: 22.7, median 19.1, 95% CI: 5.7, 78.6
    SLA( 2) = 10.0**(sla_inter + sla_slope * log10(12.0/leaf_turnover_rate( 2))) * sla_scale
    SLA( 3) = 10.0**(sla_inter + sla_slope * log10(12.0/leaf_turnover_rate( 3))) * sla_scale
@@ -2678,6 +2931,14 @@ subroutine init_pft_alloc_params()
    SLA(15) = 22.7 ! 10.0**(sla_inter + sla_slope * log10(12.0/leaf_turnover_rate(15))) * sla_scale
    SLA(16) = 22.7 !--value from Mike Dietze: mean: 22.7, median 19.1, 95% CI: 5.7, 78.6
    SLA(17) = 10.0
+   SLA(18) = 20.8
+   SLA(19) = 20.5
+   SLA(20) = 18.7
+   SLA(21) = 15.7
+   SLA(22:23) = SLA(2)
+   SLA(24:25) = SLA(3)
+   SLA(26:27) = SLA(4)
+   SLA(28:35) = SLA(3)
 
    !---------------------------------------------------------------------------------------!
    !    Fraction of vertical branches.  Values are from Poorter et al. (2006):             !
@@ -2698,6 +2959,12 @@ subroutine init_pft_alloc_params()
    horiz_branch(12:15) = 0.50
    horiz_branch(16)    = 0.50
    horiz_branch(17)    = 0.61
+   horiz_branch(18:21) = 0.57
+   horiz_branch(22:23) = horiz_branch(2)
+   horiz_branch(24:25) = horiz_branch(3)
+   horiz_branch(26:27) = horiz_branch(4)
+   horiz_branch(28:35) = horiz_branch(3)
+
    !---------------------------------------------------------------------------------------!
 
 
@@ -2716,8 +2983,9 @@ subroutine init_pft_alloc_params()
    q(12:15) = 1.0
    q(16)    = 1.0
    q(17)    = 1.0
+   q(18:35) = 1.0
 
-   sapwood_ratio(1:17) = 3900.0
+   sapwood_ratio(1:35) = 3900.0
 
    !---------------------------------------------------------------------------------------!
    !    Finding the ratio between sapwood and leaves [kg_sapwood/kg_leaves]                !
@@ -2731,6 +2999,7 @@ subroutine init_pft_alloc_params()
    qsw(14:15)  = SLA(14:15) / sapwood_ratio(14:15)  !new is SLA(14:15)(3900.0*2.0/1000.0)
    qsw(16)     = SLA(16)    / sapwood_ratio(16)
    qsw(17)     = SLA(17)    / sapwood_ratio(17)
+   qsw(18:35)  = 0.
    !---------------------------------------------------------------------------------------!
 
 
@@ -2752,6 +3021,7 @@ subroutine init_pft_alloc_params()
    init_density(14:15) = 0.1
    init_density(16)    = init_density_grass
    init_density(17)    = 0.1
+   init_density(18:35)   = 0.1
    !---------------------------------------------------------------------------------------!
 
 
@@ -2782,6 +3052,11 @@ subroutine init_pft_alloc_params()
    b1Ht(14:15) = 0.0
    b1Ht(16)    = 0.0
    b1Ht(17)    = 0.0
+   b1Ht(18)    = 0.7393
+   b1Ht(19)    = -0.0682
+   b1Ht(20)    = 0.98
+   b1Ht(21)    = 0.3444
+   b1Ht(22:35) = 0.0
    !----- DBH-height allometry slope [1/cm]. ----------------------------------------------!
    b2Ht(1:4)   =  0.00
    b2Ht(5)     = -0.75
@@ -2795,12 +3070,18 @@ subroutine init_pft_alloc_params()
    b2Ht(14:15) =  0.00
    b2Ht(16)    =  0.00
    b2Ht(17)    =  0.00
+   b2Ht(18)    =  0.5419
+   b2Ht(19)    =  0.8368
+   b2Ht(20)    =  0.4756
+   b2Ht(21)    =  0.6571
+   b2Ht(22:35) =  0.0
    !----- Reference height for diameter/height allometry. ---------------------------------!
    hgt_ref(1:5)   = 0.0
    hgt_ref(6:11)  = 1.3
    hgt_ref(12:15) = 0.0
    hgt_ref(16)    = 0.0
    hgt_ref(17)    = 0.0
+   hgt_ref(18:35) = 0.0
    !----- Assign the parameters for tropical PFTs depending on the chosen allometry. ------!
    select case (iallom)
    case (0:1)
@@ -2837,6 +3118,15 @@ subroutine init_pft_alloc_params()
       end do
    end select
    !---------------------------------------------------------------------------------------!
+   b1Ht(18)    = 0.7393
+   b1Ht(19)    = -0.0682
+   b1Ht(20)    = 0.98
+   b1Ht(21)    = 0.3444
+
+   b2Ht(18)    =  0.5419
+   b2Ht(19)    =  0.8368
+   b2Ht(20)    =  0.4756
+   b2Ht(21)    =  0.6571
 
 
 
@@ -2858,6 +3148,7 @@ subroutine init_pft_alloc_params()
    hgt_min(15)    = 0.50
    hgt_min(16)    = 0.50
    hgt_min(17)    = 0.50
+   hgt_min(18:35) = 2.0
    !----- Maximum Height. -----------------------------------------------------------------!
    hgt_max( 1) = 1.50
    hgt_max( 2) = 35.0
@@ -2876,6 +3167,7 @@ subroutine init_pft_alloc_params()
    hgt_max(15) = 1.50
    hgt_max(16) = 1.50
    hgt_max(17) = 35.0
+   hgt_max(18:35) = 35.0
    !---------------------------------------------------------------------------------------!
 
 
@@ -2920,6 +3212,14 @@ subroutine init_pft_alloc_params()
       dbh_bigleaf(15) = dbh_crit(15)
       dbh_bigleaf(16) = dbh_crit(16)
       dbh_bigleaf(17) = dbh_crit(17)
+      dbh_bigleaf(18) = dbh_crit(18)
+      dbh_bigleaf(19) = dbh_crit(19)
+      dbh_bigleaf(20) = dbh_crit(20)
+      dbh_bigleaf(21) = dbh_crit(21)
+      dbh_bigleaf(22) = dbh_crit(22)
+      dbh_bigleaf(23) = dbh_crit(23)
+      dbh_bigleaf(24) = dbh_crit(24)
+      dbh_bigleaf(25:35) = dbh_crit(25:35)
    case default
       dbh_bigleaf( 1) = dbh_crit( 1)
       dbh_bigleaf( 2) = 29.69716
@@ -2938,6 +3238,7 @@ subroutine init_pft_alloc_params()
       dbh_bigleaf(15) = dbh_crit(15)
       dbh_bigleaf(16) = dbh_crit(16)
       dbh_bigleaf(17) = 30.0
+      dbh_bigleaf(18:35) = 30.0
    end select
    !---------------------------------------------------------------------------------------!
 
@@ -2960,6 +3261,7 @@ subroutine init_pft_alloc_params()
    b1Bl_small(14:15) = 0.0
    b1Bl_small(16)    = 0.0
    b1Bl_small(17)    = 0.0
+   b1Bl_small(18:35) = 0.0
    !-----  DBH-leaf allometry slope [dimensionless]. --------------------------------------!
    b2Bl_small(1:4)   = 0.0
    b2Bl_small(5)     = 1.0
@@ -2973,6 +3275,7 @@ subroutine init_pft_alloc_params()
    b2Bl_small(14:15) = 0.0
    b2Bl_small(16)    = 0.0
    b2Bl_small(17)    = 0.0
+   b2Bl_small(18:35) = 0.0
    !----- The default coefficients for large trees are the same as the small ones. --------!
    b1Bl_large(:)     = b1Bl_small(:)
    b2Bl_large(:)     = b2Bl_small(:)
@@ -3046,6 +3349,28 @@ subroutine init_pft_alloc_params()
       end if
       !------------------------------------------------------------------------------------!
    end do
+
+   b1Bl_small(21)  = 0.023 * 2. !0.0161 * 2.!0.0154 * 2.
+   b1Bl_small(20)  = 0.008 * 2. !0.0065 * 2. !0.0063 * 2.
+   b1Bl_small(19)  = 0.012 * 2. !0.0125 * 2. !0.0140 * 2.
+   b1Bl_small(18)  = 0.003 * 2. !0.0075 * 2. !0.0060 * 2.
+
+   b2Bl_small(21)  =  1.93!1.99!2.00
+   b2Bl_small(20)  =  2.12!2.17!2.18
+   b2Bl_small(19)  =  1.75!1.81!1.81
+   b2Bl_small(18)  =  2.04!2.107!2.11
+
+   b1Bl_large(18:21) = b1Bl_small(18:21)
+   b2Bl_large(18:21) = b2Bl_small(18:21)
+
+
+   !----- Fraction of structural stem that is assumed to be above ground. -----------------!
+   agf_bs(1:17)   = 0.7
+   agf_bs(18:21)  = 0.8
+   agf_bs(22:35)  = 0.7
+   !---------------------------------------------------------------------------------------!
+
+
    !----- DBH-stem allometry intercept [kg stem biomass / plant * cm^(-b2Bs)] -------------!
    b1Bs_small(1:4)   = 0.0 
    b1Bs_small(5)     = 1.0e-5
@@ -3059,6 +3384,7 @@ subroutine init_pft_alloc_params()
    b1Bs_small(14:15) = 0.0 
    b1Bs_small(16)    = 0.0 
    b1Bs_small(17)    = 0.0
+   b1Bs_small(18:35) = 0.0
    !----- DBH-stem allometry slope [dimensionless]. ---------------------------------------!
    b2Bs_small(1:4)   = 0.0
    b2Bs_small(5)     = 1.0
@@ -3072,6 +3398,7 @@ subroutine init_pft_alloc_params()
    b2Bs_small(14:15) = 0.0
    b2Bs_small(16)    = 0.0
    b2Bs_small(17)    = 0.0
+   b2Bs_small(18:35) = 0.0
    !---------------------------------------------------------------------------------------!
    !     The temperate PFTs use the same b1Bs and b2Bs for small and big trees, copy       !
    ! the values.                                                                           !
@@ -3114,6 +3441,21 @@ subroutine init_pft_alloc_params()
       !------------------------------------------------------------------------------------!
    end do
    !---------------------------------------------------------------------------------------!
+    b2Bs_small(21)   = 2.33
+	b1Bs_small(21)   = exp(-2.82) / agf_bs(21)
+
+	b2Bs_small(20)   = 2.28
+	b1Bs_small(20)   = exp(-2.84) / agf_bs(20)
+
+	b2Bs_small(19)   = 2.32
+	b1Bs_small(19)   = exp(-3.38) / agf_bs(19)
+
+	b2Bs_small(18)   = 2.29
+	b1Bs_small(18)   = exp(-4.18) / agf_bs(18)
+
+    b1Bs_large(18:21) = b1Bs_small(18:21)
+    b2Bs_large(18:21) = b2Bs_small(18:21)
+
 
 
 
@@ -3128,6 +3470,11 @@ subroutine init_pft_alloc_params()
       b1Bl_small(    4)  = 0.08915847
       b1Bl_small(14:16)  = 0.04538826
       b1Bl_small(   17)  = 0.07322115
+      b1Bl_small(18:21)  = 0.07322115
+      b1Bl_small(22:23)  = b1Bl_small(2)
+      b1Bl_small(24:25)  = b1Bl_small(3)
+      b1Bl_small(26:27)  = b1Bl_small(4)
+      b1Bl_small(28:35)  = b1Bl_small(3)
       
       b2Bl_small(    1)  = 1.316338
       b2Bl_small(    2)  = 1.509083
@@ -3135,6 +3482,11 @@ subroutine init_pft_alloc_params()
       b2Bl_small(    4)  = 1.663773
       b2Bl_small(14:16)  = 1.316338
       b2Bl_small(   17)  = 1.509083
+      b2Bl_small(18:21)  = 1.509083
+      b2Bl_small(22:23)  = b2Bl_small(2)
+      b2Bl_small(24:25)  = b2Bl_small(3)
+      b2Bl_small(26:27)  = b2Bl_small(4)
+      b2Bl_small(28:35)  = b2Bl_small(3)
       
       b1Bs_small(    1)  = 0.05291854
       b1Bs_small(    2)  = 0.15940854
@@ -3142,6 +3494,11 @@ subroutine init_pft_alloc_params()
       b1Bs_small(    4)  = 0.26890751
       b1Bs_small(14:16)  = 0.05291854
       b1Bs_small(   17)  = 0.15940854
+      b1Bs_small(18:21)  = 0.15940854
+      b1Bs_small(22:23)  = b1Bs_small(2)
+      b1Bs_small(24:25)  = b1Bs_small(3)
+      b1Bs_small(26:27)  = b1Bs_small(4)
+      b1Bs_small(28:35)  = b1Bs_small(3)
       
       b2Bs_small(    1)  = 3.706955
       b2Bs_small(    2)  = 2.342587
@@ -3149,6 +3506,11 @@ subroutine init_pft_alloc_params()
       b2Bs_small(    4)  = 2.254336
       b2Bs_small(14:16)  = 3.706955
       b2Bs_small(   17)  = 2.342587
+      b2Bs_small(18:21)  = 2.342587
+      b2Bs_small(22:23)  = b2Bs_small(2)
+      b2Bs_small(24:25)  = b2Bs_small(3)
+      b2Bs_small(26:27)  = b2Bs_small(4)
+      b2Bs_small(28:35)  = b2Bs_small(3)
       
       b1Bl_large    (:)  = b1Bl_small(:)
       b2Bl_large    (:)  = b2Bl_small(:)
@@ -3187,11 +3549,11 @@ subroutine init_pft_alloc_params()
    !----- Intercept. ----------------------------------------------------------------------!
    b1Ca(1:4)   = exp(-1.853) * exp(b1Ht(1:4)) ** 1.888
    b1Ca(5:13)  = 2.490154
-   b1Ca(14:17) = exp(-1.853) * exp(b1Ht(14:17)) ** 1.888
+   b1Ca(14:35) = exp(-1.853) * exp(b1Ht(14:35)) ** 1.888
    !----- Slope.  -------------------------------------------------------------------------!
    b2Ca(1:4)   = b2Ht(1:4) * 1.888
    b2Ca(5:13)  = 0.8068806
-   b2Ca(14:17) = b2Ht(14:17) * 1.888
+   b2Ca(14:35) = b2Ht(14:35) * 1.888
    !------ Allometric coefficents. --------------------------------------------------------!
    select case (iallom)
    case (0,1)
@@ -3230,6 +3592,7 @@ subroutine init_pft_alloc_params()
    b1WAI(12:13) = 0.0          ! Tiny WAI for grasses
    b1WAI(14:16) = 0.0192 * 0.5 ! Tiny WAI for grasses
    b1WAI(17)    = 0.0553 * 0.5 ! Needleleaf
+   b1WAI(18:35) = 0.0192 * 0.5 ! Broadleaf
    !----- Slope. --------------------------------------------------------------------------!
    b2WAI(1)     = 2.0947       ! Tiny WAI for grasses
    b2WAI(2:4)   = 2.0947       ! Broadleaf
@@ -3239,13 +3602,10 @@ subroutine init_pft_alloc_params()
    b2WAI(12:13) = 1.0          ! Tiny WAI for grasses
    b2WAI(14:16) = 2.0947       ! Tiny WAI for grasses
    b2WAI(17)    = 1.9769       ! Needleleaf
+   b2WAI(18:35) = 2.0947       ! Broadleaf
    !---------------------------------------------------------------------------------------!
 
 
-
-   !----- Fraction of structural stem that is assumed to be above ground. -----------------!
-   agf_bs(1:17)   = 0.7
-   !---------------------------------------------------------------------------------------!
 
 
 
@@ -3276,8 +3636,8 @@ subroutine init_pft_alloc_params()
    ! may want to estimate the standing volume for other reasons (e.g. the characteristic   !
    ! diameter of branches).                                                                !
    !---------------------------------------------------------------------------------------!
-   b1Vol(1:17)  = 0.65 * pi1 * 0.11 * 0.11
-   b2Vol(1:17)  = 2.0
+   b1Vol(1:35)  = 0.65 * pi1 * 0.11 * 0.11
+   b2Vol(1:35)  = 2.0
 
    select case (iallom)
    case (0)
@@ -3287,6 +3647,7 @@ subroutine init_pft_alloc_params()
       b1Rd(6:11)  = - exp(0.545 * log(10.))
       b1Rd(12:16) = - 0.700
       b1Rd(17)    = - exp(0.545 * log(10.))
+      b1Rd(18:35) = - exp(0.545 * log(10.))
 
       b2Rd(1)     = 0.000
       b2Rd(2:4)   = 0.277
@@ -3294,15 +3655,22 @@ subroutine init_pft_alloc_params()
       b2Rd(6:11)  = 0.277
       b2Rd(12:16) = 0.000
       b2Rd(17)    = 0.277
+      b2Rd(18:35) = 0.277
    case default
       !------------------------------------------------------------------------------------!
       !     This is just a test, not based on any paper.  This is simply a fit that would  !
       ! put the roots 0.5m deep for plants 0.15m-tall and 5 m for plants 35-m tall.        !
       !------------------------------------------------------------------------------------!
-      b1Rd(1:17)  = -1.1140580
-      b2Rd(1:17)  =  0.4223014
+      b1Rd(1:35)  = -1.1140580
+      b2Rd(1:35)  =  0.4223014
    end select
    !---------------------------------------------------------------------------------------!
+   b1Rd(21) = -0.2185333  * 2.0   !* log(0.1) / log(root_beta(24)) !rd_m !2.0 
+   b1Rd(20) = -0.2185333  * 1.6   !* log(0.1) / log(root_beta(26)) !rd_m !2.0 
+   b1Rd(19) = -0.2185333  * 1.2   !* log(0.1) / log(root_beta(27)) !rd_m !2.0 
+   b1Rd(18) = -0.2185333  * 1.0   !* log(0.1) / log(root_beta(29)) !rd_m !2.0 
+   b2Rd(18:21) =  0.5436442
+
 
 
 
@@ -3323,6 +3691,7 @@ subroutine init_pft_alloc_params()
          init_density(14:15) = 0.1
          init_density(16)    = 1.0
          init_density(17)    = 1.0
+         init_density(18:35) = 1.0
       case default
          init_density(1)     = 0.1
          init_density(2:4)   = 0.1
@@ -3333,14 +3702,15 @@ subroutine init_pft_alloc_params()
          init_density(14:15) = 0.1
          init_density(16)    = 0.1
          init_density(17)    = 0.1
+         init_density(18:35) = 0.1
       end select
 
       !----- Define a non-sense number. ---------------------------------------------------!
-      init_laimax(1:17)   = huge_num
+      init_laimax(1:35)   = huge_num
 
    case(1)
       !----- Big leaf. 1st we set the maximum initial LAI for each PFT. -------------------!
-      init_laimax(1:17)   = 0.1
+      init_laimax(1:35)   = 0.1
       do ipft=1,n_pft
          init_bleaf = size2bl(dbh_bigleaf(ipft),hgt_max(ipft),ipft)
          init_density(ipft) = init_laimax(ipft) / (init_bleaf * SLA(ipft))
@@ -3418,6 +3788,7 @@ c2n_leaf(10)     = 1000.0 / ((0.11289 + 0.12947 *     15.625) * SLA(10)   )
 c2n_leaf(11)     = 1000.0 / ((0.11289 + 0.12947 *       6.25) * SLA(11)   )
 c2n_leaf(12:15)  = 1000.0 / ((0.11289 + 0.12947 * Vm0(12:15)) * SLA(12:15))
 c2n_leaf(16:17)  = 1000.0 / ((0.11289 + 0.12947 * Vm0(16:17)) * SLA(16:17))
+c2n_leaf(18:35)  = exp(-0.4972 * log(SLA(18:35)) + 4.5071) ! Powers and Tiffin 2010
 
 
 
@@ -3446,6 +3817,10 @@ subroutine init_pft_leaf_params()
                              , c_ngrn_biom_dry      & ! intent(out)
                              , wat_dry_ratio_grn    & ! intent(out)
                              , wat_dry_ratio_ngrn   & ! intent(out)
+                             , SLA                  & ! intent(in)
+                             , rho                  & ! intent(in)
+                             , epsilon_leaf         & ! intent(in)
+                             , C2B                  & ! intent(in)
                              , delta_c              ! ! intent(out)
    use consts_coms    , only : t00                  ! ! intent(out)
 
@@ -3453,6 +3828,8 @@ subroutine init_pft_leaf_params()
 
    !----- Reference temperature for heat capacity. ----------------------------------------!
    real, parameter :: tref = t00 + 15.
+   real            :: leaf_density
+   integer         :: ipft
    !---------------------------------------------------------------------------------------!
 
 
@@ -3504,6 +3881,7 @@ subroutine init_pft_leaf_params()
          phenology(12:15) = 5
          phenology(16)    = 5
          phenology(17)    = 0
+         phenology(18:35) = 5
       end select
       !------------------------------------------------------------------------------------!
    case (1)
@@ -3549,6 +3927,7 @@ subroutine init_pft_leaf_params()
          phenology(12:15) = 5
          phenology(16)    = 5
          phenology(17)    = 0
+         phenology(18:35)   = 5
       end select
       !------------------------------------------------------------------------------------!
    end select
@@ -3559,8 +3938,9 @@ subroutine init_pft_leaf_params()
    !---------------------------------------------------------------------------------------!
    !      The following parameters are second sources found in Gu et al. (2007)            !
    !---------------------------------------------------------------------------------------!
-   c_grn_leaf_dry     (1:17) = 3218.0    ! Jones 1992  J/(kg K)
-   wat_dry_ratio_ngrn (1:17) = 0.7       ! Forest Products Laboratory (2010)
+   c_grn_leaf_dry     (1:35) = 3218.0    ! Jones 1992  J/(kg K)
+   wat_dry_ratio_ngrn (1:35) = 0.7       ! Forest Products Laboratory (2010)
+   ! wat_dry_ratio_ngrn is used for branches and twigs
    !---------------------------------------------------------------------------------------!
 
 
@@ -3575,8 +3955,9 @@ subroutine init_pft_leaf_params()
    !---------------------------------------------------------------------------------------!
    wat_dry_ratio_grn(  1:4) = 1.85
    wat_dry_ratio_grn( 5:13) = 2.50
-   wat_dry_ratio_grn(14:17) = 1.85
+   wat_dry_ratio_grn(14:35) = 1.85
    !---------------------------------------------------------------------------------------!
+
 
 
 
@@ -3588,12 +3969,11 @@ subroutine init_pft_leaf_params()
    !    Instead of using the temperature-dependence, we use the values at 15C, and assume  !
    ! that the values are constant.                                                         !
    !---------------------------------------------------------------------------------------!
-   c_ngrn_biom_dry(1:17) = 103.1 + 3.867 * tref
-   delta_c        (1:17) = 1.e5 * wat_dry_ratio_ngrn(1:17)                                 &
+   c_ngrn_biom_dry(1:35) = 103.1 + 3.867 * tref
+   delta_c        (1:35) = 1.e5 * wat_dry_ratio_ngrn(1:35)                                 &
                          * ( - 0.06191 + 2.36e-4 * tref                                    &
-                                       - 1.33e-2 * wat_dry_ratio_ngrn(1:17) )
+                                       - 1.33e-2 * wat_dry_ratio_ngrn(1:35) )
    !---------------------------------------------------------------------------------------!
-
 
 
 
@@ -3611,6 +3991,7 @@ subroutine init_pft_leaf_params()
    b1Cl(6:11)  = 0.3106775
    b1Cl(12:16) = 0.99
    b1Cl(17)    = 0.3106775
+   b1Cl(18:35) = 0.3106775
    !----- Slope. ----------------------------------------------------------------------!
    b2Cl(1)     = 1.0
    b2Cl(2:4)   = 1.098
@@ -3618,6 +3999,7 @@ subroutine init_pft_leaf_params()
    b2Cl(6:11)  = 1.098
    b2Cl(12:16) = 1.0
    b2Cl(17)    = 1.098
+   b2Cl(18:35) = 1.098
    !---------------------------------------------------------------------------------------!
 
    return
@@ -3649,6 +4031,7 @@ subroutine init_pft_repro_params()
    r_fract(12:15)          = 0.3
    r_fract(16)             = 0.3
    r_fract(17)             = 0.3
+   r_fract(18:35)          = 0.3
 
    st_fract(1)             = 0.0
    st_fract(2:4)           = 0.0
@@ -3657,6 +4040,7 @@ subroutine init_pft_repro_params()
    st_fract(12:15)         = 0.0
    st_fract(16)            = 0.0
    st_fract(17)            = 0.0
+   st_fract(18:35)         = 0.0
 
    nonlocal_dispersal(1)   =  1.000 ! 1.000
    nonlocal_dispersal(2)   =  1.000 ! 0.900
@@ -3675,6 +4059,7 @@ subroutine init_pft_repro_params()
    nonlocal_dispersal(15)  =  1.000 ! 1.000
    nonlocal_dispersal(16)  =  1.000 ! 1.000
    nonlocal_dispersal(17)  =  0.766 ! 0.600
+   nonlocal_dispersal(18:35) =  1.000 ! 0.550
 
    repro_min_h(1)          =  0.0
    repro_min_h(2:4)        = 18.0
@@ -3683,6 +4068,7 @@ subroutine init_pft_repro_params()
    repro_min_h(12:15)      =  0.0
    repro_min_h(16)         =  0.0
    repro_min_h(17)         = 18.0
+   repro_min_h(18:35)      = 18.0
 
    return
 end subroutine init_pft_repro_params
@@ -3721,6 +4107,8 @@ subroutine init_pft_derived_params()
                                    , hgt_max              & ! intent(in)
                                    , dbh_crit             & ! intent(in)
                                    , dbh_bigleaf          & ! intent(in)
+                                   , leaf_rwc_min         & ! intent(in)
+                                   , wood_rwc_min         & ! intent(in)
                                    , one_plant_c          & ! intent(out)
                                    , min_recruit_size     & ! intent(out)
                                    , min_cohort_size      & ! intent(out)
@@ -3898,7 +4286,8 @@ subroutine init_pft_derived_params()
       ! all PFTs have leaves (but not branches), we only consider the leaf heat capacity   !
       ! only for the minimum value.                                                        !
       !------------------------------------------------------------------------------------!
-      call calc_veg_hcap(bleaf_min,bdead_min,bsapwood_min,init_density(ipft),ipft          &
+      call calc_veg_hcap(bleaf_min,bleaf_min * q(ipft),bdead_min,bsapwood_min               &
+                        ,init_density(ipft),ipft,leaf_rwc_min(ipft),wood_rwc_min(ipft)      &
                         ,leaf_hcap_min,wood_hcap_min)
       veg_hcap_min(ipft) = onesixth * leaf_hcap_min
       lai_min            = onesixth * init_density(ipft) * bleaf_min * sla(ipft)
@@ -4962,7 +5351,10 @@ subroutine init_phen_coms
    !     Before plants drop their leaves, they retain this fraction of their leaf carbon   !
    ! and nitrogen and put it into storage.                                                 !
    !---------------------------------------------------------------------------------------!
-   retained_carbon_fraction = 0.5
+   retained_carbon_fraction = 0.2 !0.5
+   ! Data from Vergutz et al. (2012) Global resorption efficiencies and
+   ! concentrations of carbon and nutrients in leaves of terrestrial plants.
+   ! Ecological Monographs, 82-2
    !---------------------------------------------------------------------------------------!
 
 
@@ -5393,6 +5785,7 @@ subroutine init_rk4_params()
    effarea_transp(6:8)  = 2.d0 ! Symmetrical
    effarea_transp(9:16) = 1.d0 ! Hypostomatous
    effarea_transp(17)   = 2.d0 ! Amphistomatous
+   effarea_transp(18:35)= 1.d0 ! Hypostomatous
    !---------------------------------------------------------------------------------------!
 
 

@@ -210,7 +210,7 @@ subroutine update_phenology(doy, cpoly, isi, lat)
                              , ed_biomass               & ! function
                              , size2bl                  ! ! function
    use phenology_aux  , only : daylength                ! ! function
-
+   use plant_hydro_dyn, only : update_veg_water_int   ! ! function  
    use physiology_coms, only : track_plant_hydro        ! ! intent(in)
 
    implicit none
@@ -642,8 +642,6 @@ subroutine update_phenology(doy, cpoly, isi, lat)
                 cpatch%high_psi_days(ico) = 0
             endif
 
-            
-
 
             !----- modify elongf and phenology_status if necessary------!
             if (cpatch%low_psi_days(ico) >= low_psi_threshold(ipft)) then
@@ -798,6 +796,11 @@ subroutine update_phenology(doy, cpoly, isi, lat)
 
 
 
+         !---------------------------------------------------------------------------!
+         ! XXT. We need to update vegetation internal water after biomass change     !
+         !---------------------------------------------------------------------------!
+         call update_veg_water_int(cpatch,ico)
+         !---------------------------------------------------------------------------!
 
          !----- Update above-ground biomass. ----------------------------------------------!
          cpatch%agb(ico) = ed_biomass(cpatch%bdead(ico),cpatch%bleaf(ico)                  &
@@ -809,8 +812,10 @@ subroutine update_phenology(doy, cpoly, isi, lat)
          !---------------------------------------------------------------------------------!
          old_leaf_hcap       = cpatch%leaf_hcap(ico)
          old_wood_hcap       = cpatch%wood_hcap(ico)
-         call calc_veg_hcap(cpatch%bleaf(ico),cpatch%bdead(ico),cpatch%bsapwooda(ico)      &
+         call calc_veg_hcap(cpatch%bleaf(ico),cpatch%broot(ico)                            &
+                           ,cpatch%bdead(ico),cpatch%bsapwooda(ico)                        &
                            ,cpatch%nplant(ico),cpatch%pft(ico)                             &
+                           ,cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)                      &
                            ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico) )
          call update_veg_energy_cweh(csite,ipa,ico,old_leaf_hcap,old_wood_hcap)
          call is_resolvable(csite,ipa,ico)
@@ -865,6 +870,7 @@ subroutine update_phenology_eq_0(doy, cpoly, isi, lat)
                              , elongf_flush             ! ! intent(in)
    use ed_therm_lib   , only : calc_veg_hcap            & ! function
                              , update_veg_energy_cweh   ! ! subroutine
+   use plant_hydro_dyn, only : update_veg_water_int   ! ! function  
    use ed_max_dims    , only : n_pft                    ! ! intent(in)
    use ed_misc_coms   , only : current_time             ! ! intent(in)
    use allometry      , only : area_indices             & ! subroutine
@@ -1205,14 +1211,22 @@ subroutine update_phenology_eq_0(doy, cpoly, isi, lat)
          cpatch%agb(ico) = ed_biomass(cpatch%bdead(ico),cpatch%bleaf(ico)                  &
                                      ,cpatch%bsapwooda(ico),cpatch%pft(ico)) 
 
+         !---------------------------------------------------------------------------!
+         ! XXT. We need to update vegetation internal water after biomass change     !
+         !---------------------------------------------------------------------------!
+         call update_veg_water_int(cpatch,ico)
+         !---------------------------------------------------------------------------!
+
          !---------------------------------------------------------------------------------!
          !    The leaf biomass of the cohort has changed, update the vegetation energy -   !
          ! using a constant temperature assumption.                                        !
          !---------------------------------------------------------------------------------!
          old_leaf_hcap       = cpatch%leaf_hcap(ico)
          old_wood_hcap       = cpatch%wood_hcap(ico)
-         call calc_veg_hcap(cpatch%bleaf(ico),cpatch%bdead(ico),cpatch%bsapwooda(ico)      &
+         call calc_veg_hcap(cpatch%bleaf(ico),cpatch%broot(ico)                            &
+                           ,cpatch%bdead(ico),cpatch%bsapwooda(ico)                        &
                            ,cpatch%nplant(ico),cpatch%pft(ico)                             &
+                           ,cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)                      &
                            ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico) )
          call update_veg_energy_cweh(csite,ipa,ico,old_leaf_hcap,old_wood_hcap)
          call is_resolvable(csite,ipa,ico)

@@ -354,6 +354,7 @@ module phenology_aux
                                , sitetype         & ! structure
                                , patchtype        ! ! structure
       use ed_therm_lib  , only : calc_veg_hcap    ! ! function
+      use plant_hydro_dyn, only : update_veg_water_int   ! ! function  
       use ed_max_dims   , only : n_pft            ! ! intent(in)
       use allometry     , only : area_indices     ! ! subroutine
       use grid_coms     , only : nzg              ! ! intent(in)
@@ -417,11 +418,17 @@ module phenology_aux
                                    ,cpatch%bsapwooda(ico))  
                   !------------------------------------------------------------------------!
 
+                  !---------------------------------------------------------------------------!
+                  ! XXT. We need to update vegetation internal water after biomass change     !
+                  !---------------------------------------------------------------------------!
+                  call update_veg_water_int(cpatch,ico)
+                  !---------------------------------------------------------------------------!
 
                   !----- Find heat capacity and vegetation internal energy. ---------------!
-                  call calc_veg_hcap(cpatch%bleaf(ico),cpatch%bdead(ico)                   &
-                                    ,cpatch%bsapwooda(ico),cpatch%nplant(ico)              &
-                                    ,cpatch%pft(ico)                                       &
+                  call calc_veg_hcap(cpatch%bleaf(ico),cpatch%broot(ico)                   &
+                                    ,cpatch%bdead(ico),cpatch%bsapwooda(ico)               &
+                                    ,cpatch%nplant(ico),cpatch%pft(ico)                    &
+                                    ,cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)             &
                                     ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico) )
                   cpatch%leaf_energy(ico) = cmtl2uext(cpatch%leaf_hcap (ico)               &
                                                      ,cpatch%leaf_water(ico)               &

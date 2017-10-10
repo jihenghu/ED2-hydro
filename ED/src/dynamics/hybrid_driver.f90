@@ -38,6 +38,8 @@ subroutine hybrid_timestep(cgrid)
   use budget_utils          , only : update_budget      & ! function
                                    , compute_budget     ! ! function
 
+  use physiology_coms        , only : track_plant_hydro    !   intent(in)
+  use plant_hydro_dyn , only : update_plant_hydrodynamics !subroutine 
 !$  use omp_lib
 
   implicit none
@@ -290,6 +292,13 @@ subroutine hybrid_timestep(cgrid)
                              ,wcurr_loss2runoff,ecurr_loss2runoff)
 
             
+           !----- Calculate plant hydrodynamics if it is tracked          -------------!
+           !----- Potentially integrated into integration scheme later    -------------!
+           if (track_plant_hydro == 1) then
+              call update_plant_hydrodynamics(csite,ipa,cpoly%ntext_soil(:,isi))
+           endif
+           !---------------------------------------------------------------------------!
+
             !----- Add the number of steps into the step counter. -------------!
             cgrid%workload(13,ipy) = cgrid%workload(13,ipy) + real(nsteps)
             

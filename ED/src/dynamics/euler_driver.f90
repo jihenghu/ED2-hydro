@@ -32,6 +32,8 @@ subroutine euler_timestep(cgrid)
    use therm_lib             , only : tq2enthalpy        ! ! function
    use budget_utils          , only : update_budget      & ! function
                                     , compute_budget     ! ! function
+   use physiology_coms        , only : track_plant_hydro    !   intent(in)
+   use plant_hydro_dyn , only : update_plant_hydrodynamics !subroutine 
    ! OMP use omp_lib
 
    implicit none
@@ -210,6 +212,12 @@ subroutine euler_timestep(cgrid)
                                       ,ecurr_loss2runoff,nsteps)
             !------------------------------------------------------------------------------!
 
+            !----- Calculate plant hydrodynamics if it is tracked          -------------!
+            !----- Potentially integrated into integration scheme later    -------------!
+            if (track_plant_hydro == 1) then
+               call update_plant_hydrodynamics(csite,ipa,cpoly%ntext_soil(:,isi))
+            endif
+            !---------------------------------------------------------------------------!
 
 
             !----- Add the number of steps into the step counter. -------------------------!

@@ -306,6 +306,7 @@ subroutine copy_patch_init(sourcesite,ipa,targetp,vels)
       if (targetp%leaf_resolvable(ico)) then
          targetp%leaf_energy(ico) = dble(cpatch%leaf_energy(ico))
          targetp%leaf_water (ico) = max(0.d0,dble(cpatch%leaf_water (ico)))
+         targetp%leaf_rwc   (ico) = max(0.d0,dble(cpatch%leaf_rwc (ico)))
          targetp%leaf_hcap  (ico) = dble(cpatch%leaf_hcap  (ico))
 
          call uextcm2tl8(targetp%leaf_energy(ico),targetp%leaf_water(ico)                  &
@@ -315,6 +316,7 @@ subroutine copy_patch_init(sourcesite,ipa,targetp,vels)
          targetp%leaf_fliq  (ico) = dble(cpatch%leaf_fliq  (ico))
          targetp%leaf_temp  (ico) = dble(cpatch%leaf_temp  (ico))
          targetp%leaf_water (ico) = dble(cpatch%leaf_water (ico))
+         targetp%leaf_rwc   (ico) = dble(cpatch%leaf_rwc   (ico))
          targetp%leaf_hcap  (ico) = dble(cpatch%leaf_hcap  (ico))
          targetp%leaf_energy(ico) = cmtl2uext8( targetp%leaf_hcap (ico)                    &
                                               , targetp%leaf_water(ico)                    &
@@ -333,6 +335,7 @@ subroutine copy_patch_init(sourcesite,ipa,targetp,vels)
       if (targetp%wood_resolvable(ico)) then
          targetp%wood_energy(ico) = dble(cpatch%wood_energy(ico))
          targetp%wood_water (ico) = max(0.d0,dble(cpatch%wood_water (ico)))
+         targetp%wood_rwc   (ico) = max(0.d0,dble(cpatch%wood_rwc (ico)))
          targetp%wood_hcap  (ico) = dble(cpatch%wood_hcap  (ico))
 
          call uextcm2tl8(targetp%wood_energy(ico),targetp%wood_water(ico)                  &
@@ -342,6 +345,7 @@ subroutine copy_patch_init(sourcesite,ipa,targetp,vels)
          targetp%wood_fliq  (ico) = dble(cpatch%wood_fliq  (ico))
          targetp%wood_temp  (ico) = dble(cpatch%wood_temp  (ico))
          targetp%wood_water (ico) = dble(cpatch%wood_water (ico))
+         targetp%wood_rwc   (ico) = dble(cpatch%wood_rwc   (ico))
          targetp%wood_hcap  (ico) = dble(cpatch%wood_hcap  (ico))
          targetp%wood_energy(ico) = cmtl2uext8( targetp%wood_hcap (ico)                    &
                                               , targetp%wood_water(ico)                    &
@@ -358,7 +362,7 @@ subroutine copy_patch_init(sourcesite,ipa,targetp,vels)
       targetp%veg_resolvable(ico) = targetp%leaf_resolvable(ico) .or.                      &
                                     targetp%wood_resolvable(ico)
       targetp%veg_energy(ico)     = targetp%leaf_energy(ico) + targetp%wood_energy(ico)
-      targetp%veg_water(ico)      = targetp%leaf_water(ico)  + targetp%wood_water(ico)
+      targetp%veg_water(ico)      = targetp%leaf_water(ico)  + targetp%wood_water(ico)     
       targetp%veg_hcap(ico)       = targetp%leaf_hcap(ico)   + targetp%wood_hcap(ico)
       !------------------------------------------------------------------------------------!
 
@@ -611,7 +615,8 @@ subroutine update_diagnostic_vars(initp, csite,ipa)
                                     , epim18                & ! intent(in)
                                     , toodry8               ! ! intent(in)
    use canopy_struct_dynamics, only : canopy_turbulence8    ! ! subroutine
-   use ed_therm_lib          , only : ed_grndvap8           ! ! subroutine
+   use ed_therm_lib          , only : ed_grndvap8           & ! subroutine
+                                    , calc_veg_hcap         ! ! subroutine
    !$ use omp_lib
    implicit none
    !----- Arguments -----------------------------------------------------------------------!
@@ -648,7 +653,11 @@ subroutine update_diagnostic_vars(initp, csite,ipa)
    real(kind=8)                     :: wgt_wood
    real(kind=8)                     :: bulk_sfcw_dens
    integer                          :: ibuff
+   real(kind=4)                     :: temp_leaf_hcap
+   real(kind=4)                     :: temp_wood_hcap
    !---------------------------------------------------------------------------------------!
+   !----- External function. --------------------------------------------------------------!
+   real                      , external    :: sngloff
 
    ibuff = 1
    !$ ibuff = OMP_get_thread_num()+1
@@ -927,6 +936,23 @@ subroutine update_diagnostic_vars(initp, csite,ipa)
    !     Now we update leaf and branch properties, based on which kind of branch thermo-   !
    ! dynamics we're using.                                                                 !
    !---------------------------------------------------------------------------------------!
+  
+   !---------------------------------------------------------------------------------------!
+   !     Leaf and wood RWC changes almost everytime update_diagnostic_vars is called      -!
+   ! So we need to update leaf_hcap and wood_hcap before update temperature             ---!
+   !---------------------------------------------------------------------------------------!
+   do ico = 1,cpatch%ncohorts
+      call calc_veg_hcap(cpatch%bleaf(ico),cpatch%broot(ico)                       &
+                         ,cpatch%bdead(ico),cpatch%bsapwooda(ico)                  &
+                         ,cpatch%nplant(ico),cpatch%pft(ico)                       &
+                         ,sngloff(initp%leaf_rwc(ico),tiny_offset)                 &
+                         ,sngloff(initp%wood_rwc(ico),tiny_offset)                 &
+                         ,temp_leaf_hcap,temp_wood_hcap)
+      initp%leaf_hcap(ico) = dble(temp_leaf_hcap)
+      initp%wood_hcap(ico) = dble(temp_wood_hcap)
+   enddo
+
+
    select case(ibranch_thermo)
    case (1)
 
@@ -975,8 +1001,8 @@ subroutine update_diagnostic_vars(initp, csite,ipa)
                !     Water is too negative, we must reject the step.  To be safe, we cheat !
                ! and put the total water to both pools.                                    !
                !---------------------------------------------------------------------------!
-               initp%leaf_water(ico) = initp%veg_water(ico)
-               initp%wood_water(ico) = initp%veg_water(ico)
+               initp%leaf_water(ico) = initp%veg_water(ico) 
+               initp%wood_water(ico) = initp%veg_water(ico) 
                !---------------------------------------------------------------------------!
 
 
@@ -1035,7 +1061,7 @@ subroutine update_diagnostic_vars(initp, csite,ipa)
                   !------------------------------------------------------------------------!
 
 
-                  !----- Find lead and wood internal energy. ------------------------------!
+                  !----- Find leaf and wood internal energy. ------------------------------!
                   initp%leaf_energy(ico) = cmtl2uext8( initp%leaf_hcap (ico)               &
                                                      , initp%leaf_water(ico)               &
                                                      , initp%leaf_temp (ico)               &
@@ -1243,7 +1269,7 @@ subroutine update_diagnostic_vars(initp, csite,ipa)
       !------------------------------------------------------------------------------------!
       do ico=1,cpatch%ncohorts
          initp%veg_energy(ico) = initp%leaf_energy(ico) + initp%wood_energy(ico)
-         initp%veg_water(ico)  = initp%leaf_water(ico)  + initp%wood_water(ico)
+         initp%veg_water(ico)  = initp%leaf_water(ico)  + initp%wood_water(ico) 
       end do
       !------------------------------------------------------------------------------------!
    end select

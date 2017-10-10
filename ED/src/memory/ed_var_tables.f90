@@ -58,6 +58,7 @@
 !     !  41  : rank 1 : cohort (real)                       !                              !
 !     ! -41  : rank 2 : ndcycle                             !                              !
 !     !  44  : rank 2 : cohort, pft                         !                              !
+!     !  45  : rank 2 : cohort, nzg                         !                              !
 !     !  46  : rank 2 : cohort, dbh                         !                              !
 !     !  47  : rank 2 : cohort, age                         !                              !
 !     !  48  : rank 2 : cohort, mort                        !                              !

@@ -132,7 +132,11 @@ module ed_max_dims
    ! 16 - Subtropical C3 grass                                                             !
    ! 17 - Araucaria                                                                        !
    !---------------------------------------------------------------------------------------!
-   integer, parameter :: n_pft = 17
+   !integer, parameter :: n_pft = 17
+   integer, parameter :: n_pft = 35
+   ! This is temporary! need to update in the future once we determine the PFTs
+   ! to use  [XXT]
+
    !---------------------------------------------------------------------------------------!
 
 

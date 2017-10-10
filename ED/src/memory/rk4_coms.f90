@@ -162,6 +162,7 @@ module rk4_coms
       !----- Leaf (cohort-level) variables. -----------------------------------------------!
       real(kind=8), pointer, dimension(:) :: leaf_energy     ! Internal energy  [     J/m²]
       real(kind=8), pointer, dimension(:) :: leaf_water      ! Sfc. water mass  [    kg/m²]
+      real(kind=8), pointer, dimension(:) :: leaf_rwc        ! rel. water cont. [      ---] 
       real(kind=8), pointer, dimension(:) :: leaf_temp       ! Temperature      [        K]
       real(kind=8), pointer, dimension(:) :: leaf_fliq       ! Liquid fraction  [      ---]
       real(kind=8), pointer, dimension(:) :: leaf_hcap       ! Heat capacity    [   J/m²/K]
@@ -183,6 +184,7 @@ module rk4_coms
       !----- Wood (cohort-level) variables. -----------------------------------------------!
       real(kind=8), pointer, dimension(:) :: wood_energy     ! Internal energy  [     J/m²]
       real(kind=8), pointer, dimension(:) :: wood_water      ! Sfc. water mass  [    kg/m²]
+      real(kind=8), pointer, dimension(:) :: wood_rwc        ! rel. water cont. [      ---] 
       real(kind=8), pointer, dimension(:) :: wood_temp       ! Temperature      [        K]
       real(kind=8), pointer, dimension(:) :: wood_fliq       ! Liquid fraction  [      ---]
       real(kind=8), pointer, dimension(:) :: wood_hcap       ! Heat capacity    [   J/m²/K]
@@ -1203,6 +1205,7 @@ module rk4_coms
 
       allocate(y%leaf_energy      (maxcohort))
       allocate(y%leaf_water       (maxcohort))
+      allocate(y%leaf_rwc         (maxcohort))
       allocate(y%leaf_temp        (maxcohort))
       allocate(y%leaf_fliq        (maxcohort))
       allocate(y%leaf_hcap        (maxcohort))
@@ -1220,6 +1223,7 @@ module rk4_coms
       allocate(y%rlong_l          (maxcohort))
       allocate(y%wood_energy      (maxcohort))
       allocate(y%wood_water       (maxcohort))
+      allocate(y%wood_rwc         (maxcohort))
       allocate(y%wood_temp        (maxcohort))
       allocate(y%wood_fliq        (maxcohort))
       allocate(y%wood_hcap        (maxcohort))
@@ -1307,6 +1311,7 @@ module rk4_coms
 
       nullify(y%leaf_energy      )
       nullify(y%leaf_water       )
+      nullify(y%leaf_rwc         )
       nullify(y%leaf_temp        )
       nullify(y%leaf_fliq        )
       nullify(y%leaf_hcap        )
@@ -1324,6 +1329,7 @@ module rk4_coms
       nullify(y%rlong_l          )
       nullify(y%wood_energy      )
       nullify(y%wood_water       )
+      nullify(y%wood_rwc         )
       nullify(y%wood_temp        )
       nullify(y%wood_fliq        )
       nullify(y%wood_hcap        )
@@ -1410,6 +1416,7 @@ module rk4_coms
 
       if (associated(y%leaf_energy      )) y%leaf_energy      = 0.d0
       if (associated(y%leaf_water       )) y%leaf_water       = 0.d0
+      if (associated(y%leaf_rwc         )) y%leaf_rwc         = 0.d0
       if (associated(y%leaf_temp        )) y%leaf_temp        = 0.d0
       if (associated(y%leaf_fliq        )) y%leaf_fliq        = 0.d0
       if (associated(y%leaf_hcap        )) y%leaf_hcap        = 0.d0
@@ -1427,6 +1434,7 @@ module rk4_coms
       if (associated(y%rlong_l          )) y%rlong_l          = 0.d0
       if (associated(y%wood_energy      )) y%wood_energy      = 0.d0
       if (associated(y%wood_water       )) y%wood_water       = 0.d0
+      if (associated(y%wood_rwc         )) y%wood_rwc         = 0.d0
       if (associated(y%wood_temp        )) y%wood_temp        = 0.d0
       if (associated(y%wood_fliq        )) y%wood_fliq        = 0.d0
       if (associated(y%wood_hcap        )) y%wood_hcap        = 0.d0
@@ -1512,6 +1520,7 @@ module rk4_coms
 
       if (associated(y%leaf_energy      )) deallocate(y%leaf_energy       )
       if (associated(y%leaf_water       )) deallocate(y%leaf_water        )
+      if (associated(y%leaf_rwc         )) deallocate(y%leaf_rwc          )
       if (associated(y%leaf_temp        )) deallocate(y%leaf_temp         )
       if (associated(y%leaf_fliq        )) deallocate(y%leaf_fliq         )
       if (associated(y%leaf_hcap        )) deallocate(y%leaf_hcap         )
@@ -1529,6 +1538,7 @@ module rk4_coms
       if (associated(y%rlong_l          )) deallocate(y%rlong_l           )
       if (associated(y%wood_energy      )) deallocate(y%wood_energy       )
       if (associated(y%wood_water       )) deallocate(y%wood_water        )
+      if (associated(y%wood_rwc         )) deallocate(y%wood_rwc          )
       if (associated(y%wood_temp        )) deallocate(y%wood_temp         )
       if (associated(y%wood_fliq        )) deallocate(y%wood_fliq         )
       if (associated(y%wood_hcap        )) deallocate(y%wood_hcap         )

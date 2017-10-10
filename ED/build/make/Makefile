@@ -84,10 +84,10 @@ install:
 clean:
 	@echo ""
 	rm -f $(LIBMODEL) $(EXE)
-	rm -f ./$(BIN)/*.mk ./$(BIN)/*.sh ./$(BIN)/*.c ./$(BIN)/*.f90 ./$(BIN)/*.F90
+	#rm -f ./$(BIN)/*.mk ./$(BIN)/*.sh ./$(BIN)/*.c ./$(BIN)/*.f90 ./$(BIN)/*.F90
 	rm -f ./$(BIN)/*.mod ./$(BIN)/*.o ./$(BIN)/dependency.mk~
 	rm -f ../$(EXE) ../$(LIBMODEL)
-	rm -f include.* Makefile *.mk *.sh configure *.pl
+	#rm -f include.* Makefile *.mk *.sh configure *.pl
 	@echo ""
 
 #----- Define rules -----------------------------------------------------------------------#

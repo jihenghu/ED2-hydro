@@ -1051,6 +1051,7 @@ module fuse_fiss_utils
                                     , lnexp_max              & ! intent(in)
                                     , tiny_num               ! ! intent(in)
       use fusion_fission_coms, only : corr_cohort
+      use grid_coms,           only : nzg                    ! ! intent(in)
       implicit none
       !----- Arguments --------------------------------------------------------------------!
       type(patchtype) , target     :: cpatch            ! Current patch
@@ -1064,6 +1065,7 @@ module fuse_fiss_utils
       logical         , intent(in) :: fuse_initial      ! Called from initialisation
       !----- Local variables --------------------------------------------------------------!
       integer                      :: imon              ! Month for cb loop
+      integer                      :: izg               ! Soil layer counter
       integer                      :: t                 ! Time of day for dcycle loop
       integer                      :: imty              ! Mortality type
       real                         :: newni             ! Inverse of new nplants
@@ -1075,6 +1077,8 @@ module fuse_fiss_utils
       real                         :: dwai              ! WAI of donor
       real                         :: rnplant           ! nplant of receiver
       real                         :: dnplant           ! nplant of donor
+      real                         :: rbdead            ! bdead of donor
+      real                         :: dbdead            ! bdead of donor
       !------------------------------------------------------------------------------------!
 
 
@@ -1112,6 +1116,14 @@ module fuse_fiss_utils
          rwai    = 0.5
          dwai    = 0.5
       end if
+      if (cpatch%bdead(recc) + cpatch%bdead(donc) > 0 ) then
+         rbdead    = cpatch%bdead(recc) / ( cpatch%bdead(recc) + cpatch%bdead(donc) )
+         dbdead    = 1.0 - rbdead
+      else
+         rbdead    = 0.5
+         dbdead    = 0.5
+      end if
+
       !------------------------------------------------------------------------------------!
 
 
@@ -1187,9 +1199,11 @@ module fuse_fiss_utils
       !------ Energy, water, and heat capacity are extensive, add them. -------------------!
       cpatch%leaf_energy(recc) = cpatch%leaf_energy(recc) + cpatch%leaf_energy(donc)
       cpatch%leaf_water (recc) = cpatch%leaf_water (recc) + cpatch%leaf_water (donc)
+      cpatch%leaf_water_int (recc) = cpatch%leaf_water_int (recc) + cpatch%leaf_water_int (donc)
       cpatch%leaf_hcap  (recc) = cpatch%leaf_hcap  (recc) + cpatch%leaf_hcap  (donc)
       cpatch%wood_energy(recc) = cpatch%wood_energy(recc) + cpatch%wood_energy(donc)
       cpatch%wood_water (recc) = cpatch%wood_water (recc) + cpatch%wood_water (donc)
+      cpatch%wood_water_int (recc) = cpatch%wood_water_int (recc) + cpatch%wood_water_int (donc)
       cpatch%wood_hcap  (recc) = cpatch%wood_hcap  (recc) + cpatch%wood_hcap  (donc)
       !------------------------------------------------------------------------------------!
 
@@ -1524,15 +1538,29 @@ module fuse_fiss_utils
                                 + cpatch%sla         (donc) * dnplant
       !------------------------------------------------------------------------------------!
 
+      
       !------------------------------------------------------------------------------------!
-      !    Plant hydrodynamic variables. For simplicity, all the variables are scaled by   !
-      ! nplant                                               XXT
+      !    Light-environment driven characteristics (XXT currently only Vm0 and sla        !
+      ! but sla has been already deal with in the last section)                            !
       !------------------------------------------------------------------------------------!
-      cpatch%psi_leaf(recc)  = cpatch%psi_leaf(recc)*rnplant &
-                             + cpatch%psi_leaf(donc)*dnplant
+      cpatch%vm0         (recc) = cpatch%vm0         (recc) * rlai                         &
+                                + cpatch%vm0         (donc) * dlai
 
-      cpatch%psi_stem(recc)  = cpatch%psi_stem(recc)*rnplant &
-                             + cpatch%psi_stem(donc)*dnplant
+      !------------------------------------------------------------------------------------!
+      !    Plant hydrodynamic variables. All leaf water content is  scaled by lai. All stem!
+      ! water content is scaled by bdead. All fluxes are scaled by nplant                  !
+      !------------------------------------------------------------------------------------!
+      cpatch%psi_leaf(recc)  = cpatch%psi_leaf(recc)*rlai &
+                             + cpatch%psi_leaf(donc)*dlai
+
+      cpatch%psi_stem(recc)  = cpatch%psi_stem(recc)*rbdead &
+                             + cpatch%psi_stem(donc)*dbdead
+
+      cpatch%leaf_rwc(recc)  = cpatch%leaf_rwc(recc)*rlai &
+                             + cpatch%leaf_rwc(donc)*dlai
+
+      cpatch%wood_rwc(recc)  = cpatch%wood_rwc(recc)*rbdead &
+                             + cpatch%wood_rwc(donc)*dbdead
 
       cpatch%water_flux_rl(recc)  = cpatch%water_flux_rl(recc)*rnplant &
                                   + cpatch%water_flux_rl(donc)*dnplant
@@ -1552,6 +1580,11 @@ module fuse_fiss_utils
       cpatch%last_gV (recc)  = cpatch%last_gV(recc)*rnplant &
                              + cpatch%last_gV(donc)*dnplant
 
+      do izg=1,nzg
+        
+            cpatch%water_flux_sr_layer(izg,recc)  = cpatch%water_flux_sr_layer(izg,recc)*rnplant &
+                                  + cpatch%water_flux_sr_layer(izg,donc)*dnplant
+      enddo
       !------------------------------------------------------------------------------------!
       !------------------------------------------------------------------------------------!
       !------------------------------------------------------------------------------------!
@@ -1640,40 +1673,54 @@ module fuse_fiss_utils
          !---------------------------------------------------------------------------------!
 
          !----------------         Plant Hydrodynamics     -----------------------------------!
-         ! For simplicity, all the plant hydrodynamic variables are weighted by nplant now    !
 
          cpatch%fmean_psi_leaf        (recc) = ( cpatch%fmean_psi_leaf        (recc)          &
-               * rnplant                                      & 
+               * rlai                                         & 
                + cpatch%fmean_psi_leaf        (donc)          &
-               * dnplant
+               * dlai   )
          cpatch%fmean_psi_stem        (recc) = ( cpatch%fmean_psi_stem        (recc)          &
-               * rnplant                                      & 
+               * rbdead                                       & 
                + cpatch%fmean_psi_stem        (donc)          &
-               * dnplant
+               * dbdead )
+         cpatch%fmean_leaf_rwc        (recc) = ( cpatch%fmean_leaf_rwc        (recc)          &
+               * rlai                                         & 
+               + cpatch%fmean_leaf_rwc        (donc)          &
+               * dlai   )
+         cpatch%fmean_wood_rwc        (recc) = ( cpatch%fmean_wood_rwc        (recc)          &
+               * rbdead                                       & 
+               + cpatch%fmean_wood_rwc        (donc)          &
+               * dbdead )
          cpatch%fmean_water_flux_rl   (recc) = ( cpatch%fmean_water_flux_rl   (recc)          &
                * rnplant                                      &
                + cpatch%fmean_water_flux_rl   (donc)          &
-               * dnplant
+               * dnplant)
          cpatch%fmean_water_flux_sr   (recc) = ( cpatch%fmean_water_flux_sr   (recc)          &
                * rnplant                                      &
                + cpatch%fmean_water_flux_sr   (donc)          &
-               * dnplant
+               * dnplant)
          cpatch%dmax_psi_leaf         (recc) = ( cpatch%dmax_psi_leaf         (recc)          &
-               * rnplant                                      &
+               * rlai                                         &
                + cpatch%dmax_psi_leaf         (donc)          &
-               * dnplant
+               * dlai   )
          cpatch%dmin_psi_leaf         (recc) = ( cpatch%dmin_psi_leaf         (recc)          &
-               * rnplant                                      &
+               * rlai                                         &
                + cpatch%dmin_psi_leaf         (donc)          &
-               * dnplant
+               * dlai   )
          cpatch%dmax_psi_stem         (recc) = ( cpatch%dmax_psi_stem         (recc)          &
-               * rnplant                                      &
+               * rbdead                                       &
                + cpatch%dmax_psi_stem         (donc)          &
-               * dnplant
+               * dbdead )
          cpatch%dmin_psi_stem         (recc) = ( cpatch%dmin_psi_stem         (recc)          &
-               * rnplant                                      &
+               * rbdead                                       &
                + cpatch%dmin_psi_stem         (donc)          &
-               * dnplant
+               * dbdead )
+         do izg=1,nzg
+                cpatch%fmean_water_flux_sr_layer   (izg,recc) = ( cpatch%fmean_water_flux_sr_layer   (izg,recc)          &
+               * rnplant                                      &
+               + cpatch%fmean_water_flux_sr_layer   (izg,donc)          &
+               * dnplant)
+
+         enddo
          !------------------------------------------------------------------------------------!
 
 
@@ -1730,12 +1777,16 @@ module fuse_fiss_utils
                                              + cpatch%fmean_leaf_energy     (donc)
          cpatch%fmean_leaf_water      (recc) = cpatch%fmean_leaf_water      (recc)         &
                                              + cpatch%fmean_leaf_water      (donc)
+         cpatch%fmean_leaf_water_int  (recc) = cpatch%fmean_leaf_water_int  (recc)         &
+                                             + cpatch%fmean_leaf_water_int  (donc)
          cpatch%fmean_leaf_hcap       (recc) = cpatch%fmean_leaf_hcap       (recc)         &
                                              + cpatch%fmean_leaf_hcap       (donc)
          cpatch%fmean_wood_energy     (recc) = cpatch%fmean_wood_energy     (recc)         &
                                              + cpatch%fmean_wood_energy     (donc)
          cpatch%fmean_wood_water      (recc) = cpatch%fmean_wood_water      (recc)         &
                                              + cpatch%fmean_wood_water      (donc)
+         cpatch%fmean_wood_water_int  (recc) = cpatch%fmean_wood_water_int  (recc)         &
+                                             + cpatch%fmean_wood_water_int  (donc)
          cpatch%fmean_wood_hcap       (recc) = cpatch%fmean_wood_hcap       (recc)         &
                                              + cpatch%fmean_wood_hcap       (donc)
          cpatch%fmean_water_supply    (recc) = cpatch%fmean_water_supply    (recc)         &
@@ -1995,12 +2046,16 @@ module fuse_fiss_utils
                                              + cpatch%dmean_leaf_energy     (donc)
          cpatch%dmean_leaf_water      (recc) = cpatch%dmean_leaf_water      (recc)         &
                                              + cpatch%dmean_leaf_water      (donc)
+         cpatch%dmean_leaf_water_int  (recc) = cpatch%dmean_leaf_water_int  (recc)         &
+                                             + cpatch%dmean_leaf_water_int  (donc)
          cpatch%dmean_leaf_hcap       (recc) = cpatch%dmean_leaf_hcap       (recc)         &
                                              + cpatch%dmean_leaf_hcap       (donc)
          cpatch%dmean_wood_energy     (recc) = cpatch%dmean_wood_energy     (recc)         &
                                              + cpatch%dmean_wood_energy     (donc)
          cpatch%dmean_wood_water      (recc) = cpatch%dmean_wood_water      (recc)         &
                                              + cpatch%dmean_wood_water      (donc)
+         cpatch%dmean_wood_water_int  (recc) = cpatch%dmean_wood_water_int  (recc)         &
+                                             + cpatch%dmean_wood_water_int  (donc)
          cpatch%dmean_wood_hcap       (recc) = cpatch%dmean_wood_hcap       (recc)         &
                                              + cpatch%dmean_wood_hcap       (donc)
          cpatch%dmean_water_supply    (recc) = cpatch%dmean_water_supply    (recc)         &
@@ -2298,22 +2353,23 @@ module fuse_fiss_utils
                                              * dnplant
 
          !-----------------       Plant Hydrodynamics      --------------------------------!
+         ! bug_xx, missing ) at the end of each statement in this section
          cpatch%mmean_dmax_psi_leaf   (recc) = ( cpatch%mmean_dmax_psi_leaf   (recc)       &
                                                * rnplant                                   &
                                                + cpatch%mmean_dmax_psi_leaf   (donc)       &
-                                               * dnplant
+                                               * dnplant)
          cpatch%mmean_dmin_psi_leaf   (recc) = ( cpatch%mmean_dmin_psi_leaf   (recc)       &
                                                * rnplant                                   &
                                                + cpatch%mmean_dmin_psi_leaf   (donc)       &
-                                               * dnplant
+                                               * dnplant)
          cpatch%mmean_dmax_psi_stem   (recc) = ( cpatch%mmean_dmax_psi_stem   (recc)       &
                                                * rnplant                                   &
                                                + cpatch%mmean_dmax_psi_stem   (donc)       &
-                                               * dnplant
+                                               * dnplant)
          cpatch%mmean_dmin_psi_stem   (recc) = ( cpatch%mmean_dmin_psi_stem   (recc)       &
                                                * rnplant                                   &
                                                + cpatch%mmean_dmin_psi_stem   (donc)       &
-                                               * dnplant
+                                               * dnplant)
          !---------------------------------------------------------------------------------!
 
          !---------------------------------------------------------------------------------!
@@ -2375,12 +2431,16 @@ module fuse_fiss_utils
                                              + cpatch%mmean_leaf_energy     (donc)
          cpatch%mmean_leaf_water      (recc) = cpatch%mmean_leaf_water      (recc)         &
                                              + cpatch%mmean_leaf_water      (donc)
+         cpatch%mmean_leaf_water_int  (recc) = cpatch%mmean_leaf_water_int  (recc)         &
+                                             + cpatch%mmean_leaf_water_int  (donc)
          cpatch%mmean_leaf_hcap       (recc) = cpatch%mmean_leaf_hcap       (recc)         &
                                              + cpatch%mmean_leaf_hcap       (donc)
          cpatch%mmean_wood_energy     (recc) = cpatch%mmean_wood_energy     (recc)         &
                                              + cpatch%mmean_wood_energy     (donc)
          cpatch%mmean_wood_water      (recc) = cpatch%mmean_wood_water      (recc)         &
                                              + cpatch%mmean_wood_water      (donc)
+         cpatch%mmean_wood_water_int  (recc) = cpatch%mmean_wood_water_int  (recc)         &
+                                             + cpatch%mmean_wood_water_int  (donc)
          cpatch%mmean_wood_hcap       (recc) = cpatch%mmean_wood_hcap       (recc)         &
                                              + cpatch%mmean_wood_hcap       (donc)
          cpatch%mmean_water_supply    (recc) = cpatch%mmean_water_supply    (recc)         &
@@ -2715,12 +2775,16 @@ module fuse_fiss_utils
                                              + cpatch%qmean_leaf_energy   (:,donc)
          cpatch%qmean_leaf_water    (:,recc) = cpatch%qmean_leaf_water    (:,recc)         &
                                              + cpatch%qmean_leaf_water    (:,donc)
+         cpatch%qmean_leaf_water_int(:,recc) = cpatch%qmean_leaf_water_int(:,recc)         &
+                                             + cpatch%qmean_leaf_water_int(:,donc)
          cpatch%qmean_leaf_hcap     (:,recc) = cpatch%qmean_leaf_hcap     (:,recc)         &
                                              + cpatch%qmean_leaf_hcap     (:,donc)
          cpatch%qmean_wood_energy   (:,recc) = cpatch%qmean_wood_energy   (:,recc)         &
                                              + cpatch%qmean_wood_energy   (:,donc)
          cpatch%qmean_wood_water    (:,recc) = cpatch%qmean_wood_water    (:,recc)         &
                                              + cpatch%qmean_wood_water    (:,donc)
+         cpatch%qmean_wood_water_int(:,recc) = cpatch%qmean_wood_water_int(:,recc)         &
+                                             + cpatch%qmean_wood_water_int(:,donc)
          cpatch%qmean_wood_hcap     (:,recc) = cpatch%qmean_wood_hcap     (:,recc)         &
                                              + cpatch%qmean_wood_hcap     (:,donc)
          cpatch%qmean_water_supply  (:,recc) = cpatch%qmean_water_supply  (:,recc)         &

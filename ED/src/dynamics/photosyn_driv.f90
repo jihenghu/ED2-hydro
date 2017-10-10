@@ -18,6 +18,8 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
                              , photosyn_pathway   & ! intent(in)
                              , stoma_psi_b        & ! intent(in)
                              , stoma_psi_c        & ! intent(in)
+                             , leaf_psi_min       & ! intent(in)
+                             , TLP                & ! intent(in)
                              , leaf_turnover_rate ! ! intent(in)
    use soil_coms      , only : soil               & ! intent(in)
                              , slz                & ! intent(in)
@@ -95,6 +97,7 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
    real                                    :: llspan_tuco
    real                                    :: can_ssh
    integer, dimension(n_pft)               :: tuco_pft
+   real                                    :: gsw_factor
    !----- Locally saved variables. --------------------------------------------------------!
    real                          , save    :: dtlsm_o_frqsum
    logical                       , save    :: first_time = .true.
@@ -219,6 +222,14 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
          !---------------------------------------------------------------------------------!
       end do
       !------------------------------------------------------------------------------------!
+  case (3,4)
+      !------------------------------------------------------------------------------------!
+      !     The available water factor is not used.                                        !
+      !     Water stress is calculated using leaf water potential                          !
+      !------------------------------------------------------------------------------------!
+      do ico = 1,cpatch%ncohorts
+        avail_h2o_coh(ico) = 0.
+      end do
    end select
    !---------------------------------------------------------------------------------------!
 
@@ -319,7 +330,7 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
             !    Notice that the units that are per unit area are per m² of leaf, not the  !
             ! patch area.                                                                  !
             !------------------------------------------------------------------------------!
-            if (h2o_plant_lim == 4 .and. photosyn_pathway(ipft) == 3) then
+            if (h2o_plant_lim == 4) then
                call katul_lphys(              & !
                      csite%can_prss(ipa)         & ! Canopy air pressure              [       Pa]
                      , csite%can_rhos(ipa)         & ! Canopy air density               [    kg/m³]
@@ -333,6 +344,7 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
                      , leaf_aging_factor(ipft)     & ! Ageing parameter to scale VM     [      ---]
                      , llspan_tuco                 & ! Leaf life span                   [       yr]
                      , vm0_tuco                    & ! Average Vm function              [µmol/m²/s]
+                     , cpatch%vm0(tuco)            & ! Vm0 of the specific cohort       [µmol/m²/s]
                      , cpatch%leaf_gbw(tuco)       & ! Aerodyn. condct. of water vapour [  kg/m²/s]
                      , cpatch%psi_leaf(tuco)       & ! Leaf water potential             [        m]
                      , cpatch%last_gV (tuco)       & ! Rubisco-limited gsc last time    [µmol/m²/s]
@@ -439,7 +451,7 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
             ! patch area.                                                                  !
             !------------------------------------------------------------------------------!
 
-            if (h2o_plant_lim == 4 .and. photosyn_pathway(ipft) == 3) then
+            if (h2o_plant_lim == 4) then
                call katul_lphys(            & !
                      csite%can_prss(ipa)         & ! Canopy air pressure              [       Pa]
                      , csite%can_rhos(ipa)         & ! Canopy air density               [    kg/m³]
@@ -453,6 +465,7 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
                      , leaf_aging_factor(ipft)     & ! Ageing parameter to scale VM     [      ---]
                      , cpatch%llspan(ico)          & ! Leaf life span                   [       yr]
                      , cpatch%vm_bar(ico)          & ! Average Vm function              [µmol/m²/s]
+                     , cpatch%vm0(ico)             & ! Vm0 of the specific cohort       [µmol/m²/s]
                      , cpatch%leaf_gbw(ico)        & ! Aerodyn. condct. of water vapour [  kg/m²/s]
                      , cpatch%psi_leaf(ico)        & ! Leaf water potential             [        m]
                      , cpatch%last_gV (ico)        & ! Rubisco-limited gsc last time    [µmol/m²/s]
@@ -554,11 +567,19 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,lsl,ntext_soil              
                end if
 
             case (3,4)
-                if (h2o_plant_lim == 4 .and. photosyn_pathway(ipft) == 3) then
+                if (h2o_plant_lim == 4) then
                     cpatch%fsw(ico) = 1.0
                 else
                     cpatch%fsw(ico) = EXP(          &
                         -(cpatch%psi_leaf(ico) / stoma_psi_b(ipft)) ** stoma_psi_c(ipft))
+                    ! modify cuticular conductance
+                    ! so that the transpiration is 0 when psi_leaf is very low
+                    gsw_factor = max(0.0,min(1.0, &
+                                 (cpatch%psi_leaf(ico) - leaf_psi_min(ipft)) &
+                                 / (TLP(ipft) - leaf_psi_min(ipft))))
+                    !cpatch%gsw_open(ico) = cpatch%gsw_open(ico) * gsw_factor
+                    cpatch%gsw_closed(ico) = cpatch%gsw_closed(ico) * gsw_factor
+
                 endif
                 
 

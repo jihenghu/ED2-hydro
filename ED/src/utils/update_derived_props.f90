@@ -1247,9 +1247,11 @@ subroutine update_cohort_extensive_props(cpatch,aco,zco,mult)
       cpatch%root_respiration   (ico) = cpatch%root_respiration   (ico) * mult
       cpatch%monthly_dndt       (ico) = cpatch%monthly_dndt       (ico) * mult
       cpatch%leaf_water         (ico) = cpatch%leaf_water         (ico) * mult
+      cpatch%leaf_water_int     (ico) = cpatch%leaf_water_int     (ico) * mult
       cpatch%leaf_hcap          (ico) = cpatch%leaf_hcap          (ico) * mult
       cpatch%leaf_energy        (ico) = cpatch%leaf_energy        (ico) * mult
       cpatch%wood_water         (ico) = cpatch%wood_water         (ico) * mult
+      cpatch%wood_water_int     (ico) = cpatch%wood_water_int     (ico) * mult
       cpatch%wood_hcap          (ico) = cpatch%wood_hcap          (ico) * mult
       cpatch%wood_energy        (ico) = cpatch%wood_energy        (ico) * mult
       !----- Crown area shall not exceed 1. -----------------------------------------------!
@@ -1257,9 +1259,11 @@ subroutine update_cohort_extensive_props(cpatch,aco,zco,mult)
       !----- Fast-scale means. ------------------------------------------------------------!
       cpatch%fmean_leaf_energy   (ico) = cpatch%fmean_leaf_energy   (ico) * mult
       cpatch%fmean_leaf_water    (ico) = cpatch%fmean_leaf_water    (ico) * mult
+      cpatch%fmean_leaf_water_int(ico) = cpatch%fmean_leaf_water_int(ico) * mult
       cpatch%fmean_leaf_hcap     (ico) = cpatch%fmean_leaf_hcap     (ico) * mult
       cpatch%fmean_wood_energy   (ico) = cpatch%fmean_wood_energy   (ico) * mult
       cpatch%fmean_wood_water    (ico) = cpatch%fmean_wood_water    (ico) * mult
+      cpatch%fmean_wood_water_int(ico) = cpatch%fmean_wood_water_int(ico) * mult
       cpatch%fmean_wood_hcap     (ico) = cpatch%fmean_wood_hcap     (ico) * mult
       cpatch%fmean_water_supply  (ico) = cpatch%fmean_water_supply  (ico) * mult
       cpatch%fmean_par_l         (ico) = cpatch%fmean_par_l         (ico) * mult
@@ -1283,9 +1287,11 @@ subroutine update_cohort_extensive_props(cpatch,aco,zco,mult)
       if (writing_long) then
          cpatch%dmean_leaf_energy   (ico) = cpatch%dmean_leaf_energy   (ico) * mult
          cpatch%dmean_leaf_water    (ico) = cpatch%dmean_leaf_water    (ico) * mult
+         cpatch%dmean_leaf_water_int(ico) = cpatch%dmean_leaf_water_int(ico) * mult
          cpatch%dmean_leaf_hcap     (ico) = cpatch%dmean_leaf_hcap     (ico) * mult
          cpatch%dmean_wood_energy   (ico) = cpatch%dmean_wood_energy   (ico) * mult
          cpatch%dmean_wood_water    (ico) = cpatch%dmean_wood_water    (ico) * mult
+         cpatch%dmean_wood_water_int(ico) = cpatch%dmean_wood_water_int(ico) * mult
          cpatch%dmean_wood_hcap     (ico) = cpatch%dmean_wood_hcap     (ico) * mult
          cpatch%dmean_water_supply  (ico) = cpatch%dmean_water_supply  (ico) * mult
          cpatch%dmean_par_l         (ico) = cpatch%dmean_par_l         (ico) * mult
@@ -1311,9 +1317,11 @@ subroutine update_cohort_extensive_props(cpatch,aco,zco,mult)
          cpatch%mmean_lai           (ico) = cpatch%mmean_lai           (ico) * mult
          cpatch%mmean_leaf_energy   (ico) = cpatch%mmean_leaf_energy   (ico) * mult
          cpatch%mmean_leaf_water    (ico) = cpatch%mmean_leaf_water    (ico) * mult
+         cpatch%mmean_leaf_water_int(ico) = cpatch%mmean_leaf_water_int(ico) * mult
          cpatch%mmean_leaf_hcap     (ico) = cpatch%mmean_leaf_hcap     (ico) * mult
          cpatch%mmean_wood_energy   (ico) = cpatch%mmean_wood_energy   (ico) * mult
          cpatch%mmean_wood_water    (ico) = cpatch%mmean_wood_water    (ico) * mult
+         cpatch%mmean_wood_water_int(ico) = cpatch%mmean_wood_water_int(ico) * mult
          cpatch%mmean_wood_hcap     (ico) = cpatch%mmean_wood_hcap     (ico) * mult
          cpatch%mmean_water_supply  (ico) = cpatch%mmean_water_supply  (ico) * mult
          cpatch%mmean_par_l         (ico) = cpatch%mmean_par_l         (ico) * mult
@@ -1346,9 +1354,11 @@ subroutine update_cohort_extensive_props(cpatch,aco,zco,mult)
       if (writing_dcyc) then
          cpatch%qmean_leaf_energy   (:,ico) = cpatch%qmean_leaf_energy   (:,ico) * mult
          cpatch%qmean_leaf_water    (:,ico) = cpatch%qmean_leaf_water    (:,ico) * mult
+         cpatch%qmean_leaf_water_int(:,ico) = cpatch%qmean_leaf_water_int(:,ico) * mult
          cpatch%qmean_leaf_hcap     (:,ico) = cpatch%qmean_leaf_hcap     (:,ico) * mult
          cpatch%qmean_wood_energy   (:,ico) = cpatch%qmean_wood_energy   (:,ico) * mult
          cpatch%qmean_wood_water    (:,ico) = cpatch%qmean_wood_water    (:,ico) * mult
+         cpatch%qmean_wood_water_int(:,ico) = cpatch%qmean_wood_water_int(:,ico) * mult
          cpatch%qmean_wood_hcap     (:,ico) = cpatch%qmean_wood_hcap     (:,ico) * mult
          cpatch%qmean_water_supply  (:,ico) = cpatch%qmean_water_supply  (:,ico) * mult
          cpatch%qmean_par_l         (:,ico) = cpatch%qmean_par_l         (:,ico) * mult

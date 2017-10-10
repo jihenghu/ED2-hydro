@@ -22,11 +22,11 @@ Module farq_katul
 
 Contains
 
-  subroutine katul_lphys(can_prss,can_rhos,can_shv,can_co2,ipft,leaf_par,leaf_temp      &
-                        ,lint_shv,green_leaf_factor,leaf_aging_factor,llspan,vm_bar     &
-                        ,leaf_gbw,psi_leaf,last_gV,last_gJ,A_open,A_closed,gsw_open     &
-                        ,gsw_closed,lsfc_shv_open,lsfc_shv_closed,lsfc_co2_open         &
-                        ,lsfc_co2_closed,lint_co2_open,lint_co2_closed,leaf_resp        &
+  subroutine katul_lphys(can_prss,can_rhos,can_shv,can_co2,ipft,leaf_par,leaf_temp        &
+                        ,lint_shv,green_leaf_factor,leaf_aging_factor,llspan,vm_bar,vm0in &
+                        ,leaf_gbw,psi_leaf,last_gV,last_gJ,A_open,A_closed,gsw_open       &
+                        ,gsw_closed,lsfc_shv_open,lsfc_shv_closed,lsfc_co2_open           &
+                        ,lsfc_co2_closed,lint_co2_open,lint_co2_closed,leaf_resp          &
                         ,vmout,comppout,limit_flag)
       
     use rk4_coms       , only : tiny_offset              & ! intent(in)
@@ -38,9 +38,11 @@ Contains
                               , Rd0                      & ! intent(in)
                               , cuticular_cond           & ! intent(in)
                               , dark_respiration_factor  & ! intent(in)
+                              , quantum_efficiency       & ! intent(in)
                               , TLP                      & ! intent(in)
                               , stoma_lambda             & ! intent(in)
                               , stoma_beta               & ! intent(in)
+                              , leaf_psi_min             &
                               , photosyn_pathway         ! ! intent(in)
     use consts_coms    , only : t00                      & ! intent(in)
                               , mmdry1000                & ! intent(in)
@@ -72,6 +74,7 @@ Contains
       real(kind=4), intent(in)    :: leaf_aging_factor ! Ageing parameter       [      ---]
       real(kind=4), intent(in)    :: llspan            ! Leaf life span         [     mnth]
       real(kind=4), intent(in)    :: vm_bar            ! Average Vm function    [µmol/m²/s]
+      real(kind=4), intent(in)    :: vm0in             ! Vm0 of the leaf        [µmol/m²/s]
       real(kind=4), intent(in)    :: leaf_gbw          ! B.lyr. cnd. of H2O     [  kg/m²/s]
       real(kind=4), intent(in)    :: psi_leaf          ! leaf water potential   [        m]
       real(kind=4), intent(inout) :: last_gV           ! gs for last timestep   [  kg/m²/s]
@@ -146,12 +149,12 @@ Contains
       endif
 
       !------------------     Make sure only C3 plants go into this scheme
-      if (photosyn_pathway(ipft) == 4) then
-            write (unit=*,fmt='(80a)')         ('=',k=1,80)
-            write (unit=*,fmt='(a)')           'The optimization stomatal scheme for C4 plants are under development.....'
-            call fatal_error('Optimizing stomatal conductance for C4 plants','katul_lphys'               &
-                            &,'farq_katul.f90')
-      endif
+!      if (photosyn_pathway(ipft) == 4) then
+!            write (unit=*,fmt='(80a)')         ('=',k=1,80)
+!            write (unit=*,fmt='(a)')           'The optimization stomatal scheme for C4 plants are under development.....'
+!            call fatal_error('Optimizing stomatal conductance for C4 plants','katul_lphys'               &
+!                            &,'farq_katul.f90')
+!      endif
 
       !-------------------    Define some constants....
       leaf_o2           = o2_ref * 1000.                             ! convert to mmol/mol
@@ -169,7 +172,7 @@ Contains
          Vcmax15    = vm0_amp / (1.0 + (llspan/vm0_tran)**vm0_slope) + vm0_min
       case default
          !------ Other phenologies, no distinction on Vm0. --------------------------------!
-         Vcmax15    = Vm0(ipft)
+         Vcmax15    = vm0in
       end select
       !------------------------------------------------------------------------------------!
 
@@ -177,8 +180,10 @@ Contains
       ! correcting for water stress
   	  down_factor   = max(1e-6,min(1.0,1. / (1. + (psi_leaf / TLP(ipft)) ** 6.0)))
       Vcmax15       = Vcmax15 * down_factor
+
       cuticular_gsc = cuticular_cond(ipft) * 1.0e-6 * &
-                    max(0.0,min(1.0, (psi_leaf - (10. * -102.)) / ((10.-2.) * 102.)))
+                    max(0.0,min(1.0, (psi_leaf - leaf_psi_min(ipft)) &
+                    / (TLP(ipft) - leaf_psi_min(ipft))))
       ! when leaf water potential is too low, there can't be any water loss...
       ! mimicking the cease of soil evaporation near sh
 
@@ -234,8 +239,13 @@ Contains
       !------------------------------------------------------------------------------------!
 
       ! Solve the quadratic function for light-limited photosynthesis
-      Jrate = ((Jmax+0.385*par) -   &
-         sqrt((Jmax+0.385*par)**2-4.*0.7*0.385*Jmax*par))/1.4
+      if (photosyn_pathway(ipft) == 3) then
+          Jrate = ((Jmax+0.385*par) -   &
+                  sqrt((Jmax+0.385*par)**2-4.*0.7*0.385*Jmax*par))/1.4
+      elseif (photosyn_pathway(ipft) == 4) then
+          ! this is still under test
+          Jrate = quantum_efficiency(ipft) * par  
+      endif
 
       ! calcualte aerodynamic resistance
       if (leaf_gbw > 0.) then
@@ -543,8 +553,9 @@ Contains
 
   temp_T = Tleaf
   if (temp_T == 0.) temp_T = 0.1
-        T_coef = exp(Hv/(R * Tref) * (1 - Tref/temp_T)) / &
-                (1 + exp((Sv * temp_T - Hd)/ (R * temp_T)))
+
+  T_coef = exp(Hv/(R * Tref) * (1 - Tref/temp_T)) / &
+           (1 + exp((Sv * temp_T - Hd)/ (R * temp_T)))
 
   end subroutine temp_fun
 

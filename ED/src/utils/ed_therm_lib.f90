@@ -44,31 +44,48 @@ module ed_therm_lib
    !      energy storages on the land surface fluxes and radiative temperature.            !
    !      J. Geophys. Res., v. 112, doi: 10.1029/2006JD007425.                             !
    !---------------------------------------------------------------------------------------!
-   subroutine calc_veg_hcap(bleaf,bdead,bsapwooda,nplant,pft,leaf_hcap,wood_hcap)
+
+   !---------------------------------------------------------------------------------------!
+   ! Updates:  This function now considers the variations of leaf/wood water content.      !
+   !           Leaf/wood water content is tracked in the plant hydrodynamic calculations.  !
+   !           If palnt hydro dynamics is not tracked, leaf/wood water content will always !
+   !           stay at saturation.                                                         !
+   !                                                                                       !
+   !           This function includes all bdead and broot in the calculation now           !
+   !---------------------------------------------------------------------------------------!
+   subroutine calc_veg_hcap(bleaf,broot,bdead,bsapwooda,nplant,pft,leaf_rwc,wood_rwc,leaf_hcap,wood_hcap)
       use consts_coms          , only : cliq                ! ! intent(in)
       use pft_coms             , only : c_grn_leaf_dry      & ! intent(in)
                                       , wat_dry_ratio_grn   & ! intent(in)
                                       , c_ngrn_biom_dry     & ! intent(in)
                                       , wat_dry_ratio_ngrn  & ! intent(in)
+                                      , xylem_fraction      & ! intent(in)
+                                      , wood_rwc_min        & ! intent(in)
                                       , delta_c             & ! intent(in)
                                       , agf_bs              & ! intent(in)
                                       , C2B                 & ! intent(in)
                                       , brf_wd              ! ! intent(in)
 
       use rk4_coms             , only : ibranch_thermo      ! ! intent(in)
+      use physiology_coms      , only : track_plant_hydro   ! ! intent(in)
       implicit none
       !----- Arguments --------------------------------------------------------------------!
       real    , intent(in)    :: bleaf         ! Biomass of leaves              [kgC/plant]
+      real    , intent(in)    :: broot         ! Biomass of fine root           [kgC/plant]
       real    , intent(in)    :: bdead         ! Biomass of structural wood     [kgC/plant]
       real    , intent(in)    :: bsapwooda     ! Biomass of above ground sapwood[kgC/plant]
       real    , intent(in)    :: nplant        ! Number of plants               [ plant/m2]
       integer , intent(in)    :: pft           ! Plant functional type          [     ----]
+      real    , intent(in)    :: leaf_rwc      ! Leaf relative water content    [     ----]
+      real    , intent(in)    :: wood_rwc      ! Wood relative water content    [     ----]
       real    , intent(out)   :: leaf_hcap     ! Leaf heat capacity             [   J/m2/K]
       real    , intent(out)   :: wood_hcap     ! Wood heat capacity             [   J/m2/K]
       !----- Local variables --------------------------------------------------------------!
       real                    :: bwood         ! Wood biomass                   [kgC/plant]
       real                    :: spheat_leaf   ! Leaf specific heat             [   J/kg/K]
       real                    :: spheat_wood   ! Wood specific heat             [   J/kg/K]
+      real                    :: spheat_heartwood   ! heartwood specific heat   [   J/kg/K]
+      real                    :: bheartwood
       !------------------------------------------------------------------------------------!
 
       !------------------------------------------------------------------------------------!
@@ -81,21 +98,52 @@ module ed_therm_lib
          bwood       = 0.
       case default
          !----- Find branch/twig specific heat and biomass. -------------------------------!
-         spheat_wood = (c_ngrn_biom_dry(pft) + wat_dry_ratio_ngrn(pft) * cliq)             &
-                     / (1. + wat_dry_ratio_ngrn(pft)) + delta_c(pft)
-         bwood       = brf_wd(pft) * (bsapwooda + bdead*agf_bs(pft))
+         select case (track_plant_hydro)
+         case (0)
+             spheat_wood = (c_ngrn_biom_dry(pft) + wat_dry_ratio_ngrn(pft) * cliq)         &
+                         / (1. + wat_dry_ratio_ngrn(pft)) + delta_c(pft)
+             bwood       = brf_wd(pft) * (bsapwooda + bdead*agf_bs(pft))
+             spheat_heartwood = 0.
+         case (1)
+             spheat_wood = (c_ngrn_biom_dry(pft)                                           &
+                           +wat_dry_ratio_ngrn(pft) * wood_rwc * cliq)                     &
+                         / (1. + wat_dry_ratio_ngrn(pft) * wood_rwc) + delta_c(pft)
+             spheat_heartwood = (c_ngrn_biom_dry(pft)                                           &
+                           +wat_dry_ratio_ngrn(pft) * wood_rwc_min(pft) * cliq)                 &
+                         / (1. + wat_dry_ratio_ngrn(pft) * wood_rwc_min(pft)) + delta_c(pft)
+             bwood       = broot + bdead * xylem_fraction(pft)
+             bheartwood  = bdead * (1. - xylem_fraction(pft))
+         end select
       end select
 
       !----- Find the leaf specific heat. -------------------------------------------------!
-      spheat_leaf = (c_grn_leaf_dry(pft) + wat_dry_ratio_grn(pft) * cliq)                  &
+      select case (track_plant_hydro)
+      case (0)
+          spheat_leaf = (c_grn_leaf_dry(pft) + wat_dry_ratio_grn(pft) * cliq)              &
                   / (1. + wat_dry_ratio_grn(pft))
+      case (1)
+          spheat_leaf = (c_grn_leaf_dry(pft)                                               &
+                        + wat_dry_ratio_grn(pft) * leaf_rwc * cliq)                        &
+                  / (1. + wat_dry_ratio_grn(pft) * leaf_rwc)
+
+      end select
 
       !------------------------------------------------------------------------------------!
       !     The heat capacity is specific heat times the plant density times the leaf/wood !
       ! biomass.                                                                           !
       !------------------------------------------------------------------------------------!
-      leaf_hcap = nplant * C2B * bleaf * spheat_leaf * (1. + wat_dry_ratio_grn (pft))
-      wood_hcap = nplant * C2B * bwood * spheat_wood * (1. + wat_dry_ratio_ngrn(pft))
+      select case (track_plant_hydro)
+      case (0)
+          leaf_hcap = nplant * C2B * bleaf * spheat_leaf * (1. + wat_dry_ratio_grn (pft))
+          wood_hcap = nplant * C2B * bwood * spheat_wood * (1. + wat_dry_ratio_ngrn(pft))
+      case (1)
+          leaf_hcap = nplant * C2B * bleaf * spheat_leaf                                   &
+                    * (1. + wat_dry_ratio_grn (pft) * leaf_rwc)
+          wood_hcap = nplant * C2B * bwood * spheat_wood                                   &
+                    * (1. + wat_dry_ratio_ngrn(pft) * wood_rwc)                            &
+                    + nplant * C2B * bheartwood * spheat_heartwood                         &
+                    * (1. + wat_dry_ratio_ngrn(pft) * wood_rwc_min(pft))
+      end select
       !------------------------------------------------------------------------------------!
 
       return

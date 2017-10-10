@@ -219,10 +219,10 @@ module pft_coms
    !---- Exponent to calculate stem cavitation effect [--]
    real, dimension(n_pft) :: Ks_stem_b
 
-   !---- Leaf water capacitance     [kg H2O/m2/m]
+   !---- Leaf water capacitance     [kg H2O/kg biomass/m]
    real, dimension(n_pft) :: Cap_leaf
 
-   !---- Stem water capacitance     [kg H2O/m3/m]
+   !---- Stem water capacitance     [kg H2O/kg biomass/m]
    real, dimension(n_pft) :: Cap_stem
 
    !---- Fraction of water conducting area/xylem over total tree cross-sectional area
@@ -263,6 +263,21 @@ module pft_coms
    real, dimension(n_pft) :: stoma_psi_b  
    !---- Factor to modify stomatal conductance under water stress [unitless]
    real, dimension(n_pft) :: stoma_psi_c  
+
+   !---- minimum relative water content for leaf tissue [unitless]
+   real, dimension(n_pft) :: leaf_rwc_min
+   !---- minimum relative water content for wood tissue [unitless]
+   real, dimension(n_pft) :: wood_rwc_min
+   !---- elastic modulus of leaf cell wall [MPa]
+   real, dimension(n_pft) :: epsilon_leaf
+   !---- elastic modulus of wood cell wall [MPa]
+   real, dimension(n_pft) :: epsilon_wood
+   !---- leaf osmotic water potential at full hydration [MPa]
+   real, dimension(n_pft) :: psi_osmotic_leaf
+   !---- wood osmotic water potential at full hydration [MPa]
+   real, dimension(n_pft) :: psi_osmotic_wood
+   !---- Minimum leaf water potential allowed in the model  [MPa]
+   real, dimension(n_pft) :: leaf_psi_min
 
 
 

@@ -60,6 +60,7 @@ subroutine reproduction(cgrid, month)
    use phenology_aux      , only : pheninit_balive_bstorage ! ! intent(in)
    use budget_utils       , only : update_budget            ! ! sub-routine
    use therm_lib          , only : cmtl2uext                ! ! function
+   use plant_hydro_dyn    , only : update_veg_water_int   ! ! function  
    implicit none
    !----- Arguments -----------------------------------------------------------------------!
    type(edtype)     , target     :: cgrid
@@ -429,6 +430,11 @@ subroutine reproduction(cgrid, month)
                      cpatch%new_recruit_flag(ico) = 1
                      !---------------------------------------------------------------------!
 
+                     !---------------------------------------------------------------------------!
+                     ! XXT. We need to update vegetation internal water after biomass change     !
+                     !---------------------------------------------------------------------------!
+                     call update_veg_water_int(cpatch,ico)
+                     !---------------------------------------------------------------------------!
 
                      !---------------------------------------------------------------------!
                      !    Obtain derived properties.                                       !
@@ -440,9 +446,10 @@ subroutine reproduction(cgrid, month)
                                       ,cpatch%sla(ico),cpatch%lai(ico),cpatch%wai(ico)     &
                                       ,cpatch%crown_area(ico),cpatch%bsapwooda(ico))
                      !----- Find heat capacity and vegetation internal energy. ------------!
-                     call calc_veg_hcap(cpatch%bleaf(ico),cpatch%bdead(ico)                &
-                                       ,cpatch%bsapwooda(ico),cpatch%nplant(ico)           &
-                                       ,cpatch%pft(ico)                                    &
+                     call calc_veg_hcap(cpatch%bleaf(ico),cpatch%broot(ico)                &
+                                       ,cpatch%bdead(ico),cpatch%bsapwooda(ico)            &
+                                       ,cpatch%nplant(ico),cpatch%pft(ico)                 &
+                                       ,cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)          &
                                        ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico))
 
                      cpatch%leaf_energy(ico) = cmtl2uext(cpatch%leaf_hcap (ico)            &
@@ -655,6 +662,11 @@ subroutine reproduction(cgrid, month)
                                                  * bdead_plant
                      !---------------------------------------------------------------------!
 
+                     !---------------------------------------------------------------------------!
+                     ! XXT. We need to update vegetation internal water after biomass change     !
+                     !---------------------------------------------------------------------------!
+                     call update_veg_water_int(cpatch,ico)
+                     !---------------------------------------------------------------------------!
 
                      !---------------------------------------------------------------------!
                      !     Update the derived properties since the population may have     !
@@ -668,9 +680,10 @@ subroutine reproduction(cgrid, month)
                                       ,cpatch%lai(ico),cpatch%wai(ico)                     &
                                       ,cpatch%crown_area(ico),cpatch%bsapwooda(ico))
                      !----- Find heat capacity and vegetation internal energy. ------------!
-                     call calc_veg_hcap(cpatch%bleaf(ico),cpatch%bdead(ico)                &
-                                       ,cpatch%bsapwooda(ico),cpatch%nplant(ico)           &
-                                       ,cpatch%pft(ico)                                    &
+                     call calc_veg_hcap(cpatch%bleaf(ico),cpatch%broot(ico)                &
+                                       ,cpatch%bdead(ico),cpatch%bsapwooda(ico)            &
+                                       ,cpatch%nplant(ico),cpatch%pft(ico)                 &
+                                       ,cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)          &
                                        ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico))
                      cpatch%leaf_energy(ico) = cmtl2uext(cpatch%leaf_hcap (ico)            &
                                                         ,cpatch%leaf_water(ico)            &

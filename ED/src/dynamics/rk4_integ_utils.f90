@@ -412,8 +412,10 @@ subroutine inc_rk4_patch(rkp, inc, fac, cpatch)
 
    do ico = 1,cpatch%ncohorts
       rkp%leaf_water (ico) = rkp%leaf_water (ico) + fac * inc%leaf_water (ico)
+      rkp%leaf_rwc   (ico) = rkp%leaf_rwc   (ico) + fac * inc%leaf_rwc   (ico)
       rkp%leaf_energy(ico) = rkp%leaf_energy(ico) + fac * inc%leaf_energy(ico)
       rkp%wood_water (ico) = rkp%wood_water (ico) + fac * inc%wood_water (ico)
+      rkp%wood_rwc   (ico) = rkp%wood_rwc   (ico) + fac * inc%wood_rwc   (ico)
       rkp%wood_energy(ico) = rkp%wood_energy(ico) + fac * inc%wood_energy(ico)
       rkp%veg_water (ico)  = rkp%veg_water  (ico) + fac * inc%veg_water  (ico)
       rkp%veg_energy(ico)  = rkp%veg_energy (ico) + fac * inc%veg_energy (ico)
@@ -751,6 +753,7 @@ subroutine get_yscal(y,dy,htry,yscal,cpatch)
             yscal%veg_water(ico)  = max( abs(y%veg_water(ico))                             &
                                        + abs(dy%veg_water(ico)  * htry)                    &
                                        , rk4leaf_drywhc * y%tai(ico))  
+            
          else
             yscal%veg_water(ico)  = huge_offset
             yscal%veg_energy(ico) = huge_offset
@@ -766,6 +769,8 @@ subroutine get_yscal(y,dy,htry,yscal,cpatch)
          yscal%wood_water(ico)  = huge_offset
          yscal%wood_energy(ico) = huge_offset
          yscal%wood_temp(ico)   = huge_offset
+         yscal%leaf_rwc(ico)    = huge_offset
+         yscal%wood_rwc(ico)    = huge_offset
          !---------------------------------------------------------------------------------!
       end do
       !------------------------------------------------------------------------------------!
@@ -798,6 +803,7 @@ subroutine get_yscal(y,dy,htry,yscal,cpatch)
          end if
          !---------------------------------------------------------------------------------!
 
+         yscal%leaf_rwc(ico)  = huge_offset
 
          !----- Find the scale only if we must solve wood. --------------------------------!
          if (y%wood_resolvable(ico)) then
@@ -814,6 +820,7 @@ subroutine get_yscal(y,dy,htry,yscal,cpatch)
          end if
          !---------------------------------------------------------------------------------!
 
+         yscal%wood_rwc(ico)  = huge_offset
 
 
          !----- No need to scale veg correctly, let's make it always acceptable. ----------!

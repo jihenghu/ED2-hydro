@@ -9,6 +9,10 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    use allometry     , only : dbh2krdepth         ! ! function
    use pft_coms      , only : phenology           & ! intent(in)
                             , leaf_turnover_rate  & ! intent(in)
+                            , wat_dry_ratio_grn   & ! intent(in)
+                            , wat_dry_ratio_ngrn  & ! intent(in)
+                            , Cap_stem            & ! intent(in)
+                            , Cap_leaf            & ! intent(in)
                             , Vm0                 & ! intent(in)
                             , sla                 ! ! intent(in)
    use ed_misc_coms  , only : writing_long        & ! intent(in)
@@ -19,6 +23,8 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
                             , vm0_amp             & ! intent(in)
                             , vm0_min             & ! intent(in)
                             , llspan_inf          ! ! intent(in)
+   use physiology_coms, only : h2o_plant_lim       ! ! intent(in)
+   use plant_hydro_dyn, only : update_veg_water_int   ! ! function  
    implicit none
    !----- Arguments. ----------------------------------------------------------------------!
    type(patchtype), target     :: cpatch     ! Current patch
@@ -26,6 +32,8 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    integer        , intent(in) :: lsl        ! Lowest soil level layer
    !---------------------------------------------------------------------------------------!
 
+   !----- Local variables -----------------------------------------------------------------!
+   integer                     :: ipft
 
    !---------------------------------------------------------------------------------------!
    !    Set all cohorts to not have enough leaf area index or wood area index to be        !
@@ -65,16 +73,36 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%vm_bar(ico) = Vm0(cpatch%pft(ico))
    end select
    cpatch%sla(ico) = sla(cpatch%pft(ico))
+   cpatch%vm0(ico) = Vm0(cpatch%pft(ico))
    !---------------------------------------------------------------------------------------!
 
    !---------------------------------------------------------------------------------------!
    !     Start the leaf/stem wate rpotential with -10. m [-0.1 MPa]. This is a reasonable  !
    ! predawn value.  Water fluxes are intiated as 0.                                       !
    !---------------------------------------------------------------------------------------!
-   cpatch%psi_leaf      (ico) = -10.
-   cpatch%psi_stem      (ico) = -10.
+   select case (h2o_plant_lim)
+   case (0,1,2)
+       ! no plant hydraulics
+       cpatch%psi_leaf(ico) = 0.
+       cpatch%psi_stem(ico) = 0.
+   case (3,4)
+       ! with plant hydraulics
+       cpatch%psi_leaf      (ico) = -10.
+       cpatch%psi_stem      (ico) = -10.
+   end select
+    ! calculate rwc and water_int based on psi
+    ! assume constant capacitance
+   ipft = cpatch%pft(ico)
+   cpatch%leaf_rwc(ico) = 1. + cpatch%psi_leaf(ico) * Cap_leaf(ipft) &
+                           / wat_dry_ratio_grn(ipft)
+   cpatch%wood_rwc(ico) = 1. + cpatch%psi_stem(ico) * Cap_stem(ipft) &
+                           / wat_dry_ratio_ngrn(ipft)
+   ! update internal water
+   call update_veg_water_int(cpatch,ico)
+
    cpatch%water_flux_rl (ico) = 0.
    cpatch%water_flux_sr (ico) = 0.
+   cpatch%water_flux_sr_layer (:,ico) = 0.
    cpatch%high_psi_days (ico) = 0
    cpatch%low_psi_days  (ico) = 0
    cpatch%last_gJ       (ico) = 0.
@@ -261,6 +289,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    cpatch%fmean_plresp            (ico) = 0.0
    cpatch%fmean_leaf_energy       (ico) = 0.0
    cpatch%fmean_leaf_water        (ico) = 0.0
+   cpatch%fmean_leaf_water_int    (ico) = 0.0
    cpatch%fmean_leaf_hcap         (ico) = 0.0
    cpatch%fmean_leaf_vpdef        (ico) = 0.0
    cpatch%fmean_leaf_temp         (ico) = 0.0
@@ -269,6 +298,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    cpatch%fmean_leaf_gbw          (ico) = 0.0
    cpatch%fmean_wood_energy       (ico) = 0.0
    cpatch%fmean_wood_water        (ico) = 0.0
+   cpatch%fmean_wood_water_int    (ico) = 0.0
    cpatch%fmean_wood_hcap         (ico) = 0.0
    cpatch%fmean_wood_temp         (ico) = 0.0
    cpatch%fmean_wood_fliq         (ico) = 0.0
@@ -314,8 +344,11 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    !-------------    Plant Hydrodynamics    -----------------------------------------------!
    cpatch%fmean_psi_leaf        (ico) = 0.0
    cpatch%fmean_psi_stem        (ico) = 0.0
+   cpatch%fmean_leaf_rwc        (ico) = 0.0
+   cpatch%fmean_wood_rwc        (ico) = 0.0
    cpatch%fmean_water_flux_rl   (ico) = 0.0
    cpatch%fmean_water_flux_sr   (ico) = 0.0
+   cpatch%fmean_water_flux_sr_layer   (:,ico) = 0.0
    cpatch%dmax_psi_leaf         (ico) = 0.0
    cpatch%dmin_psi_leaf         (ico) = 0.0
    cpatch%dmax_psi_stem         (ico) = 0.0
@@ -354,6 +387,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%dmean_plresp            (ico) = 0.0
       cpatch%dmean_leaf_energy       (ico) = 0.0
       cpatch%dmean_leaf_water        (ico) = 0.0
+      cpatch%dmean_leaf_water_int    (ico) = 0.0
       cpatch%dmean_leaf_hcap         (ico) = 0.0
       cpatch%dmean_leaf_vpdef        (ico) = 0.0
       cpatch%dmean_leaf_temp         (ico) = 0.0
@@ -362,6 +396,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%dmean_leaf_gbw          (ico) = 0.0
       cpatch%dmean_wood_energy       (ico) = 0.0
       cpatch%dmean_wood_water        (ico) = 0.0
+      cpatch%dmean_wood_water_int    (ico) = 0.0
       cpatch%dmean_wood_hcap         (ico) = 0.0
       cpatch%dmean_wood_temp         (ico) = 0.0
       cpatch%dmean_wood_fliq         (ico) = 0.0
@@ -427,6 +462,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%mmean_plresp              (ico) = 0.0
       cpatch%mmean_leaf_energy         (ico) = 0.0
       cpatch%mmean_leaf_water          (ico) = 0.0
+      cpatch%mmean_leaf_water_int      (ico) = 0.0
       cpatch%mmean_leaf_hcap           (ico) = 0.0
       cpatch%mmean_leaf_vpdef          (ico) = 0.0
       cpatch%mmean_leaf_temp           (ico) = 0.0
@@ -435,6 +471,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%mmean_leaf_gbw            (ico) = 0.0
       cpatch%mmean_wood_energy         (ico) = 0.0
       cpatch%mmean_wood_water          (ico) = 0.0
+      cpatch%mmean_wood_water_int      (ico) = 0.0
       cpatch%mmean_wood_hcap           (ico) = 0.0
       cpatch%mmean_wood_temp           (ico) = 0.0
       cpatch%mmean_wood_fliq           (ico) = 0.0
@@ -530,6 +567,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%qmean_plresp            (:,ico) = 0.0
       cpatch%qmean_leaf_energy       (:,ico) = 0.0
       cpatch%qmean_leaf_water        (:,ico) = 0.0
+      cpatch%qmean_leaf_water_int    (:,ico) = 0.0
       cpatch%qmean_leaf_hcap         (:,ico) = 0.0
       cpatch%qmean_leaf_vpdef        (:,ico) = 0.0
       cpatch%qmean_leaf_temp         (:,ico) = 0.0
@@ -538,6 +576,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%qmean_leaf_gbw          (:,ico) = 0.0
       cpatch%qmean_wood_energy       (:,ico) = 0.0
       cpatch%qmean_wood_water        (:,ico) = 0.0
+      cpatch%qmean_wood_water_int    (:,ico) = 0.0
       cpatch%qmean_wood_hcap         (:,ico) = 0.0
       cpatch%qmean_wood_temp         (:,ico) = 0.0
       cpatch%qmean_wood_fliq         (:,ico) = 0.0
@@ -1517,6 +1556,7 @@ subroutine init_ed_poly_vars(cgrid)
       cgrid%fmean_plresp               (ipy) = 0.0
       cgrid%fmean_leaf_energy          (ipy) = 0.0
       cgrid%fmean_leaf_water           (ipy) = 0.0
+      cgrid%fmean_leaf_water_int       (ipy) = 0.0
       cgrid%fmean_leaf_hcap            (ipy) = 0.0
       cgrid%fmean_leaf_vpdef           (ipy) = 0.0
       cgrid%fmean_leaf_temp            (ipy) = 0.0
@@ -1525,6 +1565,7 @@ subroutine init_ed_poly_vars(cgrid)
       cgrid%fmean_leaf_gbw             (ipy) = 0.0
       cgrid%fmean_wood_energy          (ipy) = 0.0
       cgrid%fmean_wood_water           (ipy) = 0.0
+      cgrid%fmean_wood_water_int       (ipy) = 0.0
       cgrid%fmean_wood_hcap            (ipy) = 0.0
       cgrid%fmean_wood_temp            (ipy) = 0.0
       cgrid%fmean_wood_fliq            (ipy) = 0.0
@@ -1673,6 +1714,7 @@ subroutine init_ed_poly_vars(cgrid)
          cgrid%dmean_plresp               (ipy) = 0.0
          cgrid%dmean_leaf_energy          (ipy) = 0.0
          cgrid%dmean_leaf_water           (ipy) = 0.0
+         cgrid%dmean_leaf_water_int       (ipy) = 0.0
          cgrid%dmean_leaf_hcap            (ipy) = 0.0
          cgrid%dmean_leaf_vpdef           (ipy) = 0.0
          cgrid%dmean_leaf_temp            (ipy) = 0.0
@@ -1681,6 +1723,7 @@ subroutine init_ed_poly_vars(cgrid)
          cgrid%dmean_leaf_gbw             (ipy) = 0.0
          cgrid%dmean_wood_energy          (ipy) = 0.0
          cgrid%dmean_wood_water           (ipy) = 0.0
+         cgrid%dmean_wood_water_int       (ipy) = 0.0
          cgrid%dmean_wood_hcap            (ipy) = 0.0
          cgrid%dmean_wood_temp            (ipy) = 0.0
          cgrid%dmean_wood_fliq            (ipy) = 0.0
@@ -1812,6 +1855,7 @@ subroutine init_ed_poly_vars(cgrid)
          cgrid%mmean_plresp               (ipy) = 0.0
          cgrid%mmean_leaf_energy          (ipy) = 0.0
          cgrid%mmean_leaf_water           (ipy) = 0.0
+         cgrid%mmean_leaf_water_int       (ipy) = 0.0
          cgrid%mmean_leaf_hcap            (ipy) = 0.0
          cgrid%mmean_leaf_vpdef           (ipy) = 0.0
          cgrid%mmean_leaf_temp            (ipy) = 0.0
@@ -1820,6 +1864,7 @@ subroutine init_ed_poly_vars(cgrid)
          cgrid%mmean_leaf_gbw             (ipy) = 0.0
          cgrid%mmean_wood_energy          (ipy) = 0.0
          cgrid%mmean_wood_water           (ipy) = 0.0
+         cgrid%mmean_wood_water_int       (ipy) = 0.0
          cgrid%mmean_wood_hcap            (ipy) = 0.0
          cgrid%mmean_wood_temp            (ipy) = 0.0
          cgrid%mmean_wood_fliq            (ipy) = 0.0
@@ -2005,6 +2050,7 @@ subroutine init_ed_poly_vars(cgrid)
          cgrid%qmean_plresp             (:,ipy) = 0.0
          cgrid%qmean_leaf_energy        (:,ipy) = 0.0
          cgrid%qmean_leaf_water         (:,ipy) = 0.0
+         cgrid%qmean_leaf_water_int     (:,ipy) = 0.0
          cgrid%qmean_leaf_hcap          (:,ipy) = 0.0
          cgrid%qmean_leaf_vpdef         (:,ipy) = 0.0
          cgrid%qmean_leaf_temp          (:,ipy) = 0.0
@@ -2013,6 +2059,7 @@ subroutine init_ed_poly_vars(cgrid)
          cgrid%qmean_leaf_gbw           (:,ipy) = 0.0
          cgrid%qmean_wood_energy        (:,ipy) = 0.0
          cgrid%qmean_wood_water         (:,ipy) = 0.0
+         cgrid%qmean_wood_water_int     (:,ipy) = 0.0
          cgrid%qmean_wood_hcap          (:,ipy) = 0.0
          cgrid%qmean_wood_temp          (:,ipy) = 0.0
          cgrid%qmean_wood_fliq          (:,ipy) = 0.0

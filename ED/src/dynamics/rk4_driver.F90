@@ -35,6 +35,8 @@ module rk4_driver
       use therm_lib              , only : tq2enthalpy          ! ! function
       use budget_utils           , only : update_budget        & ! function
                                         , compute_budget       ! ! function
+      use physiology_coms        , only : track_plant_hydro    !   intent(in)
+      use plant_hydro_dyn , only : update_plant_hydrodynamics !subroutine 
       !$ use omp_lib
       implicit none
 
@@ -231,6 +233,7 @@ module rk4_driver
                !---------------------------------------------------------------------------!
 
 
+
                !----- Compute root and heterotrophic respiration. -------------------------!
                call soil_respiration(csite,ipa,nzg,cpoly%ntext_soil(:,isi))
                !---------------------------------------------------------------------------!
@@ -252,6 +255,15 @@ module rk4_driver
                                        ,wcurr_loss2drainage,ecurr_loss2drainage            &
                                        ,wcurr_loss2runoff,ecurr_loss2runoff,nsteps)
                !---------------------------------------------------------------------------!
+
+               ! after the integration
+               !----- Calculate plant hydrodynamics if it is tracked          -------------!
+               !----- Potentially integrated into integration scheme later    -------------!
+               if (track_plant_hydro == 1) then
+                  call update_plant_hydrodynamics(csite,ipa,cpoly%ntext_soil(:,isi))
+               endif
+               !---------------------------------------------------------------------------!
+
 
 
                !----- Add the number of steps into the step counter. ----------------------!
@@ -323,8 +335,6 @@ module rk4_driver
                                  , tend                 & ! intent(inout)
                                  , dtrk4                & ! intent(inout)
                                  , dtrk4i               ! ! intent(inout)
-      use plant_hydro_dyn , only : update_plant_hydrodynamics !subroutine 
-      use physiology_coms , only : track_plant_hydro    !   intent(in)
  
       implicit none
       !----- Arguments --------------------------------------------------------------------!
@@ -363,6 +373,7 @@ module rk4_driver
       initp%cpwp = 0.d0
       initp%wpwp = 0.d0
 
+
       !----- Go into the ODE integrator. --------------------------------------------------!
 
       call odeint(hbeg,csite,ipa,isi,nsteps)
@@ -377,11 +388,6 @@ module rk4_driver
       initp%cpwp = initp%can_rhos * initp%cpwp * dtrk4i
       initp%wpwp = initp%can_rhos * initp%wpwp * dtrk4i
       
-      if (track_plant_hydro == 1) then
-          ! track plant hydrodynamics
-          call update_plant_hydrodynamics(csite,initp,ipa,tend-tbeg)
-      endif
-
       
       !------------------------------------------------------------------------------------!
       ! Move the state variables from the integrated patch to the model patch.             !
@@ -438,6 +444,7 @@ module rk4_driver
                                       , uextcm2tl            & ! subroutine
                                       , cmtl2uext            & ! subroutine
                                       , qslif                ! ! function
+      use ed_therm_lib         , only : calc_veg_hcap        ! ! subroutine
       use phenology_coms       , only : spot_phen            ! ! intent(in)
       use allometry            , only : h2crownbh            ! ! function
       use disturb_coms         , only : include_fire         & ! intent(in)
@@ -778,6 +785,17 @@ module rk4_driver
       ! snow.                                                                              !
       !------------------------------------------------------------------------------------!
       do ico = 1,cpatch%ncohorts
+          ! copy relative water content in all cases
+          cpatch%leaf_rwc   (ico) = sngloff(initp%leaf_rwc   (ico) , tiny_offset)
+          cpatch%wood_rwc   (ico) = sngloff(initp%wood_rwc   (ico) , tiny_offset)
+          ! update leaf and wood heat capacity
+          call calc_veg_hcap(cpatch%bleaf(ico),cpatch%broot(ico)                      &
+                             ,cpatch%bdead(ico),cpatch%bsapwooda(ico)                  &
+                             ,cpatch%nplant(ico),cpatch%pft(ico)                       &
+                             ,cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)                &
+                             ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico) )
+
+
          select case (ibranch_thermo)
          case (1)
             !------------------------------------------------------------------------------!
@@ -1040,7 +1058,8 @@ module rk4_driver
                                                   , cpatch%wood_water(ico)                 &
                                                   , cpatch%wood_temp (ico)                 &
                                                   , cpatch%wood_fliq (ico)                 )
-               !---------------------------------------------------------------------------!
+
+              !---------------------------------------------------------------------------!
 
 
 
@@ -1205,11 +1224,12 @@ module rk4_driver
                else
                   cpatch%leaf_fliq(ico)   = 0.0
                end if
-               cpatch%leaf_water(ico)  = 0. 
+               cpatch%leaf_water(ico)  = 0.
                cpatch%leaf_energy(ico) = cmtl2uext( cpatch%leaf_hcap (ico)                 &
                                                   , cpatch%leaf_water(ico)                 &
                                                   , cpatch%leaf_temp (ico)                 &
                                                   , cpatch%leaf_fliq (ico)                 )
+ 
                !---------------------------------------------------------------------------!
                !     The intercellular specific humidity is always assumed to be at        !
                ! saturation for a given temperature.  Find the saturation mixing ratio,    !

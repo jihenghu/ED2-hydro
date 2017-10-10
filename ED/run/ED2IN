@@ -922,10 +922,25 @@ $ED_NL
    !                      where psi is the matric potentital at layer k, z is the layer    !
    !                      depth, H it the crown height and psi_fc and psi_wp are the       !
    !                      matric potentials at wilting point and field capacity.           !
+   !                  3.  Stomatal closure depends on leaf water potential and turgor      !
+   !                      loss point (TLP) based on T. Powell's work                       !
+   !                  4.  Down-regulate photosynthetic potentials using leaf water         !
+   !                      potential and turgor loss point (TLP) under Katul's              !
+   !                      optimization stomatal framework. Details see Xu et al. 2016      !
+   !                      New Phytologist.                                                 !
+   ! Note: 3,4 can not be used with bdf2 solver                                            !
    !---------------------------------------------------------------------------------------!
-   NL%H2O_PLANT_LIM   = 1
+   NL%H2O_PLANT_LIM   = 4
    !---------------------------------------------------------------------------------------!
 
+
+   !---------------------------------------------------------------------------------------!
+   !  TRACK_PLANT_HYDRO -- This flag determins whether plant hydrodynamics is tracked      !
+   !                       0 -- Not tracked                                                !
+   !                       1 -- Tracked                                                    !
+   !---------------------------------------------------------------------------------------!
+   NL%TRACK_PLANT_HYDRO = 1
+   !---------------------------------------------------------------------------------------!
 
 
    !---------------------------------------------------------------------------------------!

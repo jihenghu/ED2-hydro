@@ -292,6 +292,7 @@ subroutine event_harvest(agb_frac8,bgb_frac8,fol_frac8,stor_frac8)
   use pft_coms, only:sla,qsw,q,hgt_min, agf_bs, is_grass
   use disturbance_utils,only: plant_patch
   use ed_therm_lib, only: calc_veg_hcap,update_veg_energy_cweh
+  use plant_hydro_dyn, only : update_veg_water_int   ! ! function  
   use fuse_fiss_utils, only: terminate_cohorts
   use allometry, only : bd2dbh, dbh2h, bl2dbh, bl2h, h2dbh, area_indices, ed_biomass
   use consts_coms, only : pio4
@@ -414,6 +415,13 @@ subroutine event_harvest(agb_frac8,bgb_frac8,fol_frac8,stor_frac8)
                  cpatch%basarea(ico) = pio4 * cpatch%dbh(ico) * cpatch%dbh(ico)            
                  cpatch%agb(ico)     = ed_biomass(cpatch%bdead(ico),cpatch%bleaf(ico)      &
                                                  ,cpatch%bsapwooda(ico),cpatch%pft(ico))   
+               
+                 !---------------------------------------------------------------------------!
+                 ! XXT. We need to update vegetation internal water after biomass change     !
+                 !---------------------------------------------------------------------------!
+                 call update_veg_water_int(cpatch,ico)
+                 !---------------------------------------------------------------------------!
+
                  !-------------------------------------------------------------------------!
                  !    Here we are leaving all water in the branches and twigs... Do not    !
                  ! worry, if there is any, it will go down through shedding the next       !
@@ -421,10 +429,11 @@ subroutine event_harvest(agb_frac8,bgb_frac8,fol_frac8,stor_frac8)
                  !-------------------------------------------------------------------------!
                  old_leaf_hcap = cpatch%leaf_hcap(ico)
                  old_wood_hcap = cpatch%wood_hcap(ico)
-                 call calc_veg_hcap(cpatch%bleaf(ico),cpatch%bdead(ico)                    &
-                                   ,cpatch%bsapwooda(ico),cpatch%nplant(ico)               &
-                                   ,cpatch%pft(ico)                                        &
-                                   ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico))
+                 call calc_veg_hcap(cpatch%bleaf(ico),cpatch%broot(ico)                            &
+                                    ,cpatch%bdead(ico),cpatch%bsapwooda(ico)                        &
+                                    ,cpatch%nplant(ico),cpatch%pft(ico)                             &
+                                    ,cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)                      &
+                                    ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico) )
                  call update_veg_energy_cweh(csite,ipa,ico,old_leaf_hcap,old_wood_hcap)
 
                  !----- Update flags telling whether leaves and branches can be solved. ---!
@@ -702,6 +711,7 @@ subroutine event_till(rval8)
   use decomp_coms, only: f_labile
   use fuse_fiss_utils, only: terminate_cohorts
   use ed_therm_lib, only : calc_veg_hcap
+  use plant_hydro_dyn, only : update_veg_water_int   ! ! function  
   use budget_utils     , only : update_budget
   use therm_lib        , only : cmtl2uext
   implicit none
@@ -786,10 +796,17 @@ subroutine event_till(rval8)
                  cpatch%wood_water(ico)       = 0.0
                  cpatch%wood_fliq(ico)        = 0.0
                  cpatch%wood_temp(ico)        = csite%can_temp(ipa)
-                 call calc_veg_hcap(cpatch%bleaf(ico),cpatch%bdead(ico)                    &
-                                   ,cpatch%bsapwooda(ico),cpatch%nplant(ico)               &
-                                   ,cpatch%pft(ico)                                        &
-                                   ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico))
+                 !---------------------------------------------------------------------------!
+                 ! XXT. We need to update vegetation internal water after biomass change     !
+                 !---------------------------------------------------------------------------!
+                 call update_veg_water_int(cpatch,ico)
+
+                 !---------------------------------------------------------------------------!
+                 call calc_veg_hcap(cpatch%bleaf(ico),cpatch%broot(ico)                            &
+                                    ,cpatch%bdead(ico),cpatch%bsapwooda(ico)                        &
+                                    ,cpatch%nplant(ico),cpatch%pft(ico)                             &
+                                    ,cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)                      &
+                                    ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico) )
                  cpatch%leaf_energy(ico) = cmtl2uext(cpatch%leaf_hcap (ico)                &
                                                     ,cpatch%leaf_water(ico)                &
                                                     ,cpatch%leaf_temp (ico)                &

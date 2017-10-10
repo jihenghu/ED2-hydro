@@ -112,6 +112,7 @@ subroutine init_nbg_cohorts(csite,lsl,ipa_a,ipa_z)
    use pft_coms           , only : q                  & ! intent(in)
                                  , qsw                & ! intent(in)
                                  , sla                & ! intent(in)
+                                 , Vm0                & ! intent(in)
                                  , hgt_min            & ! intent(in)
                                  , include_pft        & ! intent(in)
                                  , include_these_pft  & ! intent(in)
@@ -221,6 +222,7 @@ subroutine init_nbg_cohorts(csite,lsl,ipa_a,ipa_z)
          cpatch%bdead(ico)            = dbh2bd(cpatch%dbh(ico),ipft)
          cpatch%bleaf(ico)            = size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft) 
          cpatch%sla(ico)              = sla(ipft)
+         cpatch%vm0(ico)              = Vm0(ipft)
 
 
          salloc                       = 1.0 + q(ipft) + qsw(ipft) * cpatch%hite(ico)
@@ -232,7 +234,7 @@ subroutine init_nbg_cohorts(csite,lsl,ipa_a,ipa_z)
                                       * salloci * agf_bs(ipft)
          cpatch%bsapwoodb(ico)        = qsw(ipft) * cpatch%hite(ico) * cpatch%balive(ico)  &
                                       * salloci * (1.-agf_bs(ipft))
-         cpatch%bstorage(ico)         = 0.5 * ( cpatch%bleaf(ico)                          &
+         cpatch%bstorage(ico)         = 1.0 * ( cpatch%bleaf(ico)                          &
                                               + cpatch%broot(ico)                          &
                                               + cpatch%bsapwooda(ico)                      &
                                               + cpatch%bsapwoodb(ico))

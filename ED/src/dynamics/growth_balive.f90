@@ -58,6 +58,7 @@ module growth_balive
                                  , ibigleaf               ! ! intent(in)
       use budget_utils    , only : update_budget          ! ! sub-routine
       use consts_coms   , only : tiny_num     ! ! intent(in)
+      use plant_hydro_dyn, only : update_veg_water_int   ! ! function  
 
       implicit none
       !----- Arguments. -------------------------------------------------------------------!
@@ -337,16 +338,23 @@ module growth_balive
 
 
 
+                  !---------------------------------------------------------------------------!
+                  ! XXT. We need to update vegetation internal water after biomass change     !
+                  !---------------------------------------------------------------------------!
+                  call update_veg_water_int(cpatch,ico)
+                  !---------------------------------------------------------------------------!
+
                   !------------------------------------------------------------------------!
                   !     It is likely that biomass has changed, therefore, update           !
                   ! vegetation energy and heat capacity.                                   !
                   !------------------------------------------------------------------------!
                   old_leaf_hcap         = cpatch%leaf_hcap(ico)
                   old_wood_hcap         = cpatch%wood_hcap(ico)
-                  call calc_veg_hcap(cpatch%bleaf(ico) ,cpatch%bdead(ico)                  &
-                                    ,cpatch%bsapwooda(ico),cpatch%nplant(ico)               &
-                                    ,cpatch%pft(ico)                                       &
-                                    ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico))
+                  call calc_veg_hcap(cpatch%bleaf(ico),cpatch%broot(ico)                            &
+                                    ,cpatch%bdead(ico),cpatch%bsapwooda(ico)                        &
+                                    ,cpatch%nplant(ico),cpatch%pft(ico)                             &
+                                    ,cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)                      &
+                                    ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico) )
                   call update_veg_energy_cweh(csite,ipa,ico,old_leaf_hcap,old_wood_hcap)
                   !----- Update the stability status. -------------------------------------!
                   call is_resolvable(csite,ipa,ico)
@@ -1185,8 +1193,14 @@ module growth_balive
                !------------------------------------------------------------------------------!
                f_bleaf     = delta_bleaf     / bleaf_aim
                f_broot     = delta_broot     / broot_aim
-               f_bsapwooda = delta_bsapwooda / bsapwooda_aim
-               f_bsapwoodb = delta_bsapwoodb / bsapwoodb_aim
+               if (bsapwooda_aim .eq. 0.) then
+                   ! bsapwood is not used
+                   f_bsapwooda = 0.
+                   f_bsapwoodb = 0.
+               else
+                   f_bsapwooda = delta_bsapwooda / bsapwooda_aim
+                   f_bsapwoodb = delta_bsapwoodb / bsapwoodb_aim
+               endif
                f_total     = f_bleaf + f_broot + f_bsapwooda + f_bsapwoodb
                !------------------------------------------------------------------------------!
             end if
@@ -1805,8 +1819,15 @@ module growth_balive
                !------------------------------------------------------------------------------!
                f_bleaf     = delta_bleaf     / bleaf_aim
                f_broot     = delta_broot     / broot_aim
-               f_bsapwooda = delta_bsapwooda / bsapwooda_aim
-               f_bsapwoodb = delta_bsapwoodb / bsapwoodb_aim
+               if (bsapwooda_aim .eq. 0.) then
+                   ! bsapwood is not used
+                   f_bsapwooda = 0.
+                   f_bsapwoodb = 0.
+               else
+                   f_bsapwooda = delta_bsapwooda / bsapwooda_aim
+                   f_bsapwoodb = delta_bsapwoodb / bsapwoodb_aim
+               endif
+
                f_total     = f_bleaf + f_broot + f_bsapwooda + f_bsapwoodb
                !------------------------------------------------------------------------------!
             end if
@@ -2502,8 +2523,15 @@ module growth_balive
                !------------------------------------------------------------------------------!
                f_bleaf     = delta_bleaf     / bleaf_aim
                f_broot     = delta_broot     / broot_aim
-               f_bsapwooda = delta_bsapwooda / bsapwooda_aim
-               f_bsapwoodb = delta_bsapwoodb / bsapwoodb_aim
+               if (bsapwooda_aim .eq. 0.) then
+                   ! bsapwood is not used
+                   f_bsapwooda = 0.
+                   f_bsapwoodb = 0.
+               else
+                   f_bsapwooda = delta_bsapwooda / bsapwooda_aim
+                   f_bsapwoodb = delta_bsapwoodb / bsapwoodb_aim
+               endif
+
                f_total     = f_bleaf + f_broot + f_bsapwooda + f_bsapwoodb
                !------------------------------------------------------------------------------!
                
