@@ -178,8 +178,7 @@ Contains
 
       !------------------------------------------------------------------------------------!
       ! correcting for water stress
-  	  down_factor   = max(1e-6,min(1.0,1. / (1. + (psi_leaf / TLP(ipft)) ** 6.0)))
-      Vcmax15       = Vcmax15 * down_factor
+      Vcmax15       = Vcmax15
 
       cuticular_gsc = cuticular_cond(ipft) * 1.0e-6 * &
                     max(0.0,min(1.0, (psi_leaf - leaf_psi_min(ipft)) &
@@ -237,6 +236,10 @@ Contains
       ko = exp(20.30-36380./(8.314* leaf_temp ))
 
       !------------------------------------------------------------------------------------!
+
+  	  down_factor   = max(1e-6,min(1.0,1. / (1. + (psi_leaf / TLP(ipft)) ** 6.0)))
+      Vcmax = Vcmax * down_factor
+      Jmax = Jmax * down_factor
 
       ! Solve the quadratic function for light-limited photosynthesis
       if (photosyn_pathway(ipft) == 3) then
