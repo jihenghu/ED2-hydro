@@ -99,16 +99,16 @@ module mortality
       !------------------------------------------------------------------------------------!
 
       select case (imort_scheme)
-      case (1,3)
+      case (1)
       !------------------------------------------------------------------------------------!
       ! 6. Hydraulic failure mortality.                                                    !
       !------------------------------------------------------------------------------------!
       plc_avg = sum(cpatch%plc_monthly(1:12,ico)) / 12.
       cpatch%mort_rate(6,ico) = max(0., plc_avg - mort_plc_th(ipft))                       &
                               / (1. - mort_plc_th(ipft))                                   &
-                              * morth_plc_max(ipft)
+                              * mort_plc_max(ipft)
       !------------------------------------------------------------------------------------!
-      case (2,3)
+      case (2)
       !------------------------------------------------------------------------------------!
       ! 7. DBH-based mortality. Note we need to zero the negative carbon mortality in this !
       ! case to avoid double counting                                                      !
@@ -118,6 +118,17 @@ module mortality
       cpatch%mort_rate(2,ico) = 0. ! reset the original negative carbon mortality
       ! Based on Camac et al. 2017 BioRxiv
       !------------------------------------------------------------------------------------!
+
+      case (3)
+      ! Both mortality is considered
+      plc_avg = sum(cpatch%plc_monthly(1:12,ico)) / 12.
+      cpatch%mort_rate(6,ico) = max(0., plc_avg - mort_plc_th(ipft))                       &
+                              / (1. - mort_plc_th(ipft))                                   &
+                              * mort_plc_max(ipft)
+
+      ddbh_avg = sum(cpatch%ddbh_monthly(1:12,ico)) / 12.
+      cpatch%mort_rate(7,ico) = 0.0625 * exp(-18.7313 * ddbh_avg) 
+      cpatch%mort_rate(2,ico) = 0. ! reset the original negative carbon mortality
 
       end select
 

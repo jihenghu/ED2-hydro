@@ -31,10 +31,11 @@ subroutine structural_growth(cgrid, month)
    use ed_max_dims    , only : n_pft                  & ! intent(in)
                              , n_dbh                  ! ! intent(in)
    use ed_misc_coms   , only : ibigleaf               & ! intent(in)
-                             , current_time           ! ! intent(in)
+                             , igrass                 & ! intent(in)
+                             , current_time           & ! intent(in)
+                             , simtime                ! ! structure
    use ed_therm_lib   , only : calc_veg_hcap          & ! function
                              , update_veg_energy_cweh ! ! function
-   use ed_misc_coms   , only : igrass                 ! ! intent(in)
    use physiology_coms, only : ddmort_const           & ! intent(in)
                              , iddmort_scheme         & ! intent(in)
                              , imort_scheme           & ! intent(in)
@@ -52,6 +53,8 @@ subroutine structural_growth(cgrid, month)
    type(polygontype), pointer    :: cpoly
    type(sitetype)   , pointer    :: csite
    type(patchtype)  , pointer    :: cpatch
+   type(simtime)                 :: lastmonth
+   real                          :: ndaysi
    integer                       :: ipy
    integer                       :: isi
    integer                       :: ipa
@@ -473,12 +476,19 @@ subroutine structural_growth(cgrid, month)
 
                ! new mortality scheme
                select case (imort_scheme)
-               case (1,3)
+               case (1)
                    ! need to update plc
+                   call lastmonthdate(current_time,lastmonth,ndaysi)
                    cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
                    cpatch%plc_monthly(13,ico) = 0. ! reset
-               case (2,3)
+               case (2)
                    ! need to update DBH growth rates
+                   cpatch%ddbh_monthly(prev_month,ico) = cpatch%ddbh_dt(ico)
+               case (3)
+                   ! need to update both
+                   call lastmonthdate(current_time,lastmonth,ndaysi)
+                   cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
+                   cpatch%plc_monthly(13,ico) = 0. ! reset
                    cpatch%ddbh_monthly(prev_month,ico) = cpatch%ddbh_dt(ico)
                end select
 
@@ -575,7 +585,9 @@ subroutine structural_growth_eq_0(cgrid, month)
                              , n_dbh                  ! ! intent(in)
    use ed_therm_lib   , only : calc_veg_hcap          & ! function
                              , update_veg_energy_cweh ! ! function
-   use ed_misc_coms   , only : igrass                 ! ! intent(in)
+   use ed_misc_coms   , only : igrass                 & ! intent(in)
+                             , current_time           & ! intent(in)
+                             , simtime                ! ! structure
    use physiology_coms, only : ddmort_const           & ! intent(in)
                              , iddmort_scheme         & ! intent(in)
                              , imort_scheme           & ! intent(in)
@@ -592,6 +604,8 @@ subroutine structural_growth_eq_0(cgrid, month)
    type(polygontype), pointer    :: cpoly
    type(sitetype)   , pointer    :: csite
    type(patchtype)  , pointer    :: cpatch
+   type(simtime)                 :: lastmonth
+   real                          :: ndaysi
    integer                       :: ipy
    integer                       :: isi
    integer                       :: ipa
@@ -920,12 +934,19 @@ subroutine structural_growth_eq_0(cgrid, month)
 
                ! new mortality scheme
                select case (imort_scheme)
-               case (1,3)
+               case (1)
                    ! need to update plc
+                   call lastmonthdate(current_time,lastmonth,ndaysi)
                    cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
                    cpatch%plc_monthly(13,ico) = 0. ! reset
-               case (2,3)
+               case (2)
                    ! need to update DBH growth rates
+                   cpatch%ddbh_monthly(prev_month,ico) = cpatch%ddbh_dt(ico)
+               case (3)
+                   ! need to update both
+                   call lastmonthdate(current_time,lastmonth,ndaysi)
+                   cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
+                   cpatch%plc_monthly(13,ico) = 0. ! reset
                    cpatch%ddbh_monthly(prev_month,ico) = cpatch%ddbh_dt(ico)
                end select
 

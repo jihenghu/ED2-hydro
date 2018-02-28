@@ -44,7 +44,7 @@ module growth_balive
                                  , storage_turnover_rate  & ! intent(in)
                                  , is_grass               ! ! intent(in)
       use physiology_coms , only : N_plant_lim            & ! intent(in)
-                                 : imort_scheme           ! ! intent(in)
+                                 , imort_scheme           ! ! intent(in)
       use ed_therm_lib    , only : calc_veg_hcap          & ! function
                                  , update_veg_energy_cweh ! ! function
       use allometry       , only : area_indices           & ! subroutine
@@ -139,7 +139,7 @@ module growth_balive
                   call update_cb(cpatch,ico,cb_decrement)
                   select case (imort_scheme)
                   case (1,3)
-                      call update_plc(cpatch,ico,cb_decrement)
+                      call update_plc(cpatch,ico)
                   end select
 
                   !------------------------------------------------------------------------!
