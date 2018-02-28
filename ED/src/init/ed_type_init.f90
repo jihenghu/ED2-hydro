@@ -127,6 +127,9 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    cpatch%turnover_amp    (ico) = 1.0
    !---------------------------------------------------------------------------------------!
 
+   !------ State variables for new mortality ----------------------------------------------!
+   cpatch%plc_monthly     (1:13,ico) = 0.
+   cpatch%ddbh_monthly    (1:13,ico) = 0.
 
    !---------------------------------------------------------------------------------------!
    !     The carbon balance must be initialised with a number other than zero (and better  !

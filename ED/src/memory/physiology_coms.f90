@@ -186,6 +186,17 @@ module physiology_coms
    integer              :: cbr_scheme
    !---------------------------------------------------------------------------------------!
 
+   integer              :: imort_scheme
+   !---------------------------------------------------------------------------------------!
+   !  IMORT_SCHEME -- This flag determines whether to consider hydraulic failure           \n
+   !                  mortality and DBH growth based mortality                             \n
+   !                  0 -- No hydraulic failure mortality. Do not use DBH growth           \n
+   !                       based mortality. This is default in ED-2.1                      \n
+   !                  1 -- Use hydraulic failure mortality. Not use DBH growth based mort  \n
+   !                  2 -- No  hydraulic failure mortality. Use DBH growth based mort      \n
+   !                  3 -- Use hydraulic failure mortality. And use DBH growth based mort  \n
+   !---------------------------------------------------------------------------------------!
+
 
 
 

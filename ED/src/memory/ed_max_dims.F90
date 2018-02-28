@@ -195,8 +195,10 @@ module ed_max_dims
    ! 5. Disturbance mortality.  This is not directly applied to the cohort population,     !
    !    because this mortality is associated with the creation of a new patch, but it is   !
    !    saved here for posterior analysis.                                                 !
+   ! 6. Mortality due to hydraulic failure                                                 !
+   ! 7. Mortality based on DBH growth rates                                                !
    !---------------------------------------------------------------------------------------!
-   integer, parameter :: n_mort = 5
+   integer, parameter :: n_mort = 7
    !---------------------------------------------------------------------------------------!
 
 

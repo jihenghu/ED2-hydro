@@ -289,6 +289,15 @@ module pft_coms
    !   Mortality and survivorship parameters.                                              !
    !---------------------------------------------------------------------------------------!
 
+   real, dimension(n_pft) :: mort_plc_max
+   !< This variable controls the time scale at which plants with max hydraulic
+   !<failure (measured by PLC) suffer from mortality [1/yrs]
+
+   real, dimension(n_pft) :: mort_plc_th
+   !< This variable controls the threshold of PLC where plants start to
+   !<experience hydraulic failure mortality [-]
+
+
    !---------------------------------------------------------------------------------------!
    !     This variable shifts the inflection point for the relative carbon balance curve.  !
    !---------------------------------------------------------------------------------------!

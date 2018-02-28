@@ -97,6 +97,7 @@ subroutine copy_nl(copy_type)
                                    , istruct_growth_scheme     & ! intent(out)
                                    , trait_plasticity_scheme   & ! intent(out)
                                    , iddmort_scheme            & ! intent(out)
+                                   , imort_scheme              & ! intent(out)
                                    , cbr_scheme                & ! intent(out)
                                    , ddmort_const              & ! intent(out)
                                    , n_plant_lim               & ! intent(out)
@@ -394,6 +395,7 @@ subroutine copy_nl(copy_type)
       clump_grass               = nl%clump_grass
       h2o_plant_lim             = nl%h2o_plant_lim
       iddmort_scheme            = nl%iddmort_scheme
+      imort_scheme              = nl%imort_scheme
       cbr_scheme                = nl%cbr_scheme
       ddmort_const              = nl%ddmort_const
       vmfact_c3                 = nl%vmfact_c3

@@ -37,6 +37,7 @@ subroutine structural_growth(cgrid, month)
    use ed_misc_coms   , only : igrass                 ! ! intent(in)
    use physiology_coms, only : ddmort_const           & ! intent(in)
                              , iddmort_scheme         & ! intent(in)
+                             , imort_scheme           & ! intent(in)
                              , istruct_growth_scheme  & ! intent(in)
                              , cbr_scheme             ! ! intent(in)
    use fuse_fiss_utils, only : sort_cohorts           ! ! subroutine
@@ -368,6 +369,7 @@ subroutine structural_growth(cgrid, month)
                end select
                !---------------------------------------------------------------------------!
 
+
                !---------------------------------------------------------------------------!
                !  Set up CB/CBmax as running sums and use that in the calculate cbr        !
                !---------------------------------------------------------------------------!
@@ -469,6 +471,16 @@ subroutine structural_growth(cgrid, month)
                                       ,cpoly%agb_mort(:,:,isi))
                !---------------------------------------------------------------------------!
 
+               ! new mortality scheme
+               select case (imort_scheme)
+               case (1,3)
+                   ! need to update plc
+                   cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
+                   cpatch%plc_monthly(13,ico) = 0. ! reset
+               case (2,3)
+                   ! need to update DBH growth rates
+                   cpatch%ddbh_monthly(prev_month,ico) = cpatch%ddbh_dt(ico)
+               end select
 
 
                !---------------------------------------------------------------------------!
@@ -566,6 +578,7 @@ subroutine structural_growth_eq_0(cgrid, month)
    use ed_misc_coms   , only : igrass                 ! ! intent(in)
    use physiology_coms, only : ddmort_const           & ! intent(in)
                              , iddmort_scheme         & ! intent(in)
+                             , imort_scheme           & ! intent(in)
                              , istruct_growth_scheme  & ! intent(in)
                              , cbr_scheme             ! ! intent(in)
    use plant_hydro,     only : rwc2tw                 ! ! sub-routine
@@ -905,7 +918,16 @@ subroutine structural_growth_eq_0(cgrid, month)
                                       ,cpoly%agb_mort(:,:,isi))
                !---------------------------------------------------------------------------!
 
-
+               ! new mortality scheme
+               select case (imort_scheme)
+               case (1,3)
+                   ! need to update plc
+                   cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
+                   cpatch%plc_monthly(13,ico) = 0. ! reset
+               case (2,3)
+                   ! need to update DBH growth rates
+                   cpatch%ddbh_monthly(prev_month,ico) = cpatch%ddbh_dt(ico)
+               end select
 
 
                !---------------------------------------------------------------------------!

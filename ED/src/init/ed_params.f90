@@ -2012,6 +2012,8 @@ subroutine init_pft_mort_params()
       , mort1                      & ! intent(out)
       , mort2                      & ! intent(out)
       , mort3                      & ! intent(out)
+      , mort_plc_max               & ! intent(out)
+      , mort_plc_th                & ! intent(out)
       , cbr_severe_stress          & ! intent(out)
       , rho                        & ! intent(out)
       , seedling_mortality         & ! intent(out)
@@ -2155,6 +2157,14 @@ subroutine init_pft_mort_params()
    mort3(16) = m3_scale * ( m3_slope * (1. - rho(16) / rho( 4)) )
    mort3(17) = 0.06311576 ! O. Phillips (2005)
    !---------------------------------------------------------------------------------------!
+
+
+   !---------------------------------------------------------------------------------------!
+   !      Hydraulic failure mortality parameters                                           !
+   !---------------------------------------------------------------------------------------!
+   mort_plc_max (1:17) = 1.0
+   mort_plc_th  (1:17) = 0.0
+   
 
 
    !---------------------------------------------------------------------------------------!

@@ -220,6 +220,14 @@ module ed_state_vars
       !<Logical test to check whether the cohort leaves can be resolved...
       logical, pointer, dimension(:) :: wood_resolvable
       !<Logical test to check whether the cohort wood can be resolved...
+
+      !---------- Parameters for new mortality scheme ----------!
+      real, pointer,dimension(:,:) :: plc_monthly
+      !<Monthly average percentage of loss in stem conductance for the past 12
+      !<months and the current month (no unit)
+      real, pointer,dimension(:,:) :: ddbh_monthly
+      !<Monthly growth rates of each cohort for the past 12
+      !<months and the current month (no unit)
      
       real, pointer,dimension(:,:) :: cb           !(13,ncohorts)
       !<Monthly carbon balance for past 12 months and the current month
@@ -4716,6 +4724,8 @@ module ed_state_vars
       allocate(cpatch%crown_area                   (                    ncohorts))
       allocate(cpatch%leaf_resolvable              (                    ncohorts))
       allocate(cpatch%wood_resolvable              (                    ncohorts))
+      allocate(cpatch%plc_monthly                  (                 13,ncohorts))
+      allocate(cpatch%ddbh_monthly                 (                 13,ncohorts))
       allocate(cpatch%cb                           (                 13,ncohorts))
       allocate(cpatch%cb_lightmax                  (                 13,ncohorts))
       allocate(cpatch%cb_moistmax                  (                 13,ncohorts))
@@ -6578,6 +6588,8 @@ module ed_state_vars
       nullify(cpatch%crown_area            )
       nullify(cpatch%leaf_resolvable       )
       nullify(cpatch%wood_resolvable       )
+      nullify(cpatch%plc_monthly           )
+      nullify(cpatch%ddbh_monthly          )
       nullify(cpatch%cb                    )
       nullify(cpatch%cb_lightmax           )
       nullify(cpatch%cb_moistmax           )
@@ -7556,6 +7568,8 @@ module ed_state_vars
       if(associated(cpatch%crown_area          )) deallocate(cpatch%crown_area          )
       if(associated(cpatch%leaf_resolvable     )) deallocate(cpatch%leaf_resolvable     )
       if(associated(cpatch%wood_resolvable     )) deallocate(cpatch%wood_resolvable     )
+      if(associated(cpatch%plc_monthly         )) deallocate(cpatch%plc_monthly         )
+      if(associated(cpatch%ddbh_monthly        )) deallocate(cpatch%ddbh_monthly        )
       if(associated(cpatch%cb                  )) deallocate(cpatch%cb                  )
       if(associated(cpatch%cb_lightmax         )) deallocate(cpatch%cb_lightmax         )
       if(associated(cpatch%cb_moistmax         )) deallocate(cpatch%cb_moistmax         )
@@ -9655,6 +9669,8 @@ module ed_state_vars
 
          !------ Carbon balance variables. ------------------------------------------------!
          do m=1,13
+            opatch%plc_monthly(m,oco) = ipatch%plc_monthly(m,ico)
+            opatch%ddbh_monthly(m,oco) = ipatch%ddbh_monthly(m,ico)
             opatch%cb         (m,oco) = ipatch%cb         (m,ico)
             opatch%cb_lightmax(m,oco) = ipatch%cb_lightmax(m,ico)
             opatch%cb_moistmax(m,oco) = ipatch%cb_moistmax(m,ico)
@@ -10250,6 +10266,8 @@ module ed_state_vars
 
       !------ Carbon balance variables. ---------------------------------------------------!
       do m=1,13
+         opatch%plc_monthly(m,1:z) = pack(ipatch%plc_monthly  (m,:),lmask)
+         opatch%ddbh_monthly(m,1:z) = pack(ipatch%ddbh_monthly  (m,:),lmask)
          opatch%cb         (m,1:z) = pack(ipatch%cb           (m,:),lmask)
          opatch%cb_lightmax(m,1:z) = pack(ipatch%cb_lightmax  (m,:),lmask)
          opatch%cb_moistmax(m,1:z) = pack(ipatch%cb_moistmax  (m,:),lmask)
@@ -28348,6 +28366,24 @@ module ed_state_vars
       !------------------------------------------------------------------------------------!
       npts = cpatch%ncohorts * 13
 
+
+      if (associated(cpatch%plc_monthly)) then
+         nvar=nvar+1
+         call vtable_edio_r(npts,cpatch%plc_monthly,nvar,igr,init,cpatch%coglob_id         &
+                           ,var_len,var_len_global,max_ptrs                                &
+                           ,'PLC_MONTHLY :49:hist:mont:dcyc:year')
+         call metadata_edio(nvar,igr,'PLC previous 12 months+current'                      &
+                           ,'[-]','13 - icohort') 
+      end if
+
+      if (associated(cpatch%ddbh_monthly)) then
+         nvar=nvar+1
+         call vtable_edio_r(npts,cpatch%ddbh_monthly,nvar,igr,init,cpatch%coglob_id        &
+                           ,var_len,var_len_global,max_ptrs                                &
+                           ,'DDBH_MONTHLY :49:hist:mont:dcyc:year')
+         call metadata_edio(nvar,igr,'DBH growth rates previous 12 months+current'         &
+                           ,'[-]','13 - icohort') 
+      end if
 
       if (associated(cpatch%cb)) then
          nvar=nvar+1

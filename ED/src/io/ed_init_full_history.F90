@@ -4986,6 +4986,10 @@ subroutine fill_history_patch(cpatch,paco_index,ncohorts_global)
    memdims (2) = int(cpatch%ncohorts,8)
    memsize (2) = int(cpatch%ncohorts,8)
    memoffs (2) = 0_8
+   call hdf_getslab_r(cpatch%plc_monthly                                                   &
+                     ,'PLC_MONTHLY               ',dsetrank,iparallel,.true. ,foundvar)
+   call hdf_getslab_r(cpatch%ddbh_monthly                                                  &
+                     ,'DDBH_MONTHLY              ',dsetrank,iparallel,.true. ,foundvar)
    call hdf_getslab_r(cpatch%cb                                                            &
                      ,'CB                        ',dsetrank,iparallel,.true. ,foundvar)
    call hdf_getslab_r(cpatch%cb_lightmax                                                   &

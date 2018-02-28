@@ -19,6 +19,8 @@ module mortality
                                , mort1                      & ! intent(in)
                                , mort2                      & ! intent(in)
                                , mort3                      & ! intent(in)
+                               , mort_plc_max               & ! intent(in)
+                               , mort_plc_th                & ! intent(in)
                                , plant_min_temp             & ! intent(in)
                                , frost_mort                 ! ! intent(in)
       use disturb_coms  , only : treefall_disturbance_rate  & ! intent(in)
@@ -27,6 +29,7 @@ module mortality
       use ed_max_dims   , only : n_pft                      ! ! intent(in)
       use consts_coms   , only : lnexp_min                  & ! intent(in)
                                , lnexp_max                  ! ! intent(in)
+      use physiology_coms,only : imort_scheme               ! ! intent(in)
       implicit none
       !----- Arguments --------------------------------------------------------------------!
       type(patchtype), target     :: cpatch          ! Current patch
@@ -37,6 +40,8 @@ module mortality
       integer                     :: ipft            ! PFT 
       real                        :: temp_dep        ! Temp. function  (frost mortality)
       real                        :: expmort         ! Carbon-balance term
+      real                        :: plc_avg         ! average percentage loss of conductance
+      real                        :: ddbh_avg        ! average DBH growth rates              
       !------------------------------------------------------------------------------------!
 
 
@@ -92,6 +97,29 @@ module mortality
       !------------------------------------------------------------------------------------!
       !cpatch%mort_rate(5,ico) = TBD
       !------------------------------------------------------------------------------------!
+
+      select case (imort_scheme)
+      case (1,3)
+      !------------------------------------------------------------------------------------!
+      ! 6. Hydraulic failure mortality.                                                    !
+      !------------------------------------------------------------------------------------!
+      plc_avg = sum(cpatch%plc_monthly(1:12,ico)) / 12.
+      cpatch%mort_rate(6,ico) = max(0., plc_avg - mort_plc_th(ipft))                       &
+                              / (1. - mort_plc_th(ipft))                                   &
+                              * morth_plc_max(ipft)
+      !------------------------------------------------------------------------------------!
+      case (2,3)
+      !------------------------------------------------------------------------------------!
+      ! 7. DBH-based mortality. Note we need to zero the negative carbon mortality in this !
+      ! case to avoid double counting                                                      !
+      !------------------------------------------------------------------------------------!
+      ddbh_avg = sum(cpatch%ddbh_monthly(1:12,ico)) / 12.
+      cpatch%mort_rate(7,ico) = 0.0625 * exp(-18.7313 * ddbh_avg) 
+      cpatch%mort_rate(2,ico) = 0. ! reset the original negative carbon mortality
+      ! Based on Camac et al. 2017 BioRxiv
+      !------------------------------------------------------------------------------------!
+
+      end select
 
       return
    end subroutine mortality_rates

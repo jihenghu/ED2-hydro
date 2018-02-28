@@ -43,7 +43,8 @@ module growth_balive
                                  , growth_resp_factor     & ! intent(in)
                                  , storage_turnover_rate  & ! intent(in)
                                  , is_grass               ! ! intent(in)
-      use physiology_coms , only : N_plant_lim            ! ! intent(in)
+      use physiology_coms , only : N_plant_lim            & ! intent(in)
+                                 : imort_scheme           ! ! intent(in)
       use ed_therm_lib    , only : calc_veg_hcap          & ! function
                                  , update_veg_energy_cweh ! ! function
       use allometry       , only : area_indices           & ! subroutine
@@ -136,6 +137,10 @@ module growth_balive
                   call apply_maintenance(cpatch,ico,cb_decrement)
 
                   call update_cb(cpatch,ico,cb_decrement)
+                  select case (imort_scheme)
+                  case (1,3)
+                      call update_plc(cpatch,ico,cb_decrement)
+                  end select
 
                   !------------------------------------------------------------------------!
                   !    Storage respiration/turnover_rate.                                  !
@@ -788,6 +793,31 @@ module growth_balive
 
 
    end subroutine update_cb
+   !=======================================================================================!
+   !=======================================================================================!
+
+   !=======================================================================================!
+   !=======================================================================================!
+   subroutine update_plc(cpatch,ico)
+      use ed_state_vars, only : patchtype             ! ! structure
+      use pft_coms,      only : wood_psi50            & ! intent(in)
+                              , wood_Kexp             ! ! intent(in)
+      implicit none
+      !----- Arguments. -------------------------------------------------------------------!
+      type(patchtype), target       :: cpatch
+      integer        , intent(in)   :: ico
+      !----- Locals    --------------------------------------------------------------------!
+      real                          :: plc_today
+      integer                       :: ipft
+      !------------------------------------------------------------------------------------!
+      ipft = cpatch%pft(ico)
+      plc_today  =  max(0., 1. - 1. / (1. + (cpatch%dmin_wood_psi(ico) / wood_psi50(ipft)) &
+                                       ** wood_Kexp(ipft)))
+      print*,'ico',ico,'ipft',ipft,'psi',cpatch%dmin_wood_psi(ico),'plc',plc_today
+      cpatch%plc_monthly   (13,ico) = cpatch%plc_monthly   (13,ico) + plc_today
+
+
+   end subroutine update_plc
    !=======================================================================================!
    !=======================================================================================!
 

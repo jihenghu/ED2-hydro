@@ -1188,6 +1188,7 @@ subroutine ed_opspec_misc
                                     , istruct_growth_scheme        & ! intent(in)
                                     , trait_plasticity_scheme      & ! intent(in)
                                     , iddmort_scheme               & ! intent(in)
+                                    , imort_scheme                 & ! intent(in)
                                     , cbr_scheme                   & ! intent(in)
                                     , ddmort_const                 & ! intent(in)
                                     , n_plant_lim                  & ! intent(in)
@@ -1768,6 +1769,19 @@ end do
                     ,iddmort_scheme,'...'
       call opspec_fatal(reason,'opspec_misc')
       ifaterr = ifaterr +1
+   end if
+
+   if (imort_scheme < 0 .or. imort_scheme > 3) then
+      write (reason,fmt='(a,1x,i4,a)')                                                     &
+                    'Invalid IMORT_SCHEME, it must be between 0 and 3.  Yours is set to' &
+                    ,imort_scheme,'...'
+      call opspec_fatal(reason,'opspec_misc')
+      ifaterr = ifaterr +1
+   else if ((imort_scheme == 1 .or. imort_scheme == 3) .and. (plant_hydro_scheme == 0)) then
+      write (reason,fmt='(a,1x,i4,a)')                                                     &
+                    'PLANT_HYDRO_SCHEME must be non-zero, when IMORT_SCHEME is set to 1 or 3. Yours is set to'        &
+                    ,plant_hydro_scheme,'...'
+      call opspec_fatal(reason,'opspec_misc')
    end if
 
    if (cbr_scheme < 0 .or. cbr_scheme > 2) then
