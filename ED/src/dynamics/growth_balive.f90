@@ -813,7 +813,6 @@ module growth_balive
       ipft = cpatch%pft(ico)
       plc_today  =  max(0., 1. - 1. / (1. + (cpatch%dmin_wood_psi(ico) / wood_psi50(ipft)) &
                                        ** wood_Kexp(ipft)))
-      print*,'ico',ico,'ipft',ipft,'psi',cpatch%dmin_wood_psi(ico),'plc',plc_today
       cpatch%plc_monthly   (13,ico) = cpatch%plc_monthly   (13,ico) + plc_today
 
 
