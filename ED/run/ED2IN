@@ -729,6 +729,11 @@ $ED_NL
    !                  instead of wood density.  Also, the leaf allometry is split into     !
    !                  small classes ("saplings") and large classes ("trees"), like in Cole !
    !                  and Ewel (2006).                                                     !
+   !           4.  Similar to 1, but rewrite PFT 2-4 using allometry from Palo Verde,      !
+   !                  Costa Rica, as in Xu et al. (2016)                                   !
+   !           5.  Similar to 1, but rewrite PFT 2-4 using allometry from Chave et al.     !
+   !                  (2014) as height allometry and Falster et al. (2017) as leaf         !
+   !                  allometry. This is a test case for run in HKK                        !
    !---------------------------------------------------------------------------------------!
    NL%IALLOM          = 0
    !---------------------------------------------------------------------------------------!
