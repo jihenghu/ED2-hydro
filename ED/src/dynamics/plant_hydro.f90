@@ -139,6 +139,8 @@ module plant_hydro
                 transp      = ( cpatch%fs_open(ico) * cpatch%psi_open(ico)               &
                               + (1. - cpatch%fs_open(ico)) * cpatch%psi_closed(ico)      &
                               ) * cpatch%lai(ico) / cpatch%nplant(ico)     ! kg / s
+                !print*,'ico',ico,'DBH',cpatch%dbh(ico),'pft',cpatch%pft(ico)
+                !print*,'fs_open',cpatch%fs_open(ico),'psi_open',cpatch%psi_open(ico),'psi_closed',cpatch%psi_closed(ico),'lai',cpatch%lai(ico),'nplant',cpatch%nplant(ico)
 
 
                 ! Please notice that the current leaf_water_int has included the
@@ -863,7 +865,7 @@ module plant_hydro
       endif
       
       ! wood
-      tot_water_sat = wood_water_sat(ipft) * C2B * (broot + bdead * sap_frac) * C2B
+      tot_water_sat = wood_water_sat(ipft) * C2B * (broot + bdead * sap_frac)
       if (tot_water_sat > 0.) then
           wood_rwc          =   wood_water_int / tot_water_sat
       else

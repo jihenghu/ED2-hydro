@@ -1373,7 +1373,8 @@ module rk4_driver
             !------------------------------------------------------------------------------!
          end select
          !---------------------------------------------------------------------------------!
-
+            !print*,'rk4_driver'
+            !print*,'ico',ico,'psi_open',cpatch%psi_open(ico),'psi_closed',cpatch%psi_closed(ico)
 
          !---------------------------------------------------------------------------------!
          !     Final sanity check.  This should be removed soon, since it should never     !
