@@ -2730,7 +2730,7 @@ subroutine init_pft_alloc_params()
    !    Minimum and maximum height allowed for each cohort.                                !
    !---------------------------------------------------------------------------------------!
    hgt_min(1)     = 0.50
-   hgt_min(2:4)   = 1.00
+   hgt_min(2:4)   = 1.50
    hgt_min(5)     = 0.15
    hgt_min(6)     = 1.50
    hgt_min(7)     = 1.50
