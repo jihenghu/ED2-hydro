@@ -319,7 +319,6 @@ module growth_balive
                   cpatch%monthly_dlnndt(ico) = cpatch%monthly_dlnndt(ico) + dlnndt * tfact
                   !------------------------------------------------------------------------!
 
-
                   !----- Updating LAI, WAI, and CAI. --------------------------------------!
                   call area_indices(cpatch, ico)
                   !------------------------------------------------------------------------!
