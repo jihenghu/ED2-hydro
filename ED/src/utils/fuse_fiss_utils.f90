@@ -1519,10 +1519,10 @@ module fuse_fiss_utils
                                 + cpatch%llspan      (donc) * dnplant
       cpatch%vm_bar      (recc) = cpatch%vm_bar      (recc) * rnplant                      &
                                 + cpatch%vm_bar      (donc) * dnplant
-      cpatch%sla         (recc) = cpatch%sla         (recc) * rnplant                      &
-                                + cpatch%sla         (donc) * dnplant
       cpatch%vm0         (recc) = cpatch%vm0         (recc) * rnplant                      &
                                 + cpatch%vm0         (donc) * dnplant
+      ! since SLA will be influenced by LAI, we update SLA at the end after LAI
+      ! is updated
       !------------------------------------------------------------------------------------!
 
 
@@ -2887,7 +2887,9 @@ module fuse_fiss_utils
       !----- Make sure that crown area is bounded. ----------------------------------------!
       cpatch%crown_area (recc) = min(1.,cpatch%crown_area(recc)  + cpatch%crown_area(donc))
       !------------------------------------------------------------------------------------!
-
+      ! update SLA using the new lai, bleaf, and nplant
+      cpatch%sla         (recc) = cpatch%lai(recc)                                         &
+                                / (cpatch%bleaf(recc) * cpatch%nplant(recc))
       return
    end subroutine fuse_2_cohorts
    !=======================================================================================!

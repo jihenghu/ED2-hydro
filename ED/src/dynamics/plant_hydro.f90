@@ -139,7 +139,7 @@ module plant_hydro
                 transp      = ( cpatch%fs_open(ico) * cpatch%psi_open(ico)               &
                               + (1. - cpatch%fs_open(ico)) * cpatch%psi_closed(ico)      &
                               ) * cpatch%lai(ico) / cpatch%nplant(ico)     ! kg / s
-                !print*,'ico',ico,'DBH',cpatch%dbh(ico),'pft',cpatch%pft(ico)
+                !print*,'ico',ico,'DBH',cpatch%dbh(ico),'pft',cpatch%pft(ico),'sla',cpatch%sla(ico)
                 !print*,'fs_open',cpatch%fs_open(ico),'psi_open',cpatch%psi_open(ico),'psi_closed',cpatch%psi_closed(ico),'lai',cpatch%lai(ico),'nplant',cpatch%nplant(ico)
 
 
