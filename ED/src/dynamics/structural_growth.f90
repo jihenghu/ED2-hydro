@@ -1421,10 +1421,10 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
 
             do cohort_idx = 1,ico-1
             ! from the top cohort to current cohort
-                max_cum_lai = max_cum_lai&
-                            + size2bl(cpatch%dbh(cohort_idx),&
-                                      cpatch%hite(cohort_idx),&
-                                      cpatch%pft(cohort_idx)) * &
+                max_cum_lai = max_cum_lai                           &
+                            + size2bl(cpatch%dbh(cohort_idx),       &
+                                      cpatch%hite(cohort_idx),      &
+                                      cpatch%pft(cohort_idx)) *     &
                               cpatch%sla(cohort_idx) * cpatch%nplant(cohort_idx)
             enddo
 
