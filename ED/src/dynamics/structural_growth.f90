@@ -1488,6 +1488,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        ! plant_hydro_driver. We will leave A_open and A_closed unchanged because
        ! growth of the day has already happen at this time point in the model
        sla_scaler = cpatch%sla(ico) / new_sla
+       cpatch%sla(ico) = new_sla
        cpatch%psi_open(ico)     = cpatch%psi_open(ico) * sla_scaler
        cpatch%psi_closed(ico)   = cpatch%psi_closed(ico) * sla_scaler
 

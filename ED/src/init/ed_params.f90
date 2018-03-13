@@ -2474,6 +2474,14 @@ subroutine init_pft_alloc_params()
    rho(11)    = 0.70   ! Sugar Maple
    rho(12:16) = 0.20
    rho(17)    = 0.46   ! BCI Traits
+
+   ! redefine rho for Costa Rican runs...
+   select case (iallom)
+   case (4,6)
+       rho(2) = 0.52
+       rho(3) = 0.74
+       rho(4) = 0.84
+   end select
    !---------------------------------------------------------------------------------------!
 
 
@@ -2509,6 +2517,14 @@ subroutine init_pft_alloc_params()
    SLA(15) = 22.7 ! 10.0**(sla_inter + sla_slope * log10(12.0/leaf_turnover_rate(15))) * sla_scale
    SLA(16) = 22.7 !--value from Mike Dietze: mean: 22.7, median 19.1, 95% CI: 5.7, 78.6
    SLA(17) = 10.0**(sla_inter + sla_slope * log10(12.0/leaf_turnover_rate( 17))) * sla_scale
+
+   ! redefine SLA for Costa Rican runs...
+   select case (iallom)
+   case (4,6)
+       SLA(2) = 20.5
+       SLA(3) = 18.7
+       SLA(4) = 15.7
+   end select
 
    !---------------------------------------------------------------------------------------!
    !    Fraction of vertical branches.  Values are from Poorter et al. (2006):             !
@@ -2667,7 +2683,7 @@ subroutine init_pft_alloc_params()
    hgt_ref(17)    = 0.0
    !----- Assign the parameters for tropical PFTs depending on the chosen allometry. ------!
    select case (iallom)
-      case (0,1,4,5)
+      case (0,1,4,5,6)
          !------------------------------------------------------------------------------------!
          !     Use the original ED allometry, based on an unpublished paper by O'Brien et al. !
          ! (1999).  There is an older reference from a similar group of authors, but it is    !
@@ -2693,7 +2709,7 @@ subroutine init_pft_alloc_params()
              b2Ht(2) = 0.8368
              b2Ht(3) = 0.4756
              b2Ht(4) = 0.6571
-         else if (iallom == 5) then
+         else if (iallom == 5 .or. iallom == 6) then
              ! rewrite pft 2,3,4 using Chave et al. 2014 allometry for SE Asia
              ! wet forest. This is a test case for HKK runs
              b1Ht(2:4) = 1.2
@@ -2766,7 +2782,7 @@ subroutine init_pft_alloc_params()
    !---------------------------------------------------------------------------------------!
    ! rewrite the hgt_min and hgt_max based on different allometry
    select case (iallom)
-      case (5)
+      case (5,6)
          do ipft=1,n_pft
             if (is_tropical(ipft)) then
                 ! make the maximum height as 50m
@@ -2940,7 +2956,7 @@ subroutine init_pft_alloc_params()
                b1Bl_small (ipft) = bleaf_adult(ipft) * C2B                                    &
                   / dbh_adult(ipft) ** b2Bl_small(ipft)
             !------------------------------------------------------------------------------!
-            case (5)
+            case (5,6)
             !------------------------------------------------------------------------------!
             !     TEST allometry.                                                          !
             !   Based on Falster et al. 2017                                               !
@@ -3042,7 +3058,7 @@ subroutine init_pft_alloc_params()
                b1Bs_large(ipft) = C2B * exp(odead_large(1)) * rho(ipft) / odead_large(3)
                b2Bs_large(ipft) = odead_large(2)
 
-            case (5)
+            case (5,6)
                 !---- Based on Chave et al. (2014) allometry. ------------------------!
                 b1Bs_small(ipft) = exp(log(0.0673/agf_bs(ipft))+0.976*(log(rho(ipft))+b1Ht(ipft)))
                 b2Bs_small(ipft) = 0.976 * (2. + b2Ht(ipft))
@@ -3297,7 +3313,7 @@ subroutine init_pft_alloc_params()
          b2Rd(6:11)  = 0.277
          b2Rd(12:16) = 0.000
          b2Rd(17)    = 0.277
-      case (4)
+      case (4,6)
           ! based on Kenzo et al. 2009, use DBH to scale rooting depth
           b1Rd(1:17) = -0.2185333
           b2Rd(1:17) = 0.5436442
@@ -3320,7 +3336,7 @@ subroutine init_pft_alloc_params()
       case (0)
          !----- Size and age structure. ------------------------------------------------------!
          select case (iallom)
-            case (0,1,4,5)
+            case (0,1,4,5,6)
                init_density(1)     = 1.0
                init_density(2:4)   = 1.0
                init_density(5)     = 0.1

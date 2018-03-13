@@ -1689,9 +1689,9 @@ end do
 
    end if
 
-   if (iallom < 0 .or. iallom > 5) then
+   if (iallom < 0 .or. iallom > 6) then
       write (reason,fmt='(a,1x,i4,a)')                                                     &
-                    'Invalid IALLOM, it must be between 0 and 5. Yours is set to'          &
+                    'Invalid IALLOM, it must be between 0 and 6. Yours is set to'          &
                     ,iallom,'...'
       call opspec_fatal(reason,'opspec_misc')
       ifaterr = ifaterr +1
