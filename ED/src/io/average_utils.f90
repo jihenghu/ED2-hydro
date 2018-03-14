@@ -1529,6 +1529,7 @@ module average_utils
                   cpatch%fmean_leaf_fliq         (ico) = 0.0
                   cpatch%fmean_leaf_gsw          (ico) = 0.0
                   cpatch%fmean_leaf_gbw          (ico) = 0.0
+                  cpatch%fmean_lint_co2          (ico) = 0.0
                   cpatch%fmean_wood_energy       (ico) = 0.0
                   cpatch%fmean_wood_water        (ico) = 0.0
                   cpatch%fmean_wood_hcap         (ico) = 0.0
@@ -2899,6 +2900,8 @@ module average_utils
                                                      * daylight_i
                   cpatch%dmean_fsn             (ico) = cpatch%dmean_fsn             (ico)  &
                                                      * daylight_i
+                  cpatch%dmean_lint_co2        (ico) = cpatch%dmean_lint_co2        (ico)  &
+                                                     * daylight_i
                   !------------------------------------------------------------------------!
 
 
@@ -3569,6 +3572,7 @@ module average_utils
                   cpatch%dmean_leaf_fliq         (ico) = 0.0
                   cpatch%dmean_leaf_gsw          (ico) = 0.0
                   cpatch%dmean_leaf_gbw          (ico) = 0.0
+                  cpatch%dmean_lint_co2          (ico) = 0.0
                   cpatch%dmean_wood_energy       (ico) = 0.0
                   cpatch%dmean_wood_water        (ico) = 0.0
                   cpatch%dmean_wood_hcap         (ico) = 0.0
@@ -4737,6 +4741,9 @@ module average_utils
                   cpatch%mmean_wood_gbw        (ico) = cpatch%mmean_wood_gbw        (ico)  &
                                                      + cpatch%dmean_wood_gbw        (ico)  &
                                                      * ndaysi
+                  cpatch%mmean_lint_co2        (ico) = cpatch%mmean_lint_co2        (ico)  &
+                                                     + cpatch%dmean_lint_co2        (ico)  &
+                                                     * ndaysi
                   cpatch%mmean_fs_open         (ico) = cpatch%mmean_fs_open         (ico)  &
                                                      + cpatch%dmean_fs_open         (ico)  &
                                                      * ndaysi
@@ -5658,6 +5665,7 @@ module average_utils
                   cpatch%mmean_leaf_fliq         (ico) = 0.0
                   cpatch%mmean_leaf_gsw          (ico) = 0.0
                   cpatch%mmean_leaf_gbw          (ico) = 0.0
+                  cpatch%mmean_lint_co2          (ico) = 0.0
                   cpatch%mmean_wood_energy       (ico) = 0.0
                   cpatch%mmean_wood_water        (ico) = 0.0
                   cpatch%mmean_wood_hcap         (ico) = 0.0
@@ -6606,6 +6614,9 @@ module average_utils
                   cpatch%qmean_leaf_gbw      (t,ico) = cpatch%qmean_leaf_gbw      (t,ico)  &
                                                      + cpatch%fmean_leaf_gbw        (ico)  &
                                                      * ndaysi
+                  cpatch%qmean_lint_co2      (t,ico) = cpatch%qmean_lint_co2      (t,ico)  &
+                                                     + cpatch%fmean_lint_co2        (ico)  &
+                                                     * ndaysi
                   cpatch%qmean_wood_energy   (t,ico) = cpatch%qmean_wood_energy   (t,ico)  &
                                                      + cpatch%fmean_wood_energy     (ico)  &
                                                      * ndaysi
@@ -7453,6 +7464,7 @@ module average_utils
                   cpatch%qmean_leaf_fliq           (:,ico) = 0.0
                   cpatch%qmean_leaf_gsw            (:,ico) = 0.0
                   cpatch%qmean_leaf_gbw            (:,ico) = 0.0
+                  cpatch%qmean_lint_co2            (:,ico) = 0.0
                   cpatch%qmean_wood_energy         (:,ico) = 0.0
                   cpatch%qmean_wood_water          (:,ico) = 0.0
                   cpatch%qmean_wood_hcap           (:,ico) = 0.0

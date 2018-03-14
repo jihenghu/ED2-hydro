@@ -301,6 +301,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    cpatch%fmean_leaf_fliq         (ico) = 0.0
    cpatch%fmean_leaf_gsw          (ico) = 0.0
    cpatch%fmean_leaf_gbw          (ico) = 0.0
+   cpatch%fmean_lint_co2          (ico) = 0.0
    cpatch%fmean_wood_energy       (ico) = 0.0
    cpatch%fmean_wood_water        (ico) = 0.0
    cpatch%fmean_wood_hcap         (ico) = 0.0
@@ -396,6 +397,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%dmean_leaf_fliq         (ico) = 0.0
       cpatch%dmean_leaf_gsw          (ico) = 0.0
       cpatch%dmean_leaf_gbw          (ico) = 0.0
+      cpatch%dmean_lint_co2          (ico) = 0.0
       cpatch%dmean_wood_energy       (ico) = 0.0
       cpatch%dmean_wood_water        (ico) = 0.0
       cpatch%dmean_wood_hcap         (ico) = 0.0
@@ -476,6 +478,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%mmean_leaf_fliq           (ico) = 0.0
       cpatch%mmean_leaf_gsw            (ico) = 0.0
       cpatch%mmean_leaf_gbw            (ico) = 0.0
+      cpatch%mmean_lint_co2            (ico) = 0.0
       cpatch%mmean_wood_energy         (ico) = 0.0
       cpatch%mmean_wood_water          (ico) = 0.0
       cpatch%mmean_wood_hcap           (ico) = 0.0
@@ -585,6 +588,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%qmean_leaf_fliq         (:,ico) = 0.0
       cpatch%qmean_leaf_gsw          (:,ico) = 0.0
       cpatch%qmean_leaf_gbw          (:,ico) = 0.0
+      cpatch%qmean_lint_co2          (:,ico) = 0.0
       cpatch%qmean_wood_energy       (:,ico) = 0.0
       cpatch%qmean_wood_water        (:,ico) = 0.0
       cpatch%qmean_wood_hcap         (:,ico) = 0.0

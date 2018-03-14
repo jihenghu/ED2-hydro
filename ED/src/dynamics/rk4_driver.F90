@@ -405,10 +405,12 @@ module rk4_driver
                                       , rk4max_veg_temp      & ! intent(in)
                                       , tiny_offset          & ! intent(in)
                                       , checkbudget          & ! intent(in)
+                                      , effarea_transp       & ! intent(in)
                                       , ibranch_thermo       ! ! intent(in)
       use ed_state_vars        , only : sitetype             & ! structure
                                       , patchtype            ! ! structure
       use consts_coms          , only : day_sec              & ! intent(in)
+                                      , mmdryi               & ! intent(in)
                                       , t3ple                & ! intent(in)
                                       , t3ple8               & ! intent(in)
                                       , wdns8                & ! intent(in)
@@ -434,7 +436,9 @@ module rk4_driver
       use disturb_coms         , only : include_fire         & ! intent(in)
                                       , k_fire_first         ! ! intent(in)
       use plant_hydro          , only : tw2rwc               ! ! subroutine
-      use physiology_coms      , only : plant_hydro_scheme
+      use physiology_coms      , only : plant_hydro_scheme   & ! intent(in)
+                                      , gbw_2_gbc            & ! intent(in)
+                                      , gsw_2_gsc            ! ! intent(in)
       implicit none
       !----- Arguments --------------------------------------------------------------------!
       type(rk4patchtype), target      :: initp
@@ -466,6 +470,7 @@ module rk4_driver
       real(kind=8)                    :: mcheight
       real(kind=4)                    :: step_waterdef
       real(kind=4)                    :: can_rvap
+      real(kind=4)                    :: lint_co2
       !----- Local contants ---------------------------------------------------------------!
       real        , parameter         :: tendays_sec    = 10. * day_sec
       real        , parameter         :: thirtydays_sec = 30. * day_sec
@@ -1483,6 +1488,19 @@ module rk4_driver
       end do
       !------ Cohort-level variables. -----------------------------------------------------!
       do ico=1,cpatch%ncohorts
+         ! calculate actual lint_co2
+         ipft = cpatch%pft(ico)
+         lint_co2 = csite%can_co2(ipa)                                                     &
+                  - ( ( 1. - cpatch%fs_open (ico) )                                        &
+                    * cpatch%A_closed       (ico)                                          &
+                    + cpatch%fs_open        (ico)                                          &
+                    * cpatch%A_open         (ico) )                                        &
+                  * (1. / ( cpatch%leaf_gbw(ico) * mmdryi                                  &
+                          * sngloff(effarea_transp(ipft),tiny_offset) * gbw_2_gbc)         &
+                    +1. / ( cpatch%leaf_gsw(ico) * mmdryi                                  &
+                          * sngloff(effarea_transp(ipft),tiny_offset) * gsw_2_gsc)         &
+                    )
+
          cpatch%fmean_leaf_energy(ico) = cpatch%fmean_leaf_energy(ico)                     &
                                        + cpatch%leaf_energy      (ico) * dtlsm_o_frqsum
          cpatch%fmean_leaf_water (ico) = cpatch%fmean_leaf_water (ico)                     &
@@ -1501,6 +1519,8 @@ module rk4_driver
                                        + cpatch%leaf_gsw         (ico) * dtlsm_o_frqsum
          cpatch%fmean_leaf_gbw   (ico) = cpatch%fmean_leaf_gbw   (ico)                     &
                                        + cpatch%leaf_gbw         (ico) * dtlsm_o_frqsum
+         cpatch%fmean_lint_co2   (ico) = cpatch%fmean_lint_co2   (ico)                     &
+                                       + lint_co2                      * dtlsm_o_frqsum
          cpatch%fmean_wood_gbw   (ico) = cpatch%fmean_wood_gbw   (ico)                     &
                                        + cpatch%wood_gbw         (ico) * dtlsm_o_frqsum
          cpatch%fmean_psi_open   (ico) = cpatch%fmean_psi_open   (ico)                     &
@@ -1542,6 +1562,9 @@ module rk4_driver
                                           * dtlsm
             cpatch%dmean_fsn        (ico) = cpatch%dmean_fsn        (ico)                  &
                                           + cpatch%fsn              (ico)                  &
+                                          * dtlsm
+            cpatch%dmean_lint_co2   (ico) = cpatch%dmean_lint_co2   (ico)                  &
+                                          + lint_co2                                       &
                                           * dtlsm
          end if
          !---------------------------------------------------------------------------------!
