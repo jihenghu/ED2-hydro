@@ -2747,7 +2747,7 @@ subroutine init_pft_alloc_params()
    !---------------------------------------------------------------------------------------!
 
    hgt_min(1)     = 0.50
-   hgt_min(2:4)   = 1.50
+   hgt_min(2:4)   = 0.50
    hgt_min(5)     = 0.15
    hgt_min(6)     = 1.50
    hgt_min(7)     = 1.50
@@ -2781,15 +2781,23 @@ subroutine init_pft_alloc_params()
    hgt_max(17) = 35.0
    !---------------------------------------------------------------------------------------!
    ! rewrite the hgt_min and hgt_max based on different allometry
-   select case (iallom)
-      case (5,6)
-         do ipft=1,n_pft
-            if (is_tropical(ipft)) then
-                ! make the maximum height as 50m
-                hgt_max(ipft) = 50.
-            end if
-         end do
-   end select
+   do ipft=1,n_pft
+      if (is_tropical(ipft)) then
+          ! make the maximum height as 50m if using Chave-Falster allometry
+          select case (iallom)
+          case (5,6)
+              hgt_max(ipft) = 50.
+          end select
+          
+          ! make the minimum height as 2.5m if using Costa Rican rooting depth
+          select case (iallom)
+          case (4,6)
+              ! Costa Rican allometry
+              hgt_min(ipft) = 2.5
+          end select
+      end if
+   end do
+
 
 
 

@@ -1490,16 +1490,21 @@ module rk4_driver
       do ico=1,cpatch%ncohorts
          ! calculate actual lint_co2
          ipft = cpatch%pft(ico)
-         lint_co2 = csite%can_co2(ipa)                                                     &
-                  - ( ( 1. - cpatch%fs_open (ico) )                                        &
-                    * cpatch%A_closed       (ico)                                          &
-                    + cpatch%fs_open        (ico)                                          &
-                    * cpatch%A_open         (ico) )                                        &
-                  * (1. / ( cpatch%leaf_gbw(ico) * mmdryi                                  &
-                          * sngloff(effarea_transp(ipft),tiny_offset) * gbw_2_gbc)         &
-                    +1. / ( cpatch%leaf_gsw(ico) * mmdryi                                  &
-                          * sngloff(effarea_transp(ipft),tiny_offset) * gsw_2_gsc)         &
-                    )
+         if (cpatch%A_open(ico) /= 0. .and. cpatch%leaf_gbw(ico) /= 0. &
+             .and. cpatch%leaf_gsw(ico) /= 0.)  then
+             lint_co2 = csite%can_co2(ipa)                                                 &
+                      - ( ( 1. - cpatch%fs_open (ico) )                                    &
+                        * cpatch%A_closed       (ico)                                      &
+                        + cpatch%fs_open        (ico)                                      &
+                        * cpatch%A_open         (ico) )                                    &
+                      * (1. / ( cpatch%leaf_gbw(ico) * mmdryi                              &
+                              * sngloff(effarea_transp(ipft),tiny_offset) * gbw_2_gbc)     &
+                        +1. / ( cpatch%leaf_gsw(ico) * mmdryi                              &
+                              * sngloff(effarea_transp(ipft),tiny_offset) * gsw_2_gsc)     &
+                        )
+         else
+             lint_co2 = csite%can_co2(ipa)
+         endif
 
          cpatch%fmean_leaf_energy(ico) = cpatch%fmean_leaf_energy(ico)                     &
                                        + cpatch%leaf_energy      (ico) * dtlsm_o_frqsum
