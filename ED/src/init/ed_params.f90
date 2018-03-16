@@ -2790,11 +2790,11 @@ subroutine init_pft_alloc_params()
           end select
           
           ! make the minimum height as 2.5m if using Costa Rican rooting depth
-          select case (iallom)
-          case (4,6)
-              ! Costa Rican allometry
-              hgt_min(ipft) = 2.5
-          end select
+          !select case (iallom)
+          !case (4,6)
+          !    ! Costa Rican allometry
+          !    hgt_min(ipft) = 2.5
+          !end select
       end if
    end do
 
@@ -3346,7 +3346,7 @@ subroutine init_pft_alloc_params()
          select case (iallom)
             case (0,1,4,5,6)
                init_density(1)     = 1.0
-               init_density(2:4)   = 1.0
+               init_density(2:4)   = 0.5 !1.0
                init_density(5)     = 0.1
                init_density(6:8)   = 0.1
                init_density(9:11)  = 0.1
@@ -4009,6 +4009,7 @@ subroutine init_pft_derived_params()
       , size2bl          & ! function
       , dbh2bd               ! ! function
    use ed_therm_lib         , only : calc_veg_hcap        ! ! function
+   use phenology_coms       , only : elongf_min           ! ! intent(in)
    implicit none
    !----- Local variables. ----------------------------------------------------------------!
    integer                           :: ipft
@@ -4175,8 +4176,10 @@ subroutine init_pft_derived_params()
       call calc_veg_hcap(bleaf_min,bdead_min,bsapwood_min,init_density(ipft),ipft          &
          ,broot_min,dbh,leaf_rwc_min(ipft),wood_rwc_min(ipft)                              &
          ,leaf_hcap_min,wood_hcap_min)
-      veg_hcap_min(ipft) = onesixth * leaf_hcap_min
-      lai_min            = onesixth * init_density(ipft) * bleaf_min * sla(ipft)
+      !veg_hcap_min(ipft) = onesixth * leaf_hcap_min
+      !lai_min            = onesixth * init_density(ipft) * bleaf_min * sla(ipft)
+      veg_hcap_min(ipft) = elongf_min * leaf_hcap_min
+      lai_min            = elongf_min * init_density(ipft) * bleaf_min * sla(ipft)
       !------------------------------------------------------------------------------------!
 
 
