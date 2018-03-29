@@ -96,6 +96,43 @@ subroutine rapp_driver()
       !----- Before we finish, we create the header. --------------------------------------!
       call ed_metd_header()
 
+   !--- extract data form Princeton Global Forcing data set by Justin Sheffield         ---!
+   case ('pgf_onedeg')
+
+      !------------------------------------------------------------------------------------!
+      !     Here we will load the data for each year and discard everything after generat- !
+      ! ing the data.  This way we save memory and use most of the structure from MEVI.    !
+      !------------------------------------------------------------------------------------! 
+      do year=iyeara,iyearz
+			!------------------------------
+			!1. read the pgf data
+			!------------------------------
+			call pgf_process(year,1.0)
+
+      end do
+
+      !----- Before we finish, we create the header. --------------------------------------!
+      call ed_metd_header()
+
+   case ('pgf_halfdeg')
+
+      !------------------------------------------------------------------------------------!
+      !     Here we will load the data for each year and discard everything after generat- !
+      ! ing the data.  This way we save memory and use most of the structure from MEVI.    !
+      !------------------------------------------------------------------------------------! 
+      do year=iyeara,iyearz
+			!------------------------------
+			!1. read the pgf data
+			!------------------------------
+			call pgf_process(year,0.5)
+
+      end do
+
+      !----- Before we finish, we create the header. --------------------------------------!
+      call ed_metd_header()
+
+
+   
    case default
       call fatal_error('Invalid intype '//trim(intype)//'!!! Can''t move on.'              &
                       ,'rapp_driver','rapp_driver.f90')

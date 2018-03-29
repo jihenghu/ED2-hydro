@@ -133,6 +133,11 @@ ncep_output.o : $(RAPP_NCEP)/ncep_output.F90
 	$(FPP_COMMAND) $(<F:.F90=.F90)
 	rm -f $(<F:.F90=.F90)
 
+pgf_process.o : $(RAPP_PGF)/pgf_process.F90 
+	cp -f $< $(<F:.F90=.F90)
+	$(FPP_COMMAND) $(<F:.F90=.F90)
+	rm -f $(<F:.F90=.F90)
+
 numutils.o : $(RAPP_UTILS)/numutils.f90 
 	cp -f $< $(<F:.f90=.f90)
 	$(F90_COMMAND) $(<F:.f90=.f90)
