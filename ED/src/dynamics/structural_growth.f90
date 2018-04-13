@@ -1494,8 +1494,6 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        cpatch%sla(ico) = new_sla
        cpatch%psi_open(ico)     = cpatch%psi_open(ico) * sla_scaler
        cpatch%psi_closed(ico)   = cpatch%psi_closed(ico) * sla_scaler
-
-
    endif
 
    return
