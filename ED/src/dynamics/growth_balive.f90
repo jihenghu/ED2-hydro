@@ -58,6 +58,7 @@ module growth_balive
       use budget_utils    , only : update_budget          ! ! sub-routine
       use consts_coms   , only : tiny_num     ! ! intent(in)
       use plant_hydro,     only : rwc2tw                   ! ! sub-routine
+      use ed_max_dims     , only : n_mort                 ! ! intent(in)
 
       implicit none
       !----- Arguments. -------------------------------------------------------------------!
@@ -310,7 +311,7 @@ module growth_balive
                   ! big-leaf simulations, this is now done at disturbance.f90.             !
                   !------------------------------------------------------------------------!
                   call mortality_rates(cpatch,ico,csite%avg_daily_temp(ipa),csite%age(ipa))
-                  dlnndt   = - sum(cpatch%mort_rate(1:4,ico))
+                  dlnndt   = - sum(cpatch%mort_rate(1:n_mort,ico))
                   dndt     = dlnndt * cpatch%nplant(ico)
                   !------------------------------------------------------------------------!
 

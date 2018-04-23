@@ -26,7 +26,8 @@ module mortality
       use disturb_coms  , only : treefall_disturbance_rate  & ! intent(in)
                                , treefall_hite_threshold    & ! intent(in)
                                , time2canopy                ! ! intent(in)
-      use ed_max_dims   , only : n_pft                      ! ! intent(in)
+      use ed_max_dims   , only : n_pft                      & ! intent(in)
+                               , n_mort                     ! ! intent(in)
       use consts_coms   , only : lnexp_min                  & ! intent(in)
                                , lnexp_max                  ! ! intent(in)
       use physiology_coms,only : imort_scheme               ! ! intent(in)
@@ -47,6 +48,8 @@ module mortality
 
       !----- Assume happy end, all plants survive... --------------------------------------!
       cpatch%mort_rate(1:4,ico) = 0.0
+      ! don't include disturbance mortality
+      cpatch%mort_rate(6:7,ico) = 0.0
       ipft = cpatch%pft(ico)
 
       !------------------------------------------------------------------------------------!
