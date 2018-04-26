@@ -990,21 +990,20 @@ module fuse_fiss_utils
                                  ,cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)             &
                                  ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico))
                call rwc2tw(cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)                    &
-                       ,cpatch%bleaf(ico),cpatch%bdead(ico),cpatch%broot(ico)           &
-                       ,dbh2sf(cpatch%dbh(ico),cpatch%pft(ico)),cpatch%pft(ico)         &
-                       ,cpatch%leaf_water_int(ico),cpatch%wood_water_int(ico))
-
-
-               call calc_veg_hcap(cpatch%bleaf(inew) ,cpatch%bdead(inew)                &
+                          ,cpatch%bleaf(ico),cpatch%bdead(ico),cpatch%broot(ico)        &
+                          ,dbh2sf(cpatch%dbh(ico),cpatch%pft(ico)),cpatch%pft(ico)      &
+                          ,cpatch%leaf_water_int(ico),cpatch%wood_water_int(ico))
+               
+               ! new cohort
+               call calc_veg_hcap(cpatch%bleaf(inew),cpatch%bdead(inew)                 &
                                  ,cpatch%bsapwooda(inew),cpatch%nplant(inew)            &
                                  ,cpatch%pft(inew),cpatch%broot(inew),cpatch%dbh(inew)  &
                                  ,cpatch%leaf_rwc(inew),cpatch%wood_rwc(inew)           &
                                  ,cpatch%leaf_hcap(inew),cpatch%wood_hcap(inew))
                call rwc2tw(cpatch%leaf_rwc(inew),cpatch%wood_rwc(inew)                  &
-                       ,cpatch%bleaf(inew),cpatch%bdead(inew),cpatch%broot(inew)        &
-                       ,dbh2sf(cpatch%dbh(inew),cpatch%pft(inew)),cpatch%pft(inew)      &
-                       ,cpatch%leaf_water_int(inew),cpatch%wood_water_int(inew))
-
+                          ,cpatch%bleaf(inew),cpatch%bdead(inew),cpatch%broot(inew)     &
+                          ,dbh2sf(cpatch%dbh(inew),cpatch%pft(inew)),cpatch%pft(inew)   &
+                          ,cpatch%leaf_water_int(inew),cpatch%wood_water_int(inew))
 
             end if
          end do

@@ -929,6 +929,7 @@ subroutine update_phenology_eq_0(doy, cpoly, isi, lat)
    real                                  :: delta_bleaf
    real                                  :: delta_broot
    real                                  :: bleaf_new
+   real                                  :: bleaf_full
    real                                  :: broot_new
    real                                  :: bleaf_full
    real                                  :: old_leaf_hcap
@@ -1273,8 +1274,8 @@ subroutine update_phenology_eq_0(doy, cpoly, isi, lat)
 
 
             !----- Find the maximum allowed leaf biomass. ---------------------------------!
-            bleaf_full = size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
-            bleaf_new = elongf_try * bleaf_full
+            bleaf_full= size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+            bleaf_new = elongf_try * bleaf_full 
             broot_new = bleaf_full * q(ipft) * (elongf_try + 1.0) / 2.0
             !------------------------------------------------------------------------------!
 

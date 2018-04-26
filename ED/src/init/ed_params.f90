@@ -4176,8 +4176,7 @@ subroutine init_pft_derived_params()
       call calc_veg_hcap(bleaf_min,bdead_min,bsapwood_min,init_density(ipft),ipft          &
          ,broot_min,dbh,leaf_rwc_min(ipft),wood_rwc_min(ipft)                              &
          ,leaf_hcap_min,wood_hcap_min)
-      !veg_hcap_min(ipft) = onesixth * leaf_hcap_min
-      !lai_min            = onesixth * init_density(ipft) * bleaf_min * sla(ipft)
+
       veg_hcap_min(ipft) = elongf_min * leaf_hcap_min
       lai_min            = elongf_min * init_density(ipft) * bleaf_min * sla(ipft)
       !------------------------------------------------------------------------------------!
