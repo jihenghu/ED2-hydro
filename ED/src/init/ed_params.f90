@@ -2611,7 +2611,7 @@ subroutine init_pft_alloc_params()
    ! Suggested values range from 0.0001 to 0.01.
    ! 
    !---------------------------------------------------------------------------------------!
-   root_beta(1:17)   =   0.001
+   root_beta(1:17)   =   0.01
 
 
 
