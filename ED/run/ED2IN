@@ -194,6 +194,8 @@ $ED_NL
    !             of points for the diurnal cycle is 86400 / FRQANL                         !
    ! IYOUTPUT -- Annual output.                                                            !
    ! ITOUTPUT -- Instantaneous fluxes, mostly polygon-level variables, one file per year.  !
+   ! IOOUTPUT -- Instantaneous fluxes, mostly polygon-level variables, at observational    !
+   !             time defined by OBSTIME_DB.                                               !
    ! ISOUTPUT -- restart file, for HISTORY runs.  The time interval between files is       !
    !             determined by FRQHIS                                                      !
    !---------------------------------------------------------------------------------------!
@@ -203,6 +205,7 @@ $ED_NL
    NL%IQOUTPUT  =  0
    NL%IYOUTPUT  =  0
    NL%ITOUTPUT  =  3
+   NL%IOOUTPUT  =  0
    NL%ISOUTPUT  =  3
    !---------------------------------------------------------------------------------------!
 
@@ -546,6 +549,8 @@ $ED_NL
    !                      not cold deciduous).                                             !
    !  ED_MET_DRIVER_DB -- File containing information for meteorological driver            !
    !                      instructions (the "header" file).                                !
+   !  OBSTIME_DB       -- File containing information for observation time during which    !
+   !                      we want to get model output in order to compare with observations!
    !  SOILSTATE_DB     -- Dataset in case you want to provide the initial conditions of    !
    !                      soil temperature and moisture.                                   !
    !  SOILDEPTH_DB     -- Dataset in case you want to read in soil depth information.      !
@@ -556,6 +561,7 @@ $ED_NL
    NL%PLANTATION_FILE   = ''
    NL%THSUMS_DATABASE   = '/n/gstore/Labs/moorcroft_lab_protected/data/ed2_data/ed_inputs/'
    NL%ED_MET_DRIVER_DB  = '/n/gstore/Labs/moorcroft_lab_protected/mlongo/data/ed2_data/met_driver/wmo+eft/eft/Santarem_Km67/Santarem_Km67_HEADER'
+   NL%OBSTIME_DB        = ''
    NL%SOILSTATE_DB      = '/n/gstore/Labs/moorcroft_lab_protected/data/ed2_data/ed_inputs/STW1996OCT.dat'
    NL%SOILDEPTH_DB      = '/n/gstore/Labs/moorcroft_lab_protected/data/ed2_data/ed_inputs/soil_depths.dat'
    !---------------------------------------------------------------------------------------!
