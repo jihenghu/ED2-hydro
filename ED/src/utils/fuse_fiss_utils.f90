@@ -1100,6 +1100,7 @@ module fuse_fiss_utils
       real                         :: dwai              ! WAI of donor
       real                         :: rnplant           ! nplant of receiver
       real                         :: dnplant           ! nplant of donor
+      real                         :: total_transp      ! total transpiration to conserve during fusion
       !------------------------------------------------------------------------------------!
 
 
@@ -1448,12 +1449,19 @@ module fuse_fiss_utils
       !------------------------------------------------------------------------------------!
 
 
-
+      ! before updating psi_open and psi_closed, caluclate total_transp
+      total_transp              = ( cpatch%psi_open(recc) * cpatch%fs_open(recc)           &
+                                  + cpatch%psi_closed(recc) * (1. - cpatch%fs_open(recc))) &
+                                  * rlai                                                   &
+                                + ( cpatch%psi_open(donc) * cpatch%fs_open(donc)           &
+                                  + cpatch%psi_closed(donc) * (1. - cpatch%fs_open(donc))) &
+                                  * dlai                                                   
 
       !------------------------------------------------------------------------------------!
       !    Water demand is in kg/m2_leaf/s, so we scale them by LAI.  Water supply is in   !
       ! kg/m2_ground/s, so we just add them.                                               !
       !------------------------------------------------------------------------------------!
+                    
       cpatch%psi_open    (recc) = cpatch%psi_open  (recc) * rlai                           &
                                 + cpatch%psi_open  (donc) * dlai
       cpatch%psi_closed  (recc) = cpatch%psi_closed(recc) * rlai                           &
@@ -1480,7 +1488,17 @@ module fuse_fiss_utils
                                 + cpatch%fsw     (donc) * dlai
       cpatch%fsn     (recc)     = cpatch%fsn     (recc) * rlai                             &
                                 + cpatch%fsn     (donc) * dlai
-      cpatch%fs_open (recc)     = cpatch%fsw(recc) * cpatch%fsn(recc)
+      !cpatch%fs_open (recc)     = cpatch%fsw(recc) * cpatch%fsn(recc)
+      ! the original scaling for fs_open can be problematic since fs_open can be
+      ! decoupled from fsw * fsn when photorespiration is too high (see
+      ! photosyndriv for details)
+      !now we update cpatch%fs_open by conserving total_transp
+      if ((cpatch%psi_open(recc) - cpatch%psi_closed(recc)) == 0.) then
+          cpatch%fs_open(recc)  = cpatch%fsw(recc) * cpatch%fsn(recc)
+      else
+          cpatch%fs_open (recc) = max(0.,min(1.,(total_transp - cpatch%psi_closed(recc))   &
+                                / (cpatch%psi_open(recc) - cpatch%psi_closed(recc))))
+      endif
       !------------------------------------------------------------------------------------!
 
 
