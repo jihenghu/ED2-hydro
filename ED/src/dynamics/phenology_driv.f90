@@ -928,6 +928,7 @@ subroutine update_phenology_eq_0(doy, cpoly, isi, lat)
    real                                  :: daylight
    real                                  :: delta_bleaf
    real                                  :: delta_broot
+   real                                  :: bleaf_full
    real                                  :: bleaf_new
    real                                  :: broot_new
    real                                  :: old_leaf_hcap
