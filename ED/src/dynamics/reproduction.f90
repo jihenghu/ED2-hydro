@@ -198,7 +198,6 @@ subroutine reproduction(cgrid,month)
                   !------------------------------------------------------------------------!
 
 
-
                   !------------------------------------------------------------------------!
                   !     If this PFT is allowed, check for recruitment.                     !
                   !------------------------------------------------------------------------!
@@ -240,11 +239,27 @@ subroutine reproduction(cgrid,month)
                      ! also include the "seed_rain" term, which represents sources of      !
                      ! seed that are external to the polygon.                              !
                      !---------------------------------------------------------------------!
+
+                     !rectest%nplant    = csite%repro(ipft,ipa)                             &
+                     !                  / ( rectest%balive + rectest%bdead                  &
+                     !                    + rectest%bstorage)                               &
+                     !                  + seed_rain(ipft)
+
+                     !--- XXT
+                     !--- instead of adding seed_rain temporarily into nplant,
+                     ! now seed_rain is accumulated into csite%repro
+                     csite%repro(ipft,ipa) = csite%repro(ipft,ipa)                         &
+                                           + ( rectest%balive + rectest%bdead              &
+                                             + rectest%bstorage)                           &
+                                           * seed_rain(ipft)
+
+                     ! update rectest%nplant
                      rectest%nplant    = csite%repro(ipft,ipa)                             &
                                        / ( rectest%balive + rectest%bdead                  &
-                                         + rectest%bstorage)                               &
-                                       + seed_rain(ipft)
+                                         + rectest%bstorage)                               
                      !---------------------------------------------------------------------!
+                     
+
 
 
 

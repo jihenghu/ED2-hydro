@@ -4141,8 +4141,9 @@ subroutine init_pft_derived_params()
 
       !------------------------------------------------------------------------------------!
       !    Seed_rain is the density of seedling that will be added from somewhere else.    !
+      !    every month                                                                     !
       !------------------------------------------------------------------------------------!
-      seed_rain(ipft)  = 0.1 * init_density(ipft)
+      seed_rain(ipft)  = 0.1 / 12. * init_density(ipft)
       !------------------------------------------------------------------------------------!
 
 

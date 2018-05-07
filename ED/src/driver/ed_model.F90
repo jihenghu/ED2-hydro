@@ -30,6 +30,9 @@ subroutine ed_model()
                             , isoutput                    & ! intent(in)
                             , iqoutput                    & ! intent(in)
                             , itoutput                    & ! intent(in)
+                            , iooutput                    & ! intent(in)
+                            , obstime_list                & ! intent(in)
+                            , obstime_list_len            & ! intent(in)
                             , frqsum                      & ! intent(in)
                             , unitfast                    & ! intent(in)
                             , unitstate                   & ! intent(in)
@@ -40,6 +43,8 @@ subroutine ed_model()
                             , nrec_fast                   & ! intent(in)
                             , nrec_state                  & ! intent(in)
                             , runtype                     ! ! intent(in)
+   use ed_init       , only : remove_obstime              & ! sub-routine
+                            , is_obstime                  ! ! sub-routine
    use ed_misc_coms  , only : outputMonth                 & ! intent(in)
                             , writing_dail                & ! intent(in)
                             , writing_mont                & ! intent(in)
@@ -90,7 +95,9 @@ subroutine ed_model()
    integer            :: ifm
    integer            :: nn
    integer            :: ndays
+   integer            :: obstime_idx
    logical            :: analysis_time
+   logical            :: observation_time
    logical            :: new_day
    logical            :: new_month
    logical            :: new_year
@@ -314,12 +321,14 @@ subroutine ed_model()
       annual_time     = new_month .and. writing_year .and.                                 &
                         current_time%month == outputMonth
 
+
       !----- Check whether this is time to write fast analysis output or not. -------------!
       select case (unitfast)
       case (0,1) !----- Now both are in seconds -------------------------------------------!
          analysis_time   = mod(current_time%time, frqfast) < dtlsm .and.                   &
                            (ifoutput /= 0 .or. itoutput /=0)
          dcycle_time     = mod(current_time%time, frqfast) < dtlsm .and. iqoutput /= 0
+
       case (2)   !----- Months, analysis time is at the new month -------------------------!
          analysis_time   = new_month .and. (ifoutput /= 0 .or. itoutput /=0) .and.         &
                            mod(real(12+current_time%month-imontha),frqfast) == 0.
@@ -330,6 +339,22 @@ subroutine ed_model()
                            mod(real(current_time%year-iyeara),frqfast) == 0.
          dcycle_time     = mod(current_time%time, frqfast) < dtlsm .and. iqoutput /= 0
       end select
+
+      !----- Check whether it is observation time
+      if (iooutput == 0 .or. unitfast /= 0) then
+        ! observation_time is not updated when unitfast /= 0 and iooutput is  0
+         observation_time = .false. 
+      else
+        ! check whether it is the observation time
+        call is_obstime(current_time%year,current_time%month,current_time%date              &
+                       ,current_time%time,observation_time,obstime_idx)
+        
+        ! get rid of the obstime record if observation_time is true
+        if (observation_time) then
+            call remove_obstime(obstime_idx)
+        endif
+
+      endif
 
       !----- Check whether this is time to write restart output or not. -------------------!
       select case(unitstate)
@@ -449,7 +474,8 @@ subroutine ed_model()
       !------------------------------------------------------------------------------------!
       !     Call the model output driver.                                                  !
       !------------------------------------------------------------------------------------!
-      call ed_output(analysis_time,new_day,dail_analy_time,mont_analy_time,dcyc_analy_time &
+      call ed_output(observation_time,analysis_time,new_day                             &
+                    ,dail_analy_time,mont_analy_time,dcyc_analy_time                    &
                     ,annual_time,history_time,dcycle_time)
       !------------------------------------------------------------------------------------!
 
