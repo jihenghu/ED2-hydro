@@ -1157,7 +1157,7 @@ subroutine read_obstime()
    integer  :: ferr  ! error flag
    integer  :: time_idx
    integer  :: time_hms
-   real     :: sec_2_start, sec_2_end
+   real(kind=8)     :: sec_2_start, sec_2_end
    !---------------------------------------------------------------------------------------!
 
    !----- First thing, let's check whether observation time list file exists.  ------------!
@@ -1234,9 +1234,9 @@ subroutine read_obstime()
 
         ! auxiliary variables to determine whether the observation time is
         ! within the range of simulation periods
-        time_hms = obstime_list(time_idx)%hour * 10000      &
-                 + obstime_list(time_idx)%min * 100         &
-                 + obstime_list(time_idx)%sec
+        time_hms = int(floor(obstime_list(time_idx)%time / hr_sec)) * 10000             &
+                 + int(floor(mod(obstime_list(time_idx)%time,hr_sec) / min_sec)) * 100  &
+                 + int(mod(obstime_list(time_idx)%time,min_sec))
 
         call date_2_seconds(obstime_list(time_idx)%year,obstime_list(time_idx)%month        &
                            ,obstime_list(time_idx)%date,time_hms                            &
@@ -1246,7 +1246,7 @@ subroutine read_obstime()
                            ,obstime_list(time_idx)%date,time_hms                            &
                            ,iyearz,imonthz,idatez,itimez*100                                &
                            ,sec_2_end)
-
+        
         remove_entry = (sec_2_start < 0 .or. sec_2_end > 0)
         if (time_idx > 1) then
             remove_entry = remove_entry .or.                                                &
