@@ -2763,9 +2763,9 @@ subroutine init_pft_alloc_params()
    hgt_min(17)    = 0.50
    !----- Maximum Height. -----------------------------------------------------------------!
    hgt_max( 1) = 1.50
-   hgt_max( 2) = 35.0
-   hgt_max( 3) = 35.0
-   hgt_max( 4) = 35.0
+   hgt_max( 2) = 60.0
+   hgt_max( 3) = 60.0
+   hgt_max( 4) = 60.0
    hgt_max( 5) = 0.95  * b1Ht( 5)
    hgt_max( 6) = 0.999 * b1Ht( 6)
    hgt_max( 7) = 0.999 * b1Ht( 7)
@@ -2778,7 +2778,7 @@ subroutine init_pft_alloc_params()
    hgt_max(14) = 1.50
    hgt_max(15) = 1.50
    hgt_max(16) = 1.50
-   hgt_max(17) = 35.0
+   hgt_max(17) = 60.0
    !---------------------------------------------------------------------------------------!
    ! rewrite the hgt_min and hgt_max based on different allometry
    do ipft=1,n_pft
