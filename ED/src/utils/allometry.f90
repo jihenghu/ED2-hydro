@@ -494,7 +494,7 @@ contains
             !------------------------------------------------------------------------------!
             volume     = dbh2vol(hite,dbh,ipft)
             root_depth = b1Rd(ipft)  * volume ** b2Rd(ipft)
-         case (4,6)
+         case (1,2,4,6)
              ! Based on Kenzo et al. 2009
              root_depth = b1Rd(ipft) * dbh ** b2Rd(ipft)
          case default

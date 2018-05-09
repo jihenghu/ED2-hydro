@@ -2779,24 +2779,6 @@ subroutine init_pft_alloc_params()
    hgt_max(15) = 1.50
    hgt_max(16) = 1.50
    hgt_max(17) = 60.0
-   !---------------------------------------------------------------------------------------!
-   ! rewrite the hgt_min and hgt_max based on different allometry
-   do ipft=1,n_pft
-      if (is_tropical(ipft)) then
-          ! make the maximum height as 50m if using Chave-Falster allometry
-          select case (iallom)
-          case (5,6)
-              hgt_max(ipft) = 50.
-          end select
-          
-          ! make the minimum height as 2.5m if using Costa Rican rooting depth
-          !select case (iallom)
-          !case (4,6)
-          !    ! Costa Rican allometry
-          !    hgt_min(ipft) = 2.5
-          !end select
-      end if
-   end do
 
 
 
@@ -3321,7 +3303,7 @@ subroutine init_pft_alloc_params()
          b2Rd(6:11)  = 0.277
          b2Rd(12:16) = 0.000
          b2Rd(17)    = 0.277
-      case (4,6)
+      case (1,2,4,6)
           ! based on Kenzo et al. 2009, use DBH to scale rooting depth
           b1Rd(1:17) = -0.2185333
           b2Rd(1:17) = 0.5436442
@@ -4143,7 +4125,7 @@ subroutine init_pft_derived_params()
       !    Seed_rain is the density of seedling that will be added from somewhere else.    !
       !    every month                                                                     !
       !------------------------------------------------------------------------------------!
-      seed_rain(ipft)  = 0.1 / 12. * init_density(ipft)
+      seed_rain(ipft)  = 0.1 / 6. * init_density(ipft)
       !------------------------------------------------------------------------------------!
 
 
