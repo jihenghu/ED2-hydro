@@ -494,14 +494,15 @@ contains
             !------------------------------------------------------------------------------!
             volume     = dbh2vol(hite,dbh,ipft)
             root_depth = b1Rd(ipft)  * volume ** b2Rd(ipft)
-         case (1,2,4,6)
-             ! Based on Kenzo et al. 2009
-             root_depth = b1Rd(ipft) * dbh ** b2Rd(ipft)
+         !case (1,2,4,6)
+         !    ! Based on Kenzo et al. 2009
+         !    root_depth = b1Rd(ipft) * dbh ** b2Rd(ipft)
          case default
             !------------------------------------------------------------------------------!
             !    This is just a test allometry, that imposes root depth to be 0.5 m for    !
             ! plants that are 0.15-m tall, and 5.0 m for plants that are 35-m tall.        !
             !------------------------------------------------------------------------------!
+            ! revised based on Kenzo et al. 2009, see ed_params for details
             root_depth = b1Rd(ipft) * hite ** b2Rd(ipft)
       end select
 

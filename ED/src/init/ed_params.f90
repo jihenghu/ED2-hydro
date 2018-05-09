@@ -3303,17 +3303,30 @@ subroutine init_pft_alloc_params()
          b2Rd(6:11)  = 0.277
          b2Rd(12:16) = 0.000
          b2Rd(17)    = 0.277
-      case (1,2,4,6)
-          ! based on Kenzo et al. 2009, use DBH to scale rooting depth
-          b1Rd(1:17) = -0.2185333
-          b2Rd(1:17) = 0.5436442
+!      case (1,2,4,6)
+!          ! based on Kenzo et al. 2009, use DBH to scale rooting depth
+!          b1Rd(1:17) = -0.2185333
+!          b2Rd(1:17) = 0.5436442
       case default
          !------------------------------------------------------------------------------------!
          !     This is just a test, not based on any paper.  This is simply a fit that would  !
          ! put the roots 0.5m deep for plants 0.15m-tall and 5 m for plants 35-m tall.        !
          !------------------------------------------------------------------------------------!
-         b1Rd(1:17)  = -1.1140580
-         b2Rd(1:17)  =  0.4223014
+         !b1Rd(1:17)  = -1.1140580
+         !b2Rd(1:17)  =  0.4223014
+
+         ! XXT new height based allometry
+         ! simply a fit that would put the roots 0.1m deep for plants 0.1m tall
+         ! and 2 meter deep for plants 18m tall (based on Kenzo et al. 2009).
+         ! Accordingly, a 35m tall plants would have 2.93 m deep roots and a 55m
+         ! tall plant would have 3.81m deep root.
+         ! Note that these new values should be working best together with the new plant
+         ! hydraulic framework, which assumes the maximum depth consists of
+         ! 1-root_beta (~99%) of total roots. I did some quick calculations and
+         ! it seems to be consistent with Jackson et al. 1996 for both grasses
+         ! and trees
+         b1Rd(1:17) = -0.3775
+         b2Rd(1:17) = 0.5769
    end select
    !---------------------------------------------------------------------------------------!
 
