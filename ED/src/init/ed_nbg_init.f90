@@ -230,7 +230,7 @@ subroutine init_nbg_cohorts(csite,lsl,ipa_a,ipa_z)
                                       * salloci * agf_bs(ipft)
          cpatch%bsapwoodb(ico)        = qsw(ipft) * cpatch%hite(ico) * cpatch%balive(ico)  &
                                       * salloci * (1.-agf_bs(ipft))
-         cpatch%bstorage(ico)         = 0.5 * ( cpatch%bleaf(ico)                          &
+         cpatch%bstorage(ico)         = 1.0 * ( cpatch%bleaf(ico)                          &
                                               + cpatch%broot(ico)                          &
                                               + cpatch%bsapwooda(ico)                      &
                                               + cpatch%bsapwoodb(ico))

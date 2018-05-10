@@ -3316,17 +3316,21 @@ subroutine init_pft_alloc_params()
          !b2Rd(1:17)  =  0.4223014
 
          ! XXT new height based allometry
-         ! simply a fit that would put the roots 0.1m deep for plants 0.1m tall
-         ! and 2 meter deep for plants 18m tall (based on Kenzo et al. 2009).
-         ! Accordingly, a 35m tall plants would have 2.93 m deep roots and a 55m
-         ! tall plant would have 3.81m deep root.
+         ! simply a fit that would put the roots 0.5m deep for plants 0.5m tall
+         ! and 2.5 meter deep for plants 18m tall (based on Kenzo et al. 2009
+         ! but increase the depth because Kenzo study was at a pretty wet site).
+
+         ! Accordingly, a 1.5m tall plant would have 0.8m rooting depth
+         ! 35m tall plants would have 3.2 m deep roots and a 55m
+         ! tall plant would have 3.89m deep root.
+
          ! Note that these new values should be working best together with the new plant
          ! hydraulic framework, which assumes the maximum depth consists of
          ! 1-root_beta (~99%) of total roots. I did some quick calculations and
          ! it seems to be consistent with Jackson et al. 1996 for both grasses
          ! and trees
-         b1Rd(1:17) = -0.3775
-         b2Rd(1:17) = 0.5769
+         b1Rd(1:17) = -0.67656
+         b2Rd(1:17) = 0.43629
    end select
    !---------------------------------------------------------------------------------------!
 
@@ -3949,12 +3953,12 @@ subroutine init_pft_repro_params()
    nonlocal_dispersal(17)  =  1.000 ! 0.600
 
    repro_min_h(1)          =  0.0
-   repro_min_h(2:4)        = 18.0
+   repro_min_h(2:4)        = 5.0
    repro_min_h(5)          =  0.0
-   repro_min_h(6:11)       = 18.0
+   repro_min_h(6:11)       = 5.0
    repro_min_h(12:15)      =  0.0
    repro_min_h(16)         =  0.0
-   repro_min_h(17)         = 18.0
+   repro_min_h(17)         = 5.0
 
    return
 end subroutine init_pft_repro_params
