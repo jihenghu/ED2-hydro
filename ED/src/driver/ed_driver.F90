@@ -273,14 +273,13 @@ subroutine ed_driver()
    !---------------------------------------------------------------------------------------!
 
    !---------------------------------------------------------------------------------------!
-   !      Read obsevation time list if IOOUTPUT is set as none zero                        !
+   !      Read obsevation time list if IOOUTPUT is set as non-zero                        !
    !---------------------------------------------------------------------------------------!
    if (iooutput /= 0) then
         if (mynum == nnodetot) write(unit=*,fmt='(a)') ' [+] Loading obstime_list'
         call read_obstime()
     end if
    !---------------------------------------------------------------------------------------!
-
 
    !---------------------------------------------------------------------------------------!
    !      Get the CPU time and print the banner.                                           !
@@ -337,14 +336,15 @@ subroutine find_frqsum()
    use consts_coms, only: day_sec
 
    implicit none 
+
    !----- Local variables. ----------------------------------------------------------------!
    logical :: no_fast_output, fast_output
-
    no_fast_output = (ifoutput == 0 .and. itoutput == 0 .and. iooutput == 0)
    fast_output = .not. no_fast_output
 
+
    if (ifoutput == 0 .and. isoutput == 0 .and. idoutput == 0 .and. imoutput == 0 .and.     &
-       iqoutput == 0 .and. itoutput == 0 .and. iooutput == 0 ) then
+       iqoutput == 0 .and. itoutput == 0 .and. iooutput ==0 ) then
       write(unit=*,fmt='(a)') '---------------------------------------------------------'
       write(unit=*,fmt='(a)') '  WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! '
       write(unit=*,fmt='(a)') '  WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! '

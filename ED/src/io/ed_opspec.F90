@@ -1300,6 +1300,11 @@ subroutine ed_opspec_misc
         ,'Yours is set to ',min_patch_area,'...'
    end if
 
+   if (ifoutput == 3 .and. iooutput == 3) then
+      call warning('IFOUTPUT and IOOUTPUT are both on. '// &
+                   'Outputs from both are labeled -I-.'   &
+                   ,'ed_opspec_misc','ed_opspec.F90')
+   end if
    if (ifoutput /= 0 .and. ifoutput /= 3) then
       write (reason,fmt='(a,1x,i4,a)')                                                     &
         'Invalid IFOUTPUT, it must be 0 (none) or 3 (HDF5). Yours is set to',ifoutput,'...'
@@ -1696,9 +1701,9 @@ end do
 
    end if
 
-   if (iallom < 0 .or. iallom > 6) then
+   if (iallom < 0 .or. iallom > 3) then
       write (reason,fmt='(a,1x,i4,a)')                                                     &
-                    'Invalid IALLOM, it must be between 0 and 6. Yours is set to'          &
+                    'Invalid IALLOM, it must be between 0 and 3. Yours is set to'          &
                     ,iallom,'...'
       call opspec_fatal(reason,'opspec_misc')
       ifaterr = ifaterr +1

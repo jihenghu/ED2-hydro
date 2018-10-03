@@ -51,7 +51,6 @@ module plant_hydro
       integer                                 :: nsoil      ! soil type for soil
       integer                                 :: k          ! iterator for soil layer
       integer                                 :: ico        ! iterator for cohort
-      integer,parameter                       :: dco        = 0 ! for debugging purpose
       real       ,dimension(nzg)              :: soil_psi   ! soil water potential    [m]
       real       ,dimension(nzg)              :: soil_cond  ! soil water conductance  [kg/m2/s]
       real                                    :: sap_frac   ! sapwood fraction      
@@ -60,6 +59,8 @@ module plant_hydro
       real                                    :: crown_area ! crown area              [m2]
       real                                    :: transp     ! transpiration rate      [kg/s]
       real                                    :: c_leaf     ! leaf capacitance        [kg/m]
+      !----- Variables for debugging purposes ---------------------------------------------!
+      integer,parameter                       :: dco        = 0 ! the cohort to debug
       logical                                 :: error_flag
       logical,parameter                       :: debug_flag = .false.
       character(len=13) , parameter           :: efmt       = '(a,1x,es12.5)'
@@ -145,8 +146,6 @@ module plant_hydro
                 transp      = ( cpatch%fs_open(ico) * cpatch%psi_open(ico)               &
                               + (1. - cpatch%fs_open(ico)) * cpatch%psi_closed(ico)      &
                               ) * cpatch%lai(ico) / cpatch%nplant(ico)     ! kg / s
-                !print*,'ico',ico,'DBH',cpatch%dbh(ico),'pft',cpatch%pft(ico),'sla',cpatch%sla(ico)
-                !print*,'fs_open',cpatch%fs_open(ico),'psi_open',cpatch%psi_open(ico),'psi_closed',cpatch%psi_closed(ico),'lai',cpatch%lai(ico),'nplant',cpatch%nplant(ico)
 
 
                 ! Please notice that the current leaf_water_int has included the
@@ -234,7 +233,7 @@ module plant_hydro
                                         'plant_hydro.f90')
                    endif
                 endif
- 
+
                 ! note here, transp is from last timestep's psi_open and psi_closed
                 call calc_plant_water_flux(                           &
                         dtlsm                                         &!input
@@ -493,8 +492,8 @@ module plant_hydro
       ! Consider a tree is too small if c_leaf is larger than half of c_stem
       ! This is an arbitrary threshold. Users are welcomed to modify this term
       ! if leaf_psi has strong oscillations from each timestep to another
-      ! we also assume it is a small tree if the tree is too short
-      small_tree_flag = (c_leaf > (c_stem / 2.d0)) .or. (hite_d == hgt_min(ipft))
+      ! We also assume it is a small tree if the tree is too short
+      small_tree_flag = ((c_leaf > (c_stem / 2.d0)) .or. (hite_d == hgt_min(ipft)))
 
 
 

@@ -5,8 +5,6 @@
 !------------------------------------------------------------------------------------------!
    NL%INTYPE = 'ncep'    ! Type of input data.  Available options are (case insensitive):
                          ! -> NCEP   - NCEP reanalysis
-                         ! -> PGF_halfdeg   - Princeton Global Forcing half degree version
-                         ! -> PGF_onedeg   - Princeton Global Forcing one degree  version
                          ! -> Other options will eventually appear...
                        
 !------------------------------------------------------------------------------------------!

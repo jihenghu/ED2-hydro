@@ -2452,10 +2452,6 @@ subroutine init_pft_alloc_params()
    C2B    = 2.0
    !---------------------------------------------------------------------------------------!
 
-   !----- Fraction of structural stem that is assumed to be above ground. -----------------!
-   agf_bs(1:17)   = 0.7
-   !---------------------------------------------------------------------------------------!
-
    !---------------------------------------------------------------------------------------!
    !     Wood density.  Currently only tropical PFTs need it.  C3 grass density will be    !
    ! used only for branch area purposes.                                                   !
@@ -2474,14 +2470,6 @@ subroutine init_pft_alloc_params()
    rho(11)    = 0.70   ! Sugar Maple
    rho(12:16) = 0.20
    rho(17)    = 0.46   ! BCI Traits
-
-   ! redefine rho for Costa Rican runs...
-   select case (iallom)
-   case (4,6)
-       rho(2) = 0.52
-       rho(3) = 0.74
-       rho(4) = 0.84
-   end select
    !---------------------------------------------------------------------------------------!
 
 
@@ -2517,14 +2505,6 @@ subroutine init_pft_alloc_params()
    SLA(15) = 22.7 ! 10.0**(sla_inter + sla_slope * log10(12.0/leaf_turnover_rate(15))) * sla_scale
    SLA(16) = 22.7 !--value from Mike Dietze: mean: 22.7, median 19.1, 95% CI: 5.7, 78.6
    SLA(17) = 10.0**(sla_inter + sla_slope * log10(12.0/leaf_turnover_rate( 17))) * sla_scale
-
-   ! redefine SLA for Costa Rican runs...
-   select case (iallom)
-   case (4,6)
-       SLA(2) = 20.5
-       SLA(3) = 18.7
-       SLA(4) = 15.7
-   end select
 
    !---------------------------------------------------------------------------------------!
    !    Fraction of vertical branches.  Values are from Poorter et al. (2006):             !
@@ -2683,7 +2663,7 @@ subroutine init_pft_alloc_params()
    hgt_ref(17)    = 0.0
    !----- Assign the parameters for tropical PFTs depending on the chosen allometry. ------!
    select case (iallom)
-      case (0,1,4,5,6)
+       case (0:1)
          !------------------------------------------------------------------------------------!
          !     Use the original ED allometry, based on an unpublished paper by O'Brien et al. !
          ! (1999).  There is an older reference from a similar group of authors, but it is    !
@@ -2698,23 +2678,6 @@ subroutine init_pft_alloc_params()
                ! hgt_ref(ipft) = 0.0
             end if
          end do
-
-         if (iallom == 4) then
-             ! rewrite pft 2,3,4 using allometry from PV Costa Rica
-             ! only include PFT D, BD, E
-             b1Ht(2) = -0.0682
-             b1Ht(3) = 0.98
-             b1Ht(4) = 0.3444
-
-             b2Ht(2) = 0.8368
-             b2Ht(3) = 0.4756
-             b2Ht(4) = 0.6571
-         else if (iallom == 5 .or. iallom == 6) then
-             ! rewrite pft 2,3,4 using Chave et al. 2014 allometry for SE Asia
-             ! wet forest. This is a test case for HKK runs
-             b1Ht(2:4) = 1.2
-             b2Ht(2:4) = 0.5393
-         endif
 
       case default
          !------------------------------------------------------------------------------------!
@@ -2763,9 +2726,9 @@ subroutine init_pft_alloc_params()
    hgt_min(17)    = 0.50
    !----- Maximum Height. -----------------------------------------------------------------!
    hgt_max( 1) = 1.50
-   hgt_max( 2) = 60.0
-   hgt_max( 3) = 60.0
-   hgt_max( 4) = 60.0
+   hgt_max( 2) = 35.0
+   hgt_max( 3) = 35.0
+   hgt_max( 4) = 35.0
    hgt_max( 5) = 0.95  * b1Ht( 5)
    hgt_max( 6) = 0.999 * b1Ht( 6)
    hgt_max( 7) = 0.999 * b1Ht( 7)
@@ -2778,7 +2741,7 @@ subroutine init_pft_alloc_params()
    hgt_max(14) = 1.50
    hgt_max(15) = 1.50
    hgt_max(16) = 1.50
-   hgt_max(17) = 60.0
+   hgt_max(17) = 35.0
 
 
 
@@ -2874,7 +2837,7 @@ subroutine init_pft_alloc_params()
    do ipft=1,n_pft
       if (is_tropical(ipft)) then
          select case(iallom)
-            case (0,1,4)
+            case (0,1)
                !------------------------------------------------------------------------------!
                !      ED-2.0 allometry, based on:                                             !
                !                                                                              !
@@ -2890,23 +2853,6 @@ subroutine init_pft_alloc_params()
                b2Bl_large (ipft) = b2Bl_small(ipft)
                bleaf_adult(ipft) = b1Bl_large(ipft) / C2B * dbh_adult(ipft) ** b2Bl_large(ipft)
                !------------------------------------------------------------------------------!
-
-               ! case 4
-               ! rewrite PFT 2-4 using data from Palo Verde Costa Rica after all
-               ! PFTs are initialized
-               if (ipft == n_pft .and. iallom == 4) then
-                   b1Bl_small(2)  = 0.012 * C2B
-                   b1Bl_small(3)  = 0.008 * C2B 
-                   b1Bl_small(3)  = 0.023 * C2B 
-
-                   b2Bl_small(2)  =  1.75
-                   b2Bl_small(3)  =  2.12
-                   b2Bl_small(4)  =  1.93
-                    
-                   b1Bl_large(2:4) = b1Bl_small(2:4)
-                   b2Bl_large(2:4) = b2Bl_small(2:4)
-                   bleaf_adult(2:4) = b1Bl_large(2:4) / C2B * dbh_adult(2:4) ** b2Bl_large(2:4)
-               endif
 
             case (2)
                !------------------------------------------------------------------------------!
@@ -2945,26 +2891,6 @@ subroutine init_pft_alloc_params()
                   / log( dbh_adult  (ipft) / min_dbh(ipft) )
                b1Bl_small (ipft) = bleaf_adult(ipft) * C2B                                    &
                   / dbh_adult(ipft) ** b2Bl_small(ipft)
-            !------------------------------------------------------------------------------!
-            case (5,6)
-            !------------------------------------------------------------------------------!
-            !     TEST allometry.                                                          !
-            !   Based on Falster et al. 2017                                               !
-            !   The assumption is that Leaf area has a log-linear relationship with        !
-            !      tree height. The equation used here is                                  !
-            !      log(Height[m]) = log(10)/3 + 0.5 * log(leaf area[m2])               !
-            !   Since SLA is a variable in current version, b1Bl will be
-            !   modified in allometry.f90
-            !   
-            !------------------------------------------------------------------------------!
-            b1Bl_large(ipft) = exp(2. * b1Ht(ipft) - 2. * log(10.) / 3.) / &
-                               (SLA(ipft) / C2B)
-            b2Bl_large(ipft) = 2. * b2Ht(ipft)
-
-            bleaf_adult(ipft) = b1Bl_large(ipft) / C2B * dbh_adult(ipft) ** b2Bl_large(ipft)
-
-            b1Bl_small(ipft) = b1Bl_large(ipft)
-            b2Bl_small(ipft) = b2Bl_large(ipft)
             !------------------------------------------------------------------------------!
          end select
       else
@@ -3012,7 +2938,7 @@ subroutine init_pft_alloc_params()
    do ipft = 1, n_pft
       if (is_tropical(ipft)) then
          select case (iallom)
-            case (0,4)
+            case (0)
                !---- ED-2.1 allometry. -------------------------------------------------------!
                b1Bs_small(ipft) = exp(a1 + c1d * b1Ht(ipft) + d1d * log(rho(ipft)))
                b1Bs_large(ipft) = exp(a1 + c1d * log(hgt_max(ipft)) + d1d * log(rho(ipft)))
@@ -3025,35 +2951,12 @@ subroutine init_pft_alloc_params()
                   + log(rho(ipft)) * (d2d - d1d)) * (1.0/log(dcrit))
                b2Bs_large(ipft) = C2B * b2d + aux
 
-               ! case 4
-               ! rewrite PFT 2-4 using data from Palo Verde Costa Rica after all
-               ! PFTs are initialized
-               if (ipft == n_pft .and. iallom == 4) then
-                   b1Bs_small(2)  = exp(-3.38) / agf_bs(2)
-                   b1Bs_small(3)  = exp(-2.84) / agf_bs(3)
-                   b1Bs_small(4)  = exp(-2.82) / agf_bs(4)
-
-                   b2Bs_small(2)  =  2.32
-                   b2Bs_small(3)  =  2.28
-                   b2Bs_small(4)  =  2.33
-                    
-                   b1Bs_large(2:4) = b1Bs_small(2:4)
-                   b2Bs_large(2:4) = b2Bs_small(2:4)
-               endif
-
             case (1)
                !---- Based on modified Chave et al. (2001) allometry. ------------------------!
                b1Bs_small(ipft) = C2B * exp(odead_small(1)) * rho(ipft) / odead_small(3)
                b2Bs_small(ipft) = odead_small(2)
                b1Bs_large(ipft) = C2B * exp(odead_large(1)) * rho(ipft) / odead_large(3)
                b2Bs_large(ipft) = odead_large(2)
-
-            case (5,6)
-                !---- Based on Chave et al. (2014) allometry. ------------------------!
-                b1Bs_small(ipft) = exp(log(0.0673/agf_bs(ipft))+0.976*(log(rho(ipft))+b1Ht(ipft)))
-                b2Bs_small(ipft) = 0.976 * (2. + b2Ht(ipft))
-                b1Bs_large(ipft) = b1Bs_small(ipft)
-                b2Bs_large(ipft) = b2Bs_small(ipft)
 
             case default
                !---- Based an alternative modification of Chave et al. (2001) allometry. -----!
@@ -3255,6 +3158,9 @@ subroutine init_pft_alloc_params()
    end do
 
 
+   !----- Fraction of structural stem that is assumed to be above ground. -----------------!
+   agf_bs(1:17)   = 0.7
+   !---------------------------------------------------------------------------------------!
 
 
 
@@ -3303,10 +3209,6 @@ subroutine init_pft_alloc_params()
          b2Rd(6:11)  = 0.277
          b2Rd(12:16) = 0.000
          b2Rd(17)    = 0.277
-!      case (1,2,4,6)
-!          ! based on Kenzo et al. 2009, use DBH to scale rooting depth
-!          b1Rd(1:17) = -0.2185333
-!          b2Rd(1:17) = 0.5436442
       case default
          !------------------------------------------------------------------------------------!
          !     This is just a test, not based on any paper.  This is simply a fit that would  !
@@ -3343,7 +3245,7 @@ subroutine init_pft_alloc_params()
       case (0)
          !----- Size and age structure. ------------------------------------------------------!
          select case (iallom)
-            case (0,1,4,5,6)
+            case (0,1)
                init_density(1)     = 1.0
                init_density(2:4)   = 0.5 !1.0
                init_density(5)     = 0.1
@@ -3953,12 +3855,12 @@ subroutine init_pft_repro_params()
    nonlocal_dispersal(17)  =  1.000 ! 0.600
 
    repro_min_h(1)          =  0.0
-   repro_min_h(2:4)        = 5.0
+   repro_min_h(2:4)        = 18.0
    repro_min_h(5)          =  0.0
-   repro_min_h(6:11)       = 5.0
+   repro_min_h(6:11)       = 18.0
    repro_min_h(12:15)      =  0.0
    repro_min_h(16)         =  0.0
-   repro_min_h(17)         = 5.0
+   repro_min_h(17)         = 18.0
 
    return
 end subroutine init_pft_repro_params
@@ -4139,10 +4041,12 @@ subroutine init_pft_derived_params()
 
 
       !------------------------------------------------------------------------------------!
-      !    Seed_rain is the density of seedling that will be added from somewhere else.    !
-      !    every month                                                                     !
+      !    Seed_rain is the density of seedling that will be added from somewhere else     !
+      ! EVERY YEAR.                                                                        !
+      !    XXT: Now we accumulate seed_rain every month. So, the seed_rain values is       !
+      ! divided by 12                                                                      !
       !------------------------------------------------------------------------------------!
-      seed_rain(ipft)  = 0.1 / 12. * init_density(ipft)
+      seed_rain(ipft)  = 0.1 * init_density(ipft) / 12.
       !------------------------------------------------------------------------------------!
 
 

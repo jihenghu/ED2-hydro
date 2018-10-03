@@ -186,7 +186,7 @@ subroutine copy_nl(copy_type)
                                    , iqoutput                  & ! intent(out)
                                    , itoutput                  & ! intent(out)
                                    , iooutput                  & ! intent(out)
-                                   , obstime_db                & ! intent(out)
+                                   , obstime_db                & ! intent(out) 
                                    , dtlsm                     & ! intent(out)
                                    , frqstate                  & ! intent(out)
                                    , sfilout                   & ! intent(out)
@@ -352,7 +352,7 @@ subroutine copy_nl(copy_type)
       thsums_database           = nl%thsums_database
 
       ed_met_driver_db          = nl%ed_met_driver_db
-      obstime_db                = nl%obstime_db      
+      obstime_db                = nl%obstime_db
       soilstate_db              = nl%soilstate_db
       soildepth_db              = nl%soildepth_db
       isoilstateinit            = nl%isoilstateinit

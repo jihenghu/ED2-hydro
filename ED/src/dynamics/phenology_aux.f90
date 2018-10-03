@@ -586,7 +586,10 @@ module phenology_aux
       ! leaves in the storage.  This gives some extra chance for the plant whilst it       !
       ! conserves the total carbon.                                                        !
       !------------------------------------------------------------------------------------!
-      bstorage = max(0.0, (bleaf+broot) + bleaf_max - bleaf)
+
+      ! XXT, here we assume bstorage is at least equal to bleaf_max + broot_max
+      bstorage = max(0.0, bleaf_max * (1. + q(ipft))                                    &
+                        + bleaf_max - bleaf)
       !------------------------------------------------------------------------------------!
 
       return

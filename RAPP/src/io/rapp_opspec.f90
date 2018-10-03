@@ -40,7 +40,7 @@ subroutine rapp_opspec()
    
    !----- Checking the type of input data. ------------------------------------------------!
    select case (trim(intype))
-   case ('ncep','pgf_halfdeg','pgf_onedeg')
+   case ('ncep')
       !----- Valid type, move on... -------------------------------------------------------!
       continue
    case default

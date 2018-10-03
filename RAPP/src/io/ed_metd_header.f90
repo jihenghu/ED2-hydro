@@ -23,11 +23,7 @@ subroutine ed_metd_header()
                           , inpfrq     & ! intent(in)
                           , radfrq     & ! intent(in)
                           , outpref    & ! intent(in)
-                          , edgeoff    & ! intent(in)
-	 					  , lonw       & ! intent(in)
-                          , lone       & ! intent(in)
-						  , lats       & ! intent(in)
-                          , latn       ! ! intent(in)
+                          , edgeoff    ! ! intent(in)
    implicit none
    !----- Local variables. ----------------------------------------------------------------!
    character(len=maxstr)                  :: headname
@@ -48,11 +44,6 @@ subroutine ed_metd_header()
    real                                   :: dlat
    real                                   :: lon0
    real                                   :: lat0
-   character(len = 12), dimension(12)	  :: pgf_var_name
-   real,		dimension(12)			  :: pgf_freq
-   integer,		dimension(12)			  :: pgf_type
-   real                                   :: pgf_res
-
    !---------------------------------------------------------------------------------------!
 
 
@@ -169,74 +160,6 @@ subroutine ed_metd_header()
       
       end if
 
-   case ('pgf_onedeg','pgf_halfdeg')
-      !------------------------------------------------------------------------------------!
-      !     Fill some variables that will be written in the output.                        !
-      !------------------------------------------------------------------------------------!
-      select case (trim(intype))
-      case ('pgf_onedeg')
-          pgf_res = 1.
-      case ('pgf_halfdeg')
-          pgf_res = 0.5
-      endselect
-
-      !----- Domain variables. ------------------------------------------------------------!
-	  mxo = (nint(lone / pgf_res) - nint(lonw / pgf_res))  ! longitude
-	  myo = (nint(latn / pgf_res) - nint(lats / pgf_res))
-      dlon = pgf_res
-      dlat = pgf_res
-	
-	  if (lonw < 0.) then
-		lon0 = pgf_res * (nint((360. + lonw) / pgf_res) ) - 360. + pgf_res / 2.
-	  else
-		lon0 = pgf_res * nint(lonw / pgf_res) + pgf_res / 2.
-	  endif
-
-	  lat0 = pgf_res * (nint((lats + 90) / pgf_res)) - 90. + pgf_res / 2.
-      !------------------------------------------------------------------------------------!
-
-      write (unit=59,fmt='(i1)') 1
-
-      !------------------------------------------------------------------------------------!
-      !     Filling the information about the file			                               !
-      !------------------------------------------------------------------------------------!
-      !----- Output file name. ------------------------------------------------------------!
-      write(outname,fmt='(2a)') trim(outpref),''
-      write (unit=59,fmt='(a)')  trim(outname)
-      !----- Dimension information. -------------------------------------------------------!
-      write (unit=59,fmt='(2(i5,1x),4(f10.4,1x))') mxo,myo,dlon,dlat,lon0,lat0
-      write (unit=59,fmt='(i2)') 12
-      !----- Building then writing the strings with variables, times, and types. ----------!
-	  pgf_var_name(1) = "dlwrf"
-	  pgf_var_name(2) = "vbdsf"
-	  pgf_var_name(3) = "vddsf"
-	  pgf_var_name(4) = "nbdsf"
-	  pgf_var_name(5) = "nddsf"
-	  pgf_var_name(6) = "tmp"
-	  pgf_var_name(7) = "prate"
-	  pgf_var_name(8) = "sh"
-	  pgf_var_name(9) = "pres"
-	  pgf_var_name(10) = "ugrd"
-	  pgf_var_name(11) = "vgrd"
-	  pgf_var_name(12) = "hgt"
-
-	  pgf_freq = 3600. * 3.
-	  pgf_type = 1
-
-	  pgf_freq(12) = 150.
-	  pgf_type(12) = 4
-      varistring=''
-      timestring=''
-      typestring=''
-      do nv=1,12
-         write(varistring,fmt='(3a)') trim(varistring)//' '''//trim(pgf_var_name(nv))//''''
-         write(timestring,fmt='(a,1x,f6.0)') trim(timestring),pgf_freq(nv)
-         write(typestring,fmt='(a,1x,i2)'  ) trim(typestring),pgf_type(nv)
-      end do
-      write (unit=59,fmt='(a)')  trim(varistring)
-      write (unit=59,fmt='(a)')  trim(timestring)
-      write (unit=59,fmt='(a)')  trim(typestring)
-      !------------------------------------------------------------------------------------!
 
 
    end select

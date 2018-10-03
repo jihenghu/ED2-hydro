@@ -320,17 +320,6 @@ module growth_balive
                   cpatch%monthly_dlnndt(ico) = cpatch%monthly_dlnndt(ico) + dlnndt * tfact
                   !------------------------------------------------------------------------!
 
-                  !print*,'ipa',ipa,'ico',ico,'pft',cpatch%pft(ico)
-                  !print*,'dbh',cpatch%dbh(ico),'hite',cpatch%hite(ico)
-                  !print*,'bleaf',cpatch%bleaf(ico),'sla',cpatch%sla(ico),'lai',cpatch%lai(ico)
-                  !print*,'vm0',cpatch%vm0(ico),'is_resolvable',cpatch%leaf_resolvable(ico)
-                  !print*,'bstorage',cpatch%bstorage(ico)
-                  !print*,'gpp',cpatch%today_gpp(ico)/cpatch%nplant(ico)*86400.*12e-9
-                  !print*,'leaf_resp',cpatch%today_leaf_resp(ico)/cpatch%nplant(ico)*86400.*12e-9
-                  !print*,'root_resp',cpatch%today_root_resp(ico)/cpatch%nplant(ico)*86400.*12e-9
-                  !print*,'growth_resp',cpatch%sapa_growth_resp(ico)
-                  !print*,'leaf_maintenance',cpatch%leaf_maintenance(ico)
-                  !print*,'root_maintenance',cpatch%root_maintenance(ico)
 
                   !----- Updating LAI, WAI, and CAI. --------------------------------------!
                   call area_indices(cpatch, ico)

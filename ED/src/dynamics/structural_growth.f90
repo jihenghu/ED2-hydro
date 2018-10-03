@@ -1457,8 +1457,12 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        kvm0 = exp(0.00963 * vm25 - 2.43)
        ! This function is from Lloyd et al. 2010
 
-       ksla = -0.00981
-       ! This function is from Table 1 in Lloyd et al. 2010
+       ksla = kvm0 - 0.035
+       ! This value is estimated from canopy and underground 
+       ! leaf traits data from BCI, Panama. It reflects that 
+       ! LMA goes down sloer than Vcmax within canopy.
+       ! So that at lower canopy, Vcmax/LMA is smaller than
+       ! the value at canopy
 
        lma_slope = 0.015  ! linearized slope, should only be used
                           ! when trait_plasticity_scheme < 0
@@ -1472,11 +1476,8 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        case (1,2)
            ! SLA is defined at the top of canopy, use LAI to change SLA
            ! However, we only allow SLA to be doubled at the deepest shading
-           ! new_sla = SLA(ipft) * min(2.,exp(ksla * max_cum_lai))
+           new_sla = SLA(ipft) * min(2.,exp(ksla * max_cum_lai))
            
-
-           ! SLA is defined at the bottom of canopy, use height to change SLA
-           new_sla = SLA(ipft) * exp(ksla * cpatch%hite(ico))
        case (-1,-2)
            ! SLA is defined at the bottom of canopy, use height to change SLA
             new_sla = SLA(ipft) / (1. + lma_slope * cpatch%hite(ico))

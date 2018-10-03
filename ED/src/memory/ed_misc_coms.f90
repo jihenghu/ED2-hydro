@@ -27,7 +27,7 @@ Module ed_misc_coms
        real    :: time
    end type obstime
    type(obstime), dimension(max_obstime) :: obstime_list
-   integer :: obstime_list_len ! total lengh of the used obstime list
+   integer :: obstime_list_len ! total length of the used obstime list
 
    character(len=str_len) :: expnme
    character(len=str_len) :: runtype
@@ -57,7 +57,7 @@ Module ed_misc_coms
    integer :: iyoutput
    integer :: itoutput
    integer :: isoutput
-   integer :: iooutput ! observational time output
+   integer :: iooutput !Observation time output
    integer :: iclobber
 
    integer :: iadd_site_means
@@ -245,10 +245,9 @@ Module ed_misc_coms
                      ! 2 -- DBH -> AGB Tree allometry based on Baker et al. (2004)
                      !      keep original ED-2.1 Bl
                      ! 3 -- Same as 2, root profile as in Kenzo et al. (2008)
-                     ! 4 -- Allometry from Palo Verde Costa Rica in Xu et al.
-                     ! (2016)
-                     ! 5 -- Test case using Falster et al. 2017 and Chave et al.
-                     ! 2014 for southeast asia dry forests (test run for HKK)
+                     ! 4 -- Same as 2, root profile defined in a simple equation that
+                     !      puts roots at 0.5 m when the height is 0.15m, and 5.0 m when
+                     !      the height is 35.0m.
    !---------------------------------------------------------------------------------------!
 
 
