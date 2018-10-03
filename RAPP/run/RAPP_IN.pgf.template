@@ -3,7 +3,7 @@
 !------------------------------------------------------------------------------------------!
 !  General options                                                                         !
 !------------------------------------------------------------------------------------------!
-   NL%INTYPE = 'ncep'    ! Type of input data.  Available options are (case insensitive):
+   NL%INTYPE = 'pgf_halfdeg'    ! Type of input data.  Available options are (case insensitive):
                          ! -> NCEP   - NCEP reanalysis
                          ! -> PGF_halfdeg   - Princeton Global Forcing half degree version
                          ! -> PGF_onedeg   - Princeton Global Forcing one degree  version
@@ -14,21 +14,21 @@
 ! data, one directory per variable.  Please check the DATASET_README.1ST file for specific !
 ! information on which variables you must have.                                            !
 !------------------------------------------------------------------------------------------!
-   NL%INPATH = '/n/data/moorcroft_lab/mlongo/NCEP_MET/netcdf'
+   NL%INPATH ='/n/moorcroftfs5/global_met_forcing/pgf/v2/0.5deg/3hourly'
 
 !----- Prefix for output files, including path. -------------------------------------------!
-   NL%OUTPREF='/n/data/moorcroft_lab/mlongo/NCEP_MET/hdf5/SOUTHAM'
+   NL%OUTPREF='/n/moorcroftfs5/global_met_forcing/pgf-ed2/test/pgf_global_halfdeg_'
 
 !------------------------------------------------------------------------------------------!
 !     Time                                                                                 !
 !------------------------------------------------------------------------------------------!
-   NL%IYEARA = 1948    ! First year to process
-   NL%IYEARZ = 2008    ! Last year to process
+   NL%IYEARA = 1901    ! First year to process
+   NL%IYEARZ = 1902    ! Last year to process
 
-   NL%INPFRQ = 21600.  ! Frequency for input variable frequency (in seconds)
-   NL%RADFRQ = 2700.   ! Frequency for radiation flux output (interpolation will be done
+   NL%INPFRQ = 10800.  ! Frequency for input variable frequency (in seconds)
+   NL%RADFRQ = 10800.   ! Frequency for radiation flux output (interpolation will be done
                        !    if needed).
-   NL%DTINC  = 450.    ! Delta-t for integration of interpolated fluxes.
+   NL%DTINC  = 10800.    ! Delta-t for integration of interpolated fluxes.
 
 !------------------------------------------------------------------------------------------!
 !     Height information.  This is a constant that will be assigned as the height for      !
@@ -42,10 +42,10 @@
 ! will be the closest to the given point.  Also, if the actual dataset covers a smaller    !
 ! area than the one defined by these variables, everything will be included.               !
 !------------------------------------------------------------------------------------------!
-   NL%LONW = -130.    ! Westermost   longitude allowed to be included;
-   NL%LONE =  -15.    ! Easternmost  longitude allowed to be included;
-   NL%LATS =  -70.    ! Southernmost latitude  allowed to be included;
-   NL%LATN =   35.    ! Northernmost latitude  allowed to be included;
+   NL%LONW = -180    ! Westermost   longitude allowed to be included;
+   NL%LONE = 180     ! Easternmost  longitude allowed to be included;
+   NL%LATS =  -90    ! Southernmost latitude  allowed to be included;
+   NL%LATN =  90     ! Northernmost latitude  allowed to be included;
 
 !------------------------------------------------------------------------------------------!
 !    Offset in the edges.  This will make the output smaller than the actual domain,       !
