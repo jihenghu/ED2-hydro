@@ -122,7 +122,7 @@ subroutine init_nbg_cohorts(csite,lsl,ipa_a,ipa_z)
                                  , kgom2_2_tonoha     & ! intent(in)
                                  , tonoha_2_kgom2     ! ! intent(in)
    use allometry          , only : h2dbh              & ! function
-                                 , dbh2bd             & ! function
+                                 , size2bd            & ! function
                                  , size2bl            & ! function
                                  , ed_biomass         & ! function
                                  , area_indices       ! ! subroutine
@@ -216,9 +216,10 @@ subroutine init_nbg_cohorts(csite,lsl,ipa_a,ipa_z)
          cpatch%hite(ico)             = hgt_min(ipft)
          cpatch%phenology_status(ico) = 0
          cpatch%dbh(ico)              = h2dbh(cpatch%hite(ico),ipft)
-         cpatch%bdead(ico)            = dbh2bd(cpatch%dbh(ico),ipft)
-         cpatch%bleaf(ico)            = size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+         cpatch%bdead(ico)            = size2bd(cpatch%dbh(ico),cpatch%hite(ico),ipft)
          cpatch%sla(ico)              = sla(ipft)
+         cpatch%bleaf(ico)            = size2bl(cpatch%dbh(ico),cpatch%hite(ico)           &
+                                               ,cpatch%sla(ico),ipft)
 
 
          salloc                       = 1.0 + q(ipft) + qsw(ipft) * cpatch%hite(ico)
@@ -289,7 +290,7 @@ subroutine init_cohorts_by_layers(csite,lsl,ipa_a,ipa_z)
                                  , kgom2_2_tonoha     & ! intent(in)
                                  , tonoha_2_kgom2     ! ! intent(in)
    use allometry          , only : h2dbh              & ! function
-                                 , dbh2bd             & ! function
+                                 , size2bd            & ! function
                                  , size2bl            & ! function
                                  , ed_biomass         & ! function
                                  , area_indices       ! ! subroutine
@@ -350,9 +351,10 @@ subroutine init_cohorts_by_layers(csite,lsl,ipa_a,ipa_z)
          cpatch%phenology_status(ico) = 0
          cpatch%bstorage(ico)         = 0.0
          cpatch%dbh(ico)              = h2dbh(cpatch%hite(ico),ipft)
-         cpatch%bdead(ico)            = dbh2bd(cpatch%dbh(ico),ipft)
-         cpatch%bleaf(ico)            = size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+         cpatch%bdead(ico)            = size2bd(cpatch%dbh(ico),cpatch%hite(ico),ipft)
          cpatch%sla(ico)              = sla(ipft)
+         cpatch%bleaf(ico)            = size2bl(cpatch%dbh(ico),cpatch%hite(ico)           &
+                                               ,cpatch%sla(ico),ipft)
 
 
          salloc                       = 1.0 + q(ipft) + qsw(ipft) * cpatch%hite(ico)
@@ -425,7 +427,7 @@ subroutine near_bare_ground_big_leaf_init(cgrid)
                                  , pio4               & ! intent(in)
                                  , kgom2_2_tonoha     & ! intent(in)
                                  , tonoha_2_kgom2     ! ! intent(in)
-   use allometry          , only : dbh2bd             & ! function
+   use allometry          , only : size2bd            & ! function
                                  , size2bl            & ! function
                                  , ed_biomass         & ! function
                                  , area_indices       ! ! subroutine
@@ -524,9 +526,10 @@ subroutine near_bare_ground_big_leaf_init(cgrid)
                cpatch%hite(ico)             = hgt_max(ipft)
                cpatch%phenology_status(ico) = 0
                cpatch%bstorage(ico)         = 0.0
-               cpatch%bdead(ico)            = dbh2bd(cpatch%dbh(ico),ipft)
-               cpatch%bleaf(ico)            = size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+               cpatch%bdead(ico)            = size2bd(cpatch%dbh(ico),cpatch%hite(ico),ipft)
                cpatch%sla(ico)              = sla(ipft)
+               cpatch%bleaf(ico)            = size2bl(cpatch%dbh(ico),cpatch%hite(ico)     &
+                                                     ,cpatch%sla(ico),ipft)
 
                salloc                       = 1.0 + q(ipft) + qsw(ipft) * cpatch%hite(ico)
                salloci                      = 1. / salloc

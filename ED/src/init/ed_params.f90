@@ -2328,6 +2328,7 @@ subroutine init_pft_alloc_params()
 
    use pft_coms     , only : leaf_turnover_rate    & ! intent(in)
       , is_tropical           & ! intent(in)
+      , is_liana              & ! intent(in)
       , is_grass              & ! intent(in)
       , rho                   & ! intent(out)
       , SLA                   & ! intent(out)
@@ -2349,6 +2350,7 @@ subroutine init_pft_alloc_params()
       , dbh_adult             & ! intent(out)
       , min_bdead             & ! intent(out)
       , bdead_crit            & ! intent(out)
+      , bleaf_crit            & ! intent(out)
       , bleaf_adult           & ! intent(out)
       , b1Ht                  & ! intent(out)
       , b2Ht                  & ! intent(out)
@@ -2356,6 +2358,7 @@ subroutine init_pft_alloc_params()
       , b2Bs_small            & ! intent(out)
       , b1Bs_large            & ! intent(out)
       , b2Bs_large            & ! intent(out)
+      , b2Bs_hite             & ! intent(out)
       , b1Ca                  & ! intent(out)
       , b2Ca                  & ! intent(out)
       , b1Rd                  & ! intent(out)
@@ -2366,6 +2369,7 @@ subroutine init_pft_alloc_params()
       , b2Bl_small            & ! intent(out)
       , b1Bl_large            & ! intent(out)
       , b2Bl_large            & ! intent(out)
+      , b2Bl_hite             & ! intent(out)
       , b1WAI                 & ! intent(out)
       , b2WAI                 & ! intent(out)
       , b1SA                  & ! intent(out)
@@ -2376,7 +2380,7 @@ subroutine init_pft_alloc_params()
       , sla_slope             & ! intent(out)
       , sapwood_ratio         ! ! intent(out)
    use allometry    , only : h2dbh                 & ! function
-      , dbh2bd                & ! function
+      , size2bd                & ! function
       , size2bl           ! ! function
    use consts_coms  , only : onethird              & ! intent(in)
       , twothirds             & ! intent(in)
@@ -2397,7 +2401,6 @@ subroutine init_pft_alloc_params()
    real                              :: init_density_grass
    real                              :: init_bleaf
    logical                           :: write_allom
-   real                              :: bleaf_sapling
    !----- Constants shared by both bdead and bleaf (tropical PFTs) ------------------------!
    real                  , parameter :: a1          =  -1.981
    real                  , parameter :: b1          =   1.047
@@ -2679,6 +2682,26 @@ subroutine init_pft_alloc_params()
             end if
          end do
 
+      case (3)
+         !------------------------------------------------------------------------------------!
+         !     Use the allometry proposed by:                                                 !
+         !                                                                                    !
+         ! Feldpausch et al. 2011: Height-diameter allometry of tropical forest trees.        !
+         !    Biogeosciences, 8, 1081-1106                                                    !
+         !                                                                                    !
+         !------------------------------------------------------------------------------------!
+          
+         do ipft=1,n_pft
+            if (is_tropical(ipft) .and. (.not. is_liana(ipft))) then
+               !----- Regular log-log fit, b1 is the intercept and b2 is the slope. ----------!
+               ! Using South America values from the reference
+               b1Ht   (ipft) = 1.3760
+               b2Ht   (ipft) = 0.4854
+               !----- hgt_ref is not used. ---------------------------------------------------!
+               ! hgt_ref(ipft) = 0.0
+            end if
+         end do
+
       case default
          !------------------------------------------------------------------------------------!
          !     Use the allometry proposed by:                                                 !
@@ -2726,9 +2749,9 @@ subroutine init_pft_alloc_params()
    hgt_min(17)    = 0.50
    !----- Maximum Height. -----------------------------------------------------------------!
    hgt_max( 1) = 1.50
-   hgt_max( 2) = 35.0
-   hgt_max( 3) = 35.0
-   hgt_max( 4) = 35.0
+   hgt_max( 2) = 45.0
+   hgt_max( 3) = 45.0
+   hgt_max( 4) = 45.0
    hgt_max( 5) = 0.95  * b1Ht( 5)
    hgt_max( 6) = 0.999 * b1Ht( 6)
    hgt_max( 7) = 0.999 * b1Ht( 7)
@@ -2741,7 +2764,7 @@ subroutine init_pft_alloc_params()
    hgt_max(14) = 1.50
    hgt_max(15) = 1.50
    hgt_max(16) = 1.50
-   hgt_max(17) = 35.0
+   hgt_max(17) = 45.0
 
 
 
@@ -2764,6 +2787,7 @@ subroutine init_pft_alloc_params()
    ! That is:         0.0856*(x)^2 = 0.1575*(x)^0.975   ---> x=1.81279                     !
    !---------------------------------------------------------------------------------------!
    dbh_adult(17) = 1.81
+   dbh_crit(17)  = 26.0
 
 
    !---------------------------------------------------------------------------------------!
@@ -2832,6 +2856,8 @@ subroutine init_pft_alloc_params()
    b1Bl_large(:)     = b1Bl_small(:)
    b2Bl_large(:)     = b2Bl_small(:)
    !---------------------------------------------------------------------------------------!
+   ! coefficients when height is included in the analysis
+   b2Bl_hite(:)      = 0.0
 
    !------- Fill in the tropical PFTs, which are functions of wood density. ---------------!
    do ipft=1,n_pft
@@ -2852,6 +2878,7 @@ subroutine init_pft_alloc_params()
                b1Bl_large (ipft) = b1Bl_small(ipft)
                b2Bl_large (ipft) = b2Bl_small(ipft)
                bleaf_adult(ipft) = b1Bl_large(ipft) / C2B * dbh_adult(ipft) ** b2Bl_large(ipft)
+               bleaf_crit(ipft) = b1Bl_large(ipft) / C2B * dbh_crit(ipft) ** b2Bl_large(ipft)
                !------------------------------------------------------------------------------!
 
             case (2)
@@ -2869,28 +2896,29 @@ subroutine init_pft_alloc_params()
                b1Bl_large (ipft) = b1Bl_small(ipft)
                b2Bl_large (ipft) = b2Bl_small(ipft)
                bleaf_adult(ipft) = b1Bl_large(ipft) / C2B * dbh_adult(ipft) ** b2Bl_large(ipft)
+               bleaf_crit(ipft) = b1Bl_large(ipft) / C2B * dbh_crit(ipft) ** b2Bl_large(ipft)
                !------------------------------------------------------------------------------!
             case (3)
                !------------------------------------------------------------------------------!
-               !     ED-2.2 allometry.  For large trees, it is based on:                      !
-               !                                                                              !
-               !   Lescure, J.-P., H. Puig, B. Riera, D. Leclerc, A. Beekman, and             !
-               !      A. Beneteau.  La phytomasse epigee d'une foret dense en Guyane          !
-               !      Francaise.  Acta Oecol. - Oec. Gen., 4, 3, 237-251, 1983.               !
-               !                                                                              !
-               !   Further modified to scale the leaf biomass by SLA.  For smaller trees, the !
-               !      biomass is a log-linear interpolation from 20gC/plant at minimum size   !
-               !      (scaled by SLA relative to mid-successional) and Lescure's allometry at !
-               !      minimum adult size.                                                     !
+               !     Test allometry, based on analysis over the BAAD dataset                  !
+               !   Falster et al. BAAD: a Biomass And Allometry Database for woody plants.    !
+               !     Ecology 96:1445-1445                                                     !
+               !   Note that here b1Bl, b2Bl, and b2Bl_hite yields leaf area estimate         !
                !------------------------------------------------------------------------------!
-               b1Bl_large (ipft) = 0.00873 * SLA(3) / SLA(ipft)
-               b2Bl_large (ipft) = 2.1360
-               bleaf_adult(ipft) = b1Bl_large(ipft) / C2B * dbh_adult(ipft) ** b2Bl_large(ipft)
-               bleaf_sapling     = 0.02 * C2B * SLA(3) / SLA(ipft)
-               b2Bl_small (ipft) = log( bleaf_adult(ipft) / bleaf_sapling )                   &
-                  / log( dbh_adult  (ipft) / min_dbh(ipft) )
-               b1Bl_small (ipft) = bleaf_adult(ipft) * C2B                                    &
-                  / dbh_adult(ipft) ** b2Bl_small(ipft)
+               b1Bl_large (ipft) = exp(-1.3584 + 0.5 * 0.54539)
+               b2Bl_large (ipft) = 1.1979
+               b2Bl_hite  (ipft) = 0.5511
+               b1Bl_small (ipft) = b1Bl_large(ipft)
+               b2Bl_small (ipft) = b2Bl_large(ipft)
+               
+               bleaf_adult(ipft) = size2bl(                                                 &
+                                   dbh_adult(ipft),                                         &
+                                   exp(b1Ht(ipft) + b2Ht(ipft) * log(dbh_adult(ipft))),     &
+                                   SLA(ipft),ipft)
+               bleaf_crit(ipft) = size2bl(                                                 &
+                                   dbh_crit(ipft),                                         &
+                                   exp(b1Ht(ipft) + b2Ht(ipft) * log(dbh_crit(ipft))),     &
+                                   SLA(ipft),ipft)
             !------------------------------------------------------------------------------!
          end select
       else
@@ -2898,6 +2926,7 @@ subroutine init_pft_alloc_params()
          !     Calculate the leaf biomass at minimum adult size.                           !
          !---------------------------------------------------------------------------------!
          bleaf_adult(ipft) = b1Bl_large(ipft) / C2B * dbh_adult(ipft) ** b2Bl_large(ipft)
+         bleaf_crit(ipft) = b1Bl_large(ipft) / C2B * dbh_crit(ipft) ** b2Bl_large(ipft)
          !---------------------------------------------------------------------------------!
       end if
       !------------------------------------------------------------------------------------!
@@ -2934,6 +2963,9 @@ subroutine init_pft_alloc_params()
    !---------------------------------------------------------------------------------------!
    b1Bs_large(:) = b1Bs_small(:)
    b2Bs_large(:) = b2Bs_small(:)
+
+   ! Coefficiet when height is included in the allometry
+   b2Bs_hite(:)  = 0.0
    !------- Fill in the tropical PFTs, which are functions of wood density. ---------------!
    do ipft = 1, n_pft
       if (is_tropical(ipft)) then
@@ -2957,6 +2989,14 @@ subroutine init_pft_alloc_params()
                b2Bs_small(ipft) = odead_small(2)
                b1Bs_large(ipft) = C2B * exp(odead_large(1)) * rho(ipft) / odead_large(3)
                b2Bs_large(ipft) = odead_large(2)
+
+            case (3)
+                !---- Based on Chave et al. 2014
+                b1Bs_small(ipft) = 0.0673 * exp(0.5 * (0.357 ** 2)) * (rho(ipft) ** 0.976)
+                b2Bs_small(ipft) = 2. * 0.976
+                b1Bs_large(ipft) = b1Bs_small(ipft)
+                b2Bs_large(ipft) = b2Bs_small(ipft)
+                b2Bs_hite(ipft)  = 0.976
 
             case default
                !---- Based an alternative modification of Chave et al. (2001) allometry. -----!
@@ -3051,8 +3091,8 @@ subroutine init_pft_alloc_params()
       ! -- BDEAD_CRIT corresponds to BDEAD when DBH is exactly at DBH_CRIT.  This is       !
       !    used to determine which b1Bs/b2Bs pair to use.                                  !
       !------------------------------------------------------------------------------------!
-      min_bdead (ipft) = dbh2bd(min_dbh (ipft),ipft)
-      bdead_crit(ipft) = dbh2bd(dbh_crit(ipft),ipft)
+      min_bdead (ipft) = size2bd(min_dbh (ipft),hgt_min(ipft),ipft)
+      bdead_crit(ipft) = size2bd(dbh_crit(ipft),hgt_max(ipft),ipft)
       !------------------------------------------------------------------------------------!
    end do
    !---------------------------------------------------------------------------------------!
@@ -3209,30 +3249,34 @@ subroutine init_pft_alloc_params()
          b2Rd(6:11)  = 0.277
          b2Rd(12:16) = 0.000
          b2Rd(17)    = 0.277
-      case default
-         !------------------------------------------------------------------------------------!
-         !     This is just a test, not based on any paper.  This is simply a fit that would  !
-         ! put the roots 0.5m deep for plants 0.15m-tall and 5 m for plants 35-m tall.        !
-         !------------------------------------------------------------------------------------!
-         !b1Rd(1:17)  = -1.1140580
-         !b2Rd(1:17)  =  0.4223014
-
+      case (3)
          ! XXT new height based allometry
-         ! simply a fit that would put the roots 0.5m deep for plants 0.5m tall
-         ! and 2.5 meter deep for plants 18m tall (based on Kenzo et al. 2009
-         ! but increase the depth because Kenzo study was at a pretty wet site).
+         ! Based on C. Smith unpublished data from root excavation at Panama
+         ! The relationship is close to Kenzo et al. 2009.
 
-         ! Accordingly, a 1.5m tall plant would have 0.8m rooting depth
-         ! 35m tall plants would have 3.2 m deep roots and a 55m
-         ! tall plant would have 3.89m deep root.
+         ! Accordingly, 
+         ! a 0.5m tall plant would have 0.38m rooting depth
+         ! a 1.5m tall plant would have 0.62m rooting depth
+         ! a 10m tall plant would have 1.49m rooting depth
+         ! a 45m tall plant would have 2.97m rooting depth (Neotropics)
+         ! a 60m tall plant would have 3.40m rooting depth (Old tropics)
 
          ! Note that these new values should be working best together with the new plant
          ! hydraulic framework, which assumes the maximum depth consists of
          ! 1-root_beta (~99%) of total roots. I did some quick calculations and
          ! it seems to be consistent with Jackson et al. 1996 for both grasses
          ! and trees
-         b1Rd(1:17) = -0.67656
-         b2Rd(1:17) = 0.43629
+         b1Rd(1:17) = -0.516144
+         b2Rd(1:17) = 0.46053
+
+      case default
+         !------------------------------------------------------------------------------------!
+         !     This is just a test, not based on any paper.  This is simply a fit that would  !
+         ! put the roots 0.5m deep for plants 0.15m-tall and 5 m for plants 35-m tall.        !
+         !------------------------------------------------------------------------------------!
+         b1Rd(1:17)  = -1.1140580
+         b2Rd(1:17)  =  0.4223014
+
    end select
    !---------------------------------------------------------------------------------------!
 
@@ -3274,7 +3318,7 @@ subroutine init_pft_alloc_params()
          !----- Big leaf. 1st we set the maximum initial LAI for each PFT. -------------------!
          init_laimax(1:17)   = 0.1
          do ipft=1,n_pft
-            init_bleaf = size2bl(dbh_bigleaf(ipft),hgt_max(ipft),ipft)
+            init_bleaf = size2bl(dbh_bigleaf(ipft),hgt_max(ipft),SLA(ipft),ipft)
             init_density(ipft) = init_laimax(ipft) / (init_bleaf * SLA(ipft))
          end do
       !------------------------------------------------------------------------------------!
@@ -3908,7 +3952,7 @@ subroutine init_pft_derived_params()
    use allometry            , only : h2dbh                & ! function
       , dbh2h                & ! function
       , size2bl          & ! function
-      , dbh2bd               ! ! function
+      , size2bd               ! ! function
    use ed_therm_lib         , only : calc_veg_hcap        ! ! function
    use phenology_coms       , only : elongf_min           ! ! intent(in)
    implicit none
@@ -3974,11 +4018,11 @@ subroutine init_pft_derived_params()
 
       !----- Find the DBH and carbon pools associated with a newly formed recruit. --------!
       dbh          = h2dbh(hgt_min(ipft),ipft)
-      bleaf_min    = size2bl(dbh,hgt_min(ipft),ipft)
+      bleaf_min    = size2bl(dbh,hgt_min(ipft),sla(ipft),ipft)
       broot_min    = bleaf_min * q(ipft)
       bsapwood_min = bleaf_min * qsw(ipft) * hgt_min(ipft)
       balive_min   = bleaf_min + broot_min + bsapwood_min
-      bdead_min    = dbh2bd(dbh,ipft)
+      bdead_min    = size2bd(dbh,hgt_min(ipft),ipft)
       !------------------------------------------------------------------------------------!
 
 
@@ -3989,22 +4033,22 @@ subroutine init_pft_derived_params()
       !------------------------------------------------------------------------------------!
       huge_dbh     = 3. * dbh_crit(ipft)
       huge_height  = dbh2h(ipft, dbh_crit(ipft))
-      bleaf_max    = size2bl(huge_dbh,huge_height,ipft)
+      bleaf_max    = size2bl(huge_dbh,huge_height,sla(ipft),ipft)
       broot_max    = bleaf_max * q(ipft)
       bsapwood_max = bleaf_max * qsw(ipft) * huge_height
       balive_max   = bleaf_max + broot_max + bsapwood_max
-      bdead_max    = dbh2bd(huge_dbh,ipft)
+      bdead_max    = size2bd(huge_dbh,hgt_max(ipft),ipft)
       !------------------------------------------------------------------------------------!
 
 
       !------------------------------------------------------------------------------------!
       !    Biomass of one individual plant at recruitment.                                 !
       !------------------------------------------------------------------------------------!
-      bleaf_bl          = size2bl(dbh_bigleaf(ipft),hgt_min(ipft),ipft)
+      bleaf_bl          = size2bl(dbh_bigleaf(ipft),hgt_min(ipft),sla(ipft),ipft)
       broot_bl          = bleaf_bl * q(ipft)
       bsapwood_bl       = bleaf_bl * qsw(ipft) * hgt_max(ipft)
       balive_bl         = bleaf_bl + broot_bl + bsapwood_bl
-      bdead_bl          = dbh2bd(dbh_bigleaf(ipft),ipft)
+      bdead_bl          = size2bd(dbh_bigleaf(ipft),hgt_min(ipft),ipft)
       !------------------------------------------------------------------------------------!
 
 

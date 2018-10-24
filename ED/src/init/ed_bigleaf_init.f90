@@ -15,7 +15,7 @@ subroutine ed_bigleaf_init(cgrid)
    use ed_max_dims    , only : n_pft                & ! intent(in)
                              , n_dist_types         ! ! intent(in)
    use allometry      , only : size2bl              & ! function
-                             , dbh2bd               & ! function
+                             , size2bd              & ! function
                              , area_indices         & ! function
                              , ed_biomass           ! ! function
    use pft_coms       , only : hgt_max              & ! intent(in)
@@ -249,8 +249,10 @@ subroutine ed_bigleaf_init(cgrid)
                      cpatch%pft          (1) = ipft
                      cpatch%hite         (1) = hgt_max(ipft)
                      cpatch%dbh          (1) = dbh_bigleaf(ipft)
-                     cpatch%bleaf        (1) = size2bl(cpatch%dbh(1),cpatch%hite(1),ipft)
-                     cpatch%bdead        (1) = dbh2bd (cpatch%dbh(1),ipft)
+                     cpatch%sla          (1) = sla     (ipft)
+                     cpatch%bleaf        (1) = size2bl(cpatch%dbh(1),cpatch%hite(1)        &
+                                                      ,cpatch%sla(1),ipft)
+                     cpatch%bdead        (1) = size2bd(cpatch%dbh(1),cpatch%hite(1),ipft)
                      cpatch%broot        (1) = cpatch%bleaf(1) * q(ipft)
                      cpatch%bsapwooda    (1) = agf_bs(ipft) * cpatch%bleaf(1)              &
                                              * qsw(ipft) * cpatch%hite(1)
@@ -258,7 +260,6 @@ subroutine ed_bigleaf_init(cgrid)
                                              * qsw(ipft) * cpatch%hite(1)
                      cpatch%balive       (1) = cpatch%bleaf    (1) + cpatch%broot    (1)   &
                                              + cpatch%bsapwooda(1) + cpatch%bsapwoodb(1)
-                     cpatch%sla          (1) = sla     (ipft)
                      cpatch%nplant       (1) = lai (ipft,ilu)                              &
                                              / ( cpatch%sla(1) * cpatch%bleaf(1)           &
                                                * csite%area(ipa) )

@@ -16,6 +16,7 @@ subroutine read_ed21_history_file
                              , str_len                 ! ! intent(in)
    use pft_coms       , only : q                       & ! intent(in)
                              , qsw                     & ! intent(in)
+                             , SLA                     & ! intent(in)
                              , min_dbh                 & ! intent(in)
                              , min_bdead               & ! intent(in)
                              , is_grass                & ! intent(in)
@@ -55,7 +56,7 @@ subroutine read_ed21_history_file
                              , bd2dbh                  & ! function
                              , size2bl                 & ! function
                              , dbh2h                   & ! function
-                             , dbh2bd                  ! ! function
+                             , size2bd                  ! ! function
    use fuse_fiss_utils, only : terminate_cohorts       ! ! subroutine
    use disturb_coms   , only : ianth_disturb           ! ! intent(in)
 
@@ -604,12 +605,12 @@ subroutine read_ed21_history_file
                               ! or the value for bdead is missing from the files           !
                               cpatch%dbh(ico)   = max(cpatch%dbh(ico),min_dbh(ipft))
                               cpatch%hite(ico)  = dbh2h (ipft,cpatch%dbh  (ico))
-                              cpatch%bdead(ico) = dbh2bd(cpatch%dbh  (ico),ipft)
+                              cpatch%bdead(ico) = size2bd(cpatch%dbh  (ico),cpatch%hite(ico),ipft)
                            end if
 
 
                            cpatch%bleaf(ico)  = size2bl(cpatch%dbh(ico),cpatch%hite(ico)   &
-                                                        ,cpatch%pft(ico))
+                                                       ,SLA(ico),cpatch%pft(ico))
 
                            !----- Find the other pools. -----------------------------------!
                            salloc  = (1.0 + q(ipft) + qsw(ipft) * cpatch%hite(ico))
@@ -873,6 +874,7 @@ subroutine read_ed21_history_unstruct
                              , maxlist                 ! ! intent(in)
    use pft_coms       , only : q                       & ! intent(in)
                              , qsw                     & ! intent(in)
+                             , SLA                     & ! intent(in)
                              , min_dbh                 & ! intent(in)
                              , min_bdead               & ! intent(in)
                              , is_grass                & ! intent(in)
@@ -908,7 +910,7 @@ subroutine read_ed21_history_unstruct
                              , ed_biomass              & ! function
                              , bd2dbh                  & ! function
                              , dbh2h                   & ! function
-                             , dbh2bd                  & ! function
+                             , size2bd                 & ! function
                              , size2bl                 ! ! function
    use fuse_fiss_utils, only : terminate_cohorts       ! ! subroutine
    use disturb_coms   , only : ianth_disturb           & ! intent(in)
@@ -1807,11 +1809,12 @@ subroutine read_ed21_history_unstruct
                               ! or the value for bdead is missing from the files           !
                               cpatch%dbh(ico)   = max(cpatch%dbh(ico),min_dbh(ipft))
                               cpatch%hite(ico)  = dbh2h (ipft,cpatch%dbh  (ico))
-                              cpatch%bdead(ico) = dbh2bd(cpatch%dbh  (ico),ipft)
+                              cpatch%bdead(ico) = size2bd(cpatch%dbh  (ico),cpatch%hite(ico),ipft)
                            end if
 
                            cpatch%bleaf(ico)  = size2bl( cpatch%dbh (ico)                  &
                                                        , cpatch%hite(ico)                  &
+                                                       , SLA(ipft)                         &
                                                        , ipft )
 
                            !----- Find the other pools. -----------------------------------!
@@ -2081,6 +2084,7 @@ subroutine read_ed21_polyclone
                              , maxlist                 ! ! intent(in)
    use pft_coms       , only : q                       & ! intent(in)
                              , qsw                     & ! intent(in)
+                             , SLA                     & ! intent(in)
                              , min_dbh                 & ! intent(in)
                              , min_bdead               & ! intent(in)
                              , is_grass                & ! intent(in)
@@ -2115,7 +2119,7 @@ subroutine read_ed21_polyclone
                              , ed_biomass              & ! function
                              , bd2dbh                  & ! function
                              , dbh2h                   & ! function
-                             , dbh2bd                  & ! function
+                             , size2bd                 & ! function
                              , size2bl                 ! ! function
    use fuse_fiss_utils, only : terminate_cohorts       ! ! subroutine
    use disturb_coms   , only : ianth_disturb           & ! intent(in)
@@ -2984,11 +2988,12 @@ subroutine read_ed21_polyclone
                               ! or the value for bdead is missing from the files           !
                               cpatch%dbh(ico)   = max(cpatch%dbh(ico),min_dbh(ipft))
                               cpatch%hite(ico)  = dbh2h (ipft,cpatch%dbh  (ico))
-                              cpatch%bdead(ico) = dbh2bd(cpatch%dbh  (ico),ipft)
+                              cpatch%bdead(ico) = size2bd(cpatch%dbh  (ico),cpatch%hite(ico),ipft)
                            end if
 
                            cpatch%bleaf(ico)  = size2bl( cpatch%dbh (ico)                  &
                                                        , cpatch%hite(ico)                  &
+                                                       , SLA(ipft)                         &
                                                        , ipft )
 
                            !----- Find the other pools. -----------------------------------!

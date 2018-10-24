@@ -29,6 +29,7 @@ subroutine reproduction(cgrid,month)
                                  , include_pft              & ! intent(in)
                                  , include_pft_ag           & ! intent(in)
                                  , include_pft_fp           & ! intent(in)
+                                 , SLA                      & ! intent(in)
                                  , qsw                      & ! intent(in)
                                  , q                        & ! intent(in)
                                  , agf_bs                   & ! intent(in)
@@ -44,7 +45,7 @@ subroutine reproduction(cgrid,month)
    use mem_polygons       , only : maxcohort                ! ! intent(in)
    use consts_coms        , only : pio4                     ! ! intent(in)
    use ed_therm_lib       , only : calc_veg_hcap            ! ! function
-   use allometry          , only : dbh2bd                   & ! function
+   use allometry          , only : size2bd                  & ! function
                                  , size2bl                  & ! function
                                  , h2dbh                    & ! function
                                  , ed_biomass               & ! function
@@ -228,10 +229,11 @@ subroutine reproduction(cgrid,month)
                      rectest%dbh       = h2dbh(rectest%hite, ipft)
                      rectest%krdepth   = dbh2krdepth(rectest%hite,rectest%dbh              &
                                                     ,rectest%pft,cpoly%lsl(isi))
-                     rectest%bdead     = dbh2bd(rectest%dbh, ipft)
+                     rectest%bdead     = size2bd(rectest%dbh, rectest%hite, ipft)
 
                      call pheninit_balive_bstorage(nzg,rectest%pft,rectest%krdepth         &
                                                   ,rectest%hite,rectest%dbh                &
+                                                  ,SLA(ipft)                               &
                                                   ,csite%soil_water(:,ipa)                 &
                                                   ,cpoly%ntext_soil(:,isi)                 &
                                                   ,rectest%paw_avg,rectest%elongf          &
@@ -644,11 +646,12 @@ subroutine reproduction(cgrid,month)
                      !    Will only reproduce/grow if on-allometry so dont' have to worry  !
                      ! about elongation factor.                                            !
                      !---------------------------------------------------------------------!
-                     bleaf_plant     = size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+                     bleaf_plant     = size2bl(cpatch%dbh(ico),cpatch%hite(ico)            &
+                                              ,cpatch%sla(ico),ipft)
                      broot_plant     = bleaf_plant * q(ipft)
                      bsapwood_plant  = bleaf_plant * qsw(ipft) * cpatch%hite(ico)
                      balive_plant    = bleaf_plant + broot_plant + bsapwood_plant
-                     bdead_plant     = dbh2bd(cpatch%dbh(ico),ipft)
+                     bdead_plant     = size2bd(cpatch%dbh(ico),cpatch%hite(ico),ipft)
                      !---------------------------------------------------------------------!
 
 

@@ -552,9 +552,17 @@ recursive subroutine read_ed_xml_config(filename)
            if (texist) then
               b2Bl_large(myPFT) = real(rval)
            end if
+           call getConfigREAL  ('b2Bl_hite','pft',i,rval,texist)
+           if (texist) then
+              b2Bl_hite(myPFT) = real(rval)
+           end if
            call getConfigREAL  ('bleaf_adult','pft',i,rval,texist)
            if (texist) then
               bleaf_adult(myPFT) = real(rval)
+           end if
+           call getConfigREAL  ('bleaf_crit','pft',i,rval,texist)
+           if (texist) then
+              bleaf_crit(myPFT) = real(rval)
            end if
 
 
@@ -584,6 +592,10 @@ recursive subroutine read_ed_xml_config(filename)
            call getConfigREAL  ('b2Bs_large','pft',i,rval,texist)
            if (texist) then
               b2Bs_large(myPFT) = real(rval)
+           end if
+           call getConfigREAL  ('b2Bs_hite','pft',i,rval,texist)
+           if (texist) then
+              b2Bs_hite(myPFT) = real(rval)
            end if
            call getConfigREAL  ('b1SA','pft',i,rval,texist)
            if (texist) then
@@ -1586,13 +1598,16 @@ subroutine write_ed_xml_config
         call putConfigREAL("b1Bl_large", b1Bl_large(i))
         call putConfigREAL("b2Bl_small", b2Bl_small(i))
         call putConfigREAL("b2Bl_large", b2Bl_large(i))
+        call putConfigREAL("b2Bl_hite", b2Bl_hite(i))
         call putConfigREAL("bleaf_adult",bleaf_adult(i))
+        call putConfigREAL("bleaf_crit",bleaf_crit(i))
 
      !! STEM
         call putConfigREAL("b1Bs_small",b1Bs_small(i))
         call putConfigREAL("b1Bs_large",b1Bs_large(i))
         call putConfigREAL("b2Bs_small",b2Bs_small(i))
         call putConfigREAL("b2Bs_large",b2Bs_large(i))
+        call putConfigREAL("b2Bs_hite",b2Bs_hite(i))
         call putConfigREAL("b1SA",b1SA(i))
         call putConfigREAL("b2SA",b2SA(i))
         call putConfigREAL("min_bdead", min_bdead(i))

@@ -228,7 +228,8 @@ subroutine structural_growth(cgrid, month)
                    bstorage_available = cpatch%bstorage(ico)
                case (1)
                    ! reserve enough carbon for reflushing canopy and fine roots
-                   bstorage_min = size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)    &
+                   bstorage_min = size2bl(cpatch%dbh(ico),cpatch%hite(ico)                  &
+                                         ,cpatch%sla(ico),ipft)                             &
                                 * (1. + q(ipft))
                    bstorage_available = max(0., cpatch%bstorage(ico) - bstorage_min)
                end select
@@ -727,7 +728,8 @@ subroutine structural_growth_eq_0(cgrid, month)
                    bstorage_available = cpatch%bstorage(ico)
                case (1)
                    ! reserve enough carbon for reflushing canopy and fine roots
-                   bstorage_min = size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)    &
+                   bstorage_min = size2bl(cpatch%dbh(ico),cpatch%hite(ico)                 &
+                                         ,cpatch%sla(ico),ipft)                            &
                                 * (1. + q(ipft))
                    bstorage_available = max(0., cpatch%bstorage(ico) - bstorage_min)
                end select
@@ -1034,7 +1036,7 @@ subroutine plant_structural_allocation(ipft,hite,dbh,lat,phen_status, bdead, bst
    use ed_misc_coms  , only : current_time & ! intent(in)
                             , igrass       ! ! intent(in)
    use ed_misc_coms  , only : ibigleaf     ! ! intent(in)
-   use allometry     , only : dbh2bd       & ! intent(in)
+   use allometry     , only : size2bd      & ! intent(in)
                             , h2dbh        ! ! intent(in)
    implicit none
    !----- Arguments -----------------------------------------------------------------------!
@@ -1153,7 +1155,7 @@ subroutine plant_structural_allocation(ipft,hite,dbh,lat,phen_status, bdead, bst
                f_bseeds = merge(0.0, r_fract(ipft), hite <= repro_min_h(ipft))
                f_bdead  = 0.0
                else
-               bd_target = dbh2bd(h2dbh(maxh,ipft),ipft)
+               bd_target = size2bd(h2dbh(maxh,ipft),maxh,ipft)
                delta_bd = bd_target - bdead
                !---------------------------------------------------------------------------!
                ! If bstorage is 0 or lianas have already reached their bd_target don't     !
@@ -1280,7 +1282,7 @@ subroutine update_derived_cohort_props(cpatch,ico,lsl,month)
    !----- Get DBH and height --------------------------------------------------------------!
    if (is_grass(ipft) .and. igrass == 1) then
        !---- New grasses get dbh_effective and height from bleaf. -------------------------!
-       cpatch%dbh(ico)  = bl2dbh(cpatch%bleaf(ico), ipft)
+       cpatch%dbh(ico)  = bl2dbh(cpatch%bleaf(ico), cpatch%sla(ico), ipft)
        cpatch%hite(ico) = bl2h  (cpatch%bleaf(ico), ipft)
    else
        !---- Trees and old grasses get dbh from bdead. ------------------------------------!
@@ -1308,22 +1310,7 @@ subroutine update_derived_cohort_props(cpatch,ico,lsl,month)
    end if
    !---------------------------------------------------------------------------------------!
 
-
-   !---------------------------------------------------------------------------------------!
-   !     Because DBH may have increased, the maximum leaf biomass may be different, which  !
-   ! will put plants off allometry even if they were on-allometry before.  Here we check   !
-   ! whether this is the case.                                                             !
-   !---------------------------------------------------------------------------------------!
-   if ((.not. is_grass(ipft)) .or. igrass /= 1) then
-      select case (cpatch%phenology_status(ico))
-      case (0)
-         bleaf_max = size2bl(cpatch%dbh(ico),cpatch%hite(ico),cpatch%pft(ico))
-         if (cpatch%bleaf(ico) < bleaf_max) cpatch%phenology_status(ico) = 1
-      end select
-   end if
-   !---------------------------------------------------------------------------------------!
-
-   !----- Update SLA and Vm0 before calculating LAI----------------------------------------!
+   !----- Update SLA and Vm0 before calculating bleaf_max or LAI  -------------------------!
    select case (trait_plasticity_scheme)
    case (-1,1)
        ! update trait every year
@@ -1335,7 +1322,23 @@ subroutine update_derived_cohort_props(cpatch,ico,lsl,month)
        call update_cohort_plastic_trait(cpatch,ico)
    end select
    !---------------------------------------------------------------------------------------!
-       
+
+   !---------------------------------------------------------------------------------------!
+   !     Because DBH may have increased, the maximum leaf biomass may be different, which  !
+   ! will put plants off allometry even if they were on-allometry before.  Here we check   !
+   ! whether this is the case.                                                             !
+   !---------------------------------------------------------------------------------------!
+   if ((.not. is_grass(ipft)) .or. igrass /= 1) then
+
+      select case (cpatch%phenology_status(ico))
+      case (0)
+         bleaf_max = size2bl(cpatch%dbh(ico),cpatch%hite(ico)                              &
+                            ,cpatch%sla(ico),cpatch%pft(ico))
+         if (cpatch%bleaf(ico) < bleaf_max) cpatch%phenology_status(ico) = 1
+      end select
+   end if
+   !---------------------------------------------------------------------------------------!
+
 
    !----- Update LAI, WAI, and CAI. -------------------------------------------------------!
    call area_indices(cpatch, ico)
@@ -1384,6 +1387,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
    use farq_katul    , only : mod_arrhenius       & ! function
                             , mod_collatz         & ! function
                             , harley_arrhenius    ! ! function
+   use ed_misc_coms  , only : iallom              ! ! intent(in)
    implicit none
    !----- Arguments -----------------------------------------------------------------------!
    type(patchtype), target     :: cpatch
@@ -1396,8 +1400,10 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
    real                        :: ksla         ! extinction coefficient for SLA
    real                        :: lma_slope    ! linearized slope of LMA with height
    real                        :: vm25
-   real                        :: new_sla
-   real                        :: sla_scaler
+   real                        :: old_la
+   real                        :: new_la
+   real                        :: new_bleaf_max
+   real                        :: la_scaler
    !---------------------------------------------------------------------------------------!
 
 
@@ -1409,7 +1415,11 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
 
    ipft    = cpatch%pft(ico)
 
-   if (.not. is_grass(ipft) .and. is_tropical(ipft)) then
+   if ((.not. is_grass(ipft)) .and. is_tropical(ipft)) then
+
+       ! before doing everything save the input leaf area in order to maintain
+       ! water conservation after changing SLA
+       old_la = cpatch%bleaf(ico) * cpatch%sla(ico)
 
        ! 1. calcualte the maximum cumulative lai above the current cohort using the
        ! current sla value
@@ -1424,6 +1434,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
                 max_cum_lai = max_cum_lai                           &
                             + size2bl(cpatch%dbh(cohort_idx),       &
                                       cpatch%hite(cohort_idx),      &
+                                      cpatch%sla(cohort_idx),       &
                                       cpatch%pft(cohort_idx)) *     &
                               cpatch%sla(cohort_idx) * cpatch%nplant(cohort_idx)
             enddo
@@ -1476,12 +1487,38 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        case (1,2)
            ! SLA is defined at the top of canopy, use LAI to change SLA
            ! However, we only allow SLA to be doubled at the deepest shading
-           new_sla = SLA(ipft) * min(2.,exp(ksla * max_cum_lai))
+           cpatch%sla(ico) = SLA(ipft) * min(2.,exp(ksla * max_cum_lai))
            
        case (-1,-2)
            ! SLA is defined at the bottom of canopy, use height to change SLA
-            new_sla = SLA(ipft) / (1. + lma_slope * cpatch%hite(ico))
+           cpatch%sla(ico) = SLA(ipft) / (1. + lma_slope * cpatch%hite(ico))
        end select
+
+       ! Since SLA is changed, we might need to adjust leaf biomass if SLA is used
+       ! in the leaf allometry (iallom == 3)
+       select case (iallom)
+       case (3)
+            new_bleaf_max = size2bl(cpatch%dbh(ico),       &
+                                    cpatch%hite(ico),      &
+                                    cpatch%sla(ico),       &
+                                    cpatch%pft(ico))       
+
+            if (cpatch%bleaf(ico) >= new_bleaf_max) then
+                ! if new_bleaf_max is smaller than current bleaf, we need to dump
+                ! the extra carbon into bstorage and change phenology_status
+
+                ! No need to do anything if bleaf < new_bleaf_max
+                cpatch%bstorage(ico) = cpatch%bstorage(ico)             &
+                                     + (cpatch%bleaf(ico) - new_bleaf_max)
+                cpatch%bleaf(ico) = new_bleaf_max
+
+                cpatch%phenology_status(ico) = 0
+            endif
+       end select
+
+       new_la = cpatch%bleaf(ico) * cpatch%sla(ico)
+       la_scaler = old_la / new_la
+       
 
        ! Here we also need to retrospectively change leaf level state variables
        ! because the leaf area has changed while we want to keep the flux the
@@ -1491,10 +1528,8 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        ! For now we only update psi_open and psi_closed, which will be used in
        ! plant_hydro_driver. We will leave A_open and A_closed unchanged because
        ! growth of the day has already happen at this time point in the model
-       sla_scaler = cpatch%sla(ico) / new_sla
-       cpatch%sla(ico) = new_sla
-       cpatch%psi_open(ico)     = cpatch%psi_open(ico) * sla_scaler
-       cpatch%psi_closed(ico)   = cpatch%psi_closed(ico) * sla_scaler
+       cpatch%psi_open(ico)     = cpatch%psi_open(ico) * la_scaler
+       cpatch%psi_closed(ico)   = cpatch%psi_closed(ico) * la_scaler
    endif
 
    return

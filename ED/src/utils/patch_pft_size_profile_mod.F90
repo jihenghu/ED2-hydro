@@ -65,7 +65,7 @@ module patch_pft_size_profile_mod
          else
              !--use dbh for trees
              lai_pot = cpatch%nplant(ico) * cpatch%sla(ico)                                &
-                     * size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+                     * size2bl(cpatch%dbh(ico),cpatch%hite(ico),cpatch%sla(ico),ipft)
          end if
          !---------------------------------------------------------------------------------!
 

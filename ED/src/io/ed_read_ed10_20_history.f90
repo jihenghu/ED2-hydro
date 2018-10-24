@@ -15,6 +15,7 @@ subroutine read_ed10_ed20_history_file
                              , maxfiles            & ! intent(in)
                              , maxlist             ! ! intent(in)
    use pft_coms       , only : q                   & ! intent(in)
+                             , SLA                 & ! intent(in)
                              , qsw                 & ! intent(in)
                              , min_dbh             & ! intent(in)
                              , min_bdead           & ! intent(in)
@@ -40,7 +41,7 @@ subroutine read_ed10_ed20_history_file
    use grid_coms      , only : ngrids              ! ! intent(in)
    use allometry      , only : bd2dbh              & ! function
                              , dbh2h               & ! function
-                             , dbh2bd              & ! function
+                             , size2bd             & ! function
                              , size2bl             & ! function
                              , ed_biomass          & ! function
                              , area_indices        ! ! subroutine
@@ -760,7 +761,7 @@ subroutine read_ed10_ed20_history_file
                            !----- Inventory.  Read DBH and find the other stuff. ----------!
                            cpatch%dbh(ic2)   = max(dbh(ic),min_dbh(ipft(ic)))
                            cpatch%hite(ic2)  = dbh2h(ipft(ic),dbh(ic))
-                           cpatch%bdead(ic2) = dbh2bd(dbh(ic),ipft(ic))
+                           cpatch%bdead(ic2) = size2bd(dbh(ic),cpatch%hite(ic2),ipft(ic))
 
                         case default
                            !---------------------------------------------------------------!
@@ -777,7 +778,7 @@ subroutine read_ed10_ed20_history_file
                            else
                               cpatch%dbh(ic2)   = dbh(ic)
                               cpatch%hite(ic2)  = dbh2h(ipft(ic),dbh(ic))
-                              cpatch%bdead(ic2) = dbh2bd(dbh(ic),ipft(ic))
+                              cpatch%bdead(ic2) = size2bd(dbh(ic),cpatch%hite(ic2),ipft(ic))
                            end if
                         end select
                         !------------------------------------------------------------------!
@@ -788,7 +789,8 @@ subroutine read_ed10_ed20_history_file
                         !     Use allometry to define leaf and the other live biomass      !
                         ! pools.                                                           !
                         !------------------------------------------------------------------!
-                        cpatch%bleaf(ic2)     = size2bl(dbh(ic), hite(ic),ipft(ic))
+                        cpatch%bleaf(ic2)     = size2bl(dbh(ic), hite(ic),SLA(ipft(ic))    &
+                                                       ,ipft(ic))
                         cpatch%balive(ic2)    = cpatch%bleaf(ic2) * (1.0 + q(ipft(ic))     &
                                               + qsw(ipft(ic)) * cpatch%hite(ic2))
                         cpatch%broot(ic2)     = cpatch%balive(ic2) * q(ipft(ic))           &

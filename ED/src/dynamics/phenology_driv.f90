@@ -267,8 +267,8 @@ subroutine update_phenology(doy, cpoly, isi, lat)
             !----- Get cohort-specific thresholds for prescribed phenology. ---------------!
             call assign_prescribed_phen(cpoly%green_leaf_factor(ipft,isi)                  &
                                        ,cpoly%leaf_aging_factor(ipft,isi),cpatch%dbh(ico)  &
-                                       ,cpatch%hite(ico),ipft,drop_cold,leaf_out_cold      &
-                                       ,bl_max)
+                                       ,cpatch%hite(ico),cpatch%sla(ico),ipft,drop_cold    &
+                                       ,leaf_out_cold,bl_max)
          case default
             !----- Drop_cold is computed in phenology_thresholds for Botta scheme. --------!
             if (drop_cold) bl_max = 0.0
@@ -493,7 +493,8 @@ subroutine update_phenology(doy, cpoly, isi, lat)
 
 
             !----- Find the maximum allowed leaf biomass. ---------------------------------!
-            bl_max = elongf_try * size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+            bl_max = elongf_try * size2bl(cpatch%dbh(ico),cpatch%hite(ico)                 &
+                                         ,cpatch%sla(ico),ipft)
             !------------------------------------------------------------------------------!
 
 
@@ -650,7 +651,7 @@ subroutine update_phenology(doy, cpoly, isi, lat)
 
 
             !----- Find the maximum allowed leaf/root biomass. ----------------------------!
-            bl_full = size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+            bl_full = size2bl(cpatch%dbh(ico),cpatch%hite(ico),cpatch%sla(ico),ipft)
             bl_max = elongf_try * bl_full
             ! Assume half of the fine roots would die if all leaves have shed
             ! Allowing fine root phenology can reduce the maintenance cost of
@@ -970,8 +971,8 @@ subroutine update_phenology_eq_0(doy, cpoly, isi, lat)
             !----- Get cohort-specific thresholds for prescribed phenology. ---------------!
             call assign_prescribed_phen(cpoly%green_leaf_factor(ipft,isi)                  &
                                        ,cpoly%leaf_aging_factor(ipft,isi),cpatch%dbh(ico)  &
-                                       ,cpatch%hite(ico),ipft,drop_cold,leaf_out_cold      &
-                                       ,bleaf_new)
+                                       ,cpatch%hite(ico),cpatch%sla(ico),ipft,drop_cold    &
+                                       ,leaf_out_cold,bleaf_new)
          case default
             !----- Drop_cold is computed in phenology_thresholds for Botta scheme. --------!
             if (drop_cold) bleaf_new = 0.0
@@ -1043,7 +1044,8 @@ subroutine update_phenology_eq_0(doy, cpoly, isi, lat)
                ! leaves appear all of a sudden.                                            !
                !---------------------------------------------------------------------------! 
                cpatch%phenology_status(ico) = 1
-               cpatch%bleaf(ico)            = size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+               cpatch%bleaf(ico)            = size2bl(cpatch%dbh(ico),cpatch%hite(ico)     &
+                                                     ,cpatch%sla(ico),ipft)
                cpatch%balive(ico)           = cpatch%balive(ico) + cpatch%bleaf(ico)
                cpatch%elongf(ico)           = 1.0
             end if  ! critical moisture
@@ -1064,7 +1066,8 @@ subroutine update_phenology_eq_0(doy, cpoly, isi, lat)
                   bleaf_new = 0.0
                else
                   bleaf_new = cpoly%green_leaf_factor(ipft,isi)                            &
-                            * size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+                            * size2bl(cpatch%dbh(ico),cpatch%hite(ico)                     &
+                                     ,cpatch%sla(ico),ipft)
                end if
                
                delta_bleaf = cpatch%bleaf(ico) - bleaf_new
@@ -1120,7 +1123,8 @@ subroutine update_phenology_eq_0(doy, cpoly, isi, lat)
                cpatch%phenology_status(ico) = 1
                cpatch%elongf          (ico) = 1.
                cpatch%bleaf(ico)            = cpoly%green_leaf_factor(ipft,isi)            &
-                                            * size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+                                            * size2bl(cpatch%dbh(ico),cpatch%hite(ico)     &
+                                                     ,cpatch%sla(ico),ipft)
                cpatch%balive(ico)           = cpatch%balive(ico) + cpatch%bleaf(ico)
                !---------------------------------------------------------------------------!
             end if
@@ -1141,7 +1145,8 @@ subroutine update_phenology_eq_0(doy, cpoly, isi, lat)
             !----- In case it is too dry, drop all the leaves. ----------------------------!
             if (elongf_try < elongf_min) elongf_try = 0.
             !----- Find the new leaf biomass. ---------------------------------------------!
-            bleaf_new = elongf_try * size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+            bleaf_new = elongf_try * size2bl(cpatch%dbh(ico),cpatch%hite(ico)              &
+                                            ,cpatch%sla(ico),ipft)
 
             !------------------------------------------------------------------------------!
             !     Delta_bleaf is the difference between the current leaf biomass and the   !
@@ -1273,7 +1278,7 @@ subroutine update_phenology_eq_0(doy, cpoly, isi, lat)
 
 
             !----- Find the maximum allowed leaf biomass. ---------------------------------!
-            bleaf_full= size2bl(cpatch%dbh(ico),cpatch%hite(ico),ipft)
+            bleaf_full= size2bl(cpatch%dbh(ico),cpatch%hite(ico),cpatch%sla(ico),ipft)
             bleaf_new = elongf_try * bleaf_full 
             broot_new = bleaf_full * q(ipft) * (elongf_try + 1.0) / 2.0
             !------------------------------------------------------------------------------!
@@ -1487,7 +1492,7 @@ end subroutine phenology_thresholds
 !==========================================================================================!
 !    This subroutine assigns the prescribed phenology.                                     !
 !------------------------------------------------------------------------------------------!
-subroutine assign_prescribed_phen(green_leaf_factor,leaf_aging_factor,dbh,height,pft       &
+subroutine assign_prescribed_phen(green_leaf_factor,leaf_aging_factor,dbh,height,sla,pft   &
                                  ,drop_cold,leaf_out_cold,bl_max)
    use allometry     , only : size2bl
    use phenology_coms, only : elongf_min
@@ -1500,12 +1505,13 @@ subroutine assign_prescribed_phen(green_leaf_factor,leaf_aging_factor,dbh,height
    real   , intent(in)  :: leaf_aging_factor
    real   , intent(in)  :: dbh
    real   , intent(in)  :: height
+   real   , intent(in)  :: sla
    integer, intent(in)  :: pft
    !---------------------------------------------------------------------------------------!
 
    drop_cold     = green_leaf_factor /= leaf_aging_factor
    leaf_out_cold = green_leaf_factor > elongf_min .and. (.not. drop_cold)
-   bl_max        = green_leaf_factor * size2bl(dbh, height, pft)
+   bl_max        = green_leaf_factor * size2bl(dbh, height, sla, pft)
 
    return
 end subroutine assign_prescribed_phen

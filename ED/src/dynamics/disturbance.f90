@@ -2954,7 +2954,7 @@ module disturbance_utils
       use consts_coms    , only : t3ple                    & ! intent(in)
                                 , pio4                     ! ! intent(in)
       use allometry      , only : h2dbh                    & ! function
-                                , dbh2bd                   & ! function
+                                , size2bd                  & ! function
                                 , area_indices             & ! function
                                 , ed_biomass               ! ! function
       use ed_max_dims    , only : n_pft                    ! ! intent(in)
@@ -3019,7 +3019,7 @@ module disturbance_utils
          !---------------------------------------------------------------------------------!
          cpatch%hite (nc) = hgt_min(cpatch%pft(nc)) * min(1.0,height_factor)
          cpatch%dbh  (nc) = h2dbh(cpatch%hite(nc),cpatch%pft(nc))
-         cpatch%bdead(nc) = dbh2bd(cpatch%dbh(nc),cpatch%pft(nc))
+         cpatch%bdead(nc) = size2bd(cpatch%dbh(nc),cpatch%hite(nc),cpatch%pft(nc))
          !---------------------------------------------------------------------------------!
 
       case (1)
@@ -3029,7 +3029,7 @@ module disturbance_utils
          !---------------------------------------------------------------------------------!
          cpatch%hite (nc) = hgt_max(cpatch%pft(nc))
          cpatch%dbh  (nc) = dbh_bigleaf(cpatch%pft(nc))
-         cpatch%bdead(nc) = dbh2bd(cpatch%dbh(nc),cpatch%pft(nc))
+         cpatch%bdead(nc) = size2bd(cpatch%dbh(nc),cpatch%hite(nc),cpatch%pft(nc))
          !---------------------------------------------------------------------------------!
       end select
       !------------------------------------------------------------------------------------!
@@ -3050,7 +3050,8 @@ module disturbance_utils
       ! stress.                                                                            !
       !------------------------------------------------------------------------------------!
       call pheninit_balive_bstorage(mzg,cpatch%pft(nc),cpatch%krdepth(nc),cpatch%hite(nc)  &
-                                   ,cpatch%dbh(nc),csite%soil_water(:,np),ntext_soil       &
+                                   ,cpatch%dbh(nc),cpatch%sla(nc)                          &
+                                   ,csite%soil_water(:,np),ntext_soil                      &
                                    ,cpatch%paw_avg(nc),cpatch%elongf(nc)                   &
                                    ,cpatch%phenology_status(nc),cpatch%bleaf(nc)           &
                                    ,cpatch%broot(nc),cpatch%bsapwooda(nc)                  &
@@ -3124,7 +3125,7 @@ module disturbance_utils
                                 , ed_biomass               & ! function
                                 , h2dbh                    & ! function
                                 , size2bl                  & ! function
-                                , dbh2bd                   & ! function
+                                , size2bd                  & ! function
                                 , dbh2krdepth              & ! function
                                 , dbh2sf                   ! ! function
       use pft_coms,        only : qsw                      & ! intent(in)
@@ -3215,9 +3216,10 @@ module disturbance_utils
             ! Lianas of 35m will be reduced to maxh, all
             cpatch%hite(ico)      = max(cpatch%hite(ico) * h_pruning_factor, 1.0)
             cpatch%dbh(ico)       = h2dbh (cpatch%hite(ico), ipft)
-            bleaf_max             = size2bl(cpatch%dbh(ico), cpatch%hite(ico), ipft)
+            bleaf_max             = size2bl(cpatch%dbh(ico), cpatch%hite(ico)                 &
+                                           ,cpatch%sla(ico), ipft)
             cpatch%bleaf(ico)     = bleaf_max * cpatch%elongf(ico)
-            cpatch%bdead(ico)     = dbh2bd(cpatch%dbh(ico), ipft)
+            cpatch%bdead(ico)     = size2bd(cpatch%dbh(ico), cpatch%hite(ico), ipft)
             cpatch%bsapwooda(ico) = bleaf_max * qsw(ipft) * cpatch%hite(ico)
 
 
