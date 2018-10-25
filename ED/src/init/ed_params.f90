@@ -1539,11 +1539,12 @@ subroutine init_pft_photo_params()
       case (1)
          ssfact = 3.0
    end select
+   ! [XX] modifified tropical PFTs based on MLongo data
    !---- Define Vm0 for all PFTs. ---------------------------------------------------------!
-   Vm0(1)                    = 12.500000 * ssfact * vmfact_c4
-   Vm0(2)                    = 18.750000 * ssfact * vmfact_c3
-   Vm0(3)                    = 12.500000 * ssfact * vmfact_c3
-   Vm0(4)                    =  6.250000 * ssfact * vmfact_c3
+   Vm0(1)                    = 23.3484 !12.500000 * ssfact * vmfact_c4
+   Vm0(2)                    = 21.4929 !18.750000 * ssfact * vmfact_c3
+   Vm0(3)                    = 18.64!12.500000 * ssfact * vmfact_c3
+   Vm0(4)                    = 16.02! 6.250000 * ssfact * vmfact_c3
    Vm0(5)                    = 18.300000 * ssfact * vmfact_c3
    Vm0(6)                    = 11.350000 * ssfact * vmfact_c3
    Vm0(7)                    = 11.350000 * ssfact * vmfact_c3
@@ -1899,6 +1900,7 @@ subroutine init_pft_resp_params()
    growth_resp_factor(16)         = growthresp
    growth_resp_factor(17)         = growthresp
 
+   ![XX]
    leaf_turnover_rate(1)          = 2.0
    leaf_turnover_rate(2)          = 1.0
    leaf_turnover_rate(3)          = 0.5
@@ -2505,6 +2507,14 @@ subroutine init_pft_alloc_params()
    rho(17)    = 0.46   ! BCI Traits
    !---------------------------------------------------------------------------------------!
 
+   ! new tropical scheme from MLongo
+   if (iallom == 3) then
+       rho(1) = 0.08
+       rho(2) = 0.45
+       rho(3) = 0.615
+       rho(4) = 0.79
+   endif
+
 
 
    !---------------------------------------------------------------------------------------!
@@ -2539,6 +2549,13 @@ subroutine init_pft_alloc_params()
    SLA(16) = 22.7 !--value from Mike Dietze: mean: 22.7, median 19.1, 95% CI: 5.7, 78.6
    SLA(17) = 10.0**(sla_inter + sla_slope * log10(12.0/leaf_turnover_rate( 17))) * sla_scale
 
+   ! new tropical scheme from MLongo
+   if (iallom == 3) then
+       SLA(1) = 27.585
+       SLA(2) = 26.221
+       SLA(3) = 19.744
+       SLA(4) = 14.615
+   endif
    !---------------------------------------------------------------------------------------!
    !    Fraction of vertical branches.  Values are from Poorter et al. (2006):             !
    !                                                                                       !
@@ -2763,7 +2780,7 @@ subroutine init_pft_alloc_params()
    !---------------------------------------------------------------------------------------!
 
    hgt_min(1)     = 0.50
-   hgt_min(2:4)   = 0.50
+   hgt_min(2:4)   = 1.30
    hgt_min(5)     = 0.15
    hgt_min(6)     = 1.50
    hgt_min(7)     = 1.50
