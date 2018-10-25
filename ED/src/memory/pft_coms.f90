@@ -320,6 +320,11 @@ module pft_coms
    ! [1/years].                                                                            !
    !---------------------------------------------------------------------------------------!
    real, dimension(n_pft) :: mort3 
+   
+   ! variable controls the growth-dependence moratlity rates from Camac et al.
+   ! mort = mort_alpha * exp(mort_beta * CBr)
+   real, dimension(n_pft) :: mort_alpha
+   real, dimension(n_pft) :: mort_beta 
 
    !---------------------------------------------------------------------------------------!
    ! This is the way to initialize mort3 through hard parameterization (ie. non dependent) !

@@ -19,6 +19,8 @@ module mortality
                                , mort1                      & ! intent(in)
                                , mort2                      & ! intent(in)
                                , mort3                      & ! intent(in)
+                               , mort_alpha                 & ! intent(in)
+                               , mort_beta                  & ! intent(in)
                                , mort_plc_max               & ! intent(in)
                                , mort_plc_th                & ! intent(in)
                                , plant_min_temp             & ! intent(in)
@@ -113,13 +115,14 @@ module mortality
       !------------------------------------------------------------------------------------!
       case (2)
       !------------------------------------------------------------------------------------!
-      ! 7. DBH-based mortality. Note we need to zero the negative carbon mortality in this !
+      ! 7. Growth-based mortality from Camac et al. BioRxiv.
+      ! Note we need to zero the negative carbon mortality in this 
       ! case to avoid double counting                                                      !
       !------------------------------------------------------------------------------------!
-      ddbh_avg = sum(cpatch%ddbh_monthly(1:12,ico)) / 12.
-      cpatch%mort_rate(7,ico) = 0.0625 * exp(-18.7313 * ddbh_avg) 
       cpatch%mort_rate(2,ico) = 0. ! reset the original negative carbon mortality
-      ! Based on Camac et al. 2017 BioRxiv
+      expmort = max( lnexp_min, min( lnexp_max                                             &
+                                   , mort_beta(ipft) * cpatch%cbr_bar(ico)  ) )
+      cpatch%mort_rate(7,ico) = mort_alpha(ipft) * exp(expmort)
       !------------------------------------------------------------------------------------!
 
       case (3)
@@ -129,9 +132,10 @@ module mortality
                               / (1. - mort_plc_th(ipft))                                   &
                               * mort_plc_max(ipft)
 
-      ddbh_avg = sum(cpatch%ddbh_monthly(1:12,ico)) / 12.
-      cpatch%mort_rate(7,ico) = 0.0625 * exp(-18.7313 * ddbh_avg) 
       cpatch%mort_rate(2,ico) = 0. ! reset the original negative carbon mortality
+      expmort = max( lnexp_min, min( lnexp_max                                             &
+                                   , mort_beta(ipft) * cpatch%cbr_bar(ico)  ) )
+      cpatch%mort_rate(7,ico) = mort_alpha(ipft) * exp(expmort)
 
       end select
 

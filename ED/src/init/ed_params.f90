@@ -2012,6 +2012,8 @@ subroutine init_pft_mort_params()
       , mort1                      & ! intent(out)
       , mort2                      & ! intent(out)
       , mort3                      & ! intent(out)
+      , mort_alpha                 & ! intent(out)
+      , mort_beta                  & ! intent(out)
       , mort_plc_max               & ! intent(out)
       , mort_plc_th                & ! intent(out)
       , cbr_severe_stress          & ! intent(out)
@@ -2022,6 +2024,9 @@ subroutine init_pft_mort_params()
       , fire_s_gtht                & ! intent(out)
       , fire_s_ltht                & ! intent(out)
       , plant_min_temp             & ! intent(out)
+      , is_tropical                & ! intent(out)
+      , is_liana                   & ! intent(out)
+      , is_grass                   & ! intent(out)
       , frost_mort                 ! ! intent(out)
    use consts_coms , only : t00                        & ! intent(in)
       , lnexp_max                  & ! intent(in)
@@ -2029,6 +2034,8 @@ subroutine init_pft_mort_params()
       , twothirds                  ! ! intent(in)
    use ed_misc_coms, only : ibigleaf                   & ! intent(in)
       , iallom                     ! ! intent(in)
+   use physiology_coms,only : imort_scheme               ! ! intent(in)
+   use ed_max_dims , only   : n_pft               ! ! intent(in)
    use disturb_coms, only : treefall_disturbance_rate  & ! intent(inout)
       , time2canopy                ! ! intent(in)
 
@@ -2046,6 +2053,7 @@ subroutine init_pft_mort_params()
    real     :: m3_slope
    real     :: m3_scale
    real     :: tdr_default
+   integer  :: ipft
    !---------------------------------------------------------------------------------------!
 
 
@@ -2157,6 +2165,28 @@ subroutine init_pft_mort_params()
    mort3(16) = m3_scale * ( m3_slope * (1. - rho(16) / rho( 4)) )
    mort3(17) = 0.06311576 ! O. Phillips (2005)
    !---------------------------------------------------------------------------------------!
+
+   ! growth-independt mortality from Camac et al. 
+   mort_alpha(1:17) = 0.
+   mort_beta(1:17)  = 0.
+   select case (imort_scheme)
+   case (2,3)
+       ! use the new mortality scheme
+       do ipft=1,n_pft
+          if (is_tropical(ipft) .and.                   &
+              (.not. is_liana(ipft)) .and.              &
+              (.not. is_grass(ipft))) then
+              ! the first term for mort3 and mort_alpha is delta_t
+              ! multiply -1.2 to mort_beta to convert growth to CB_r
+              mort3(ipft) = 0.8998337 * (0.0110928 * (rho(ipft) / 0.6) ** -2.234738)
+              mort_alpha(ipft) = 0.8998337 * (0.0498774 * (rho(ipft) / 0.6) ** -0.5598224)
+              mort_beta(ipft) = -1.2 * (23.62589 * (rho(ipft) / 0.6) ** 0.3672854)
+          end if
+       end do
+   end select
+
+
+
 
 
    !---------------------------------------------------------------------------------------!
