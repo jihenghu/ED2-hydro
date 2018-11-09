@@ -41,9 +41,11 @@ module mortality
       real           , intent(in) :: patch_age       ! Patch age
       !----- Local variables --------------------------------------------------------------!
       integer                     :: ipft            ! PFT 
+      integer                     :: imonth          ! Month
       real                        :: temp_dep        ! Temp. function  (frost mortality)
       real                        :: expmort         ! Carbon-balance term
       real                        :: plc_avg         ! average percentage loss of conductance
+      real                        :: plc_mort        ! plc mortality at monthly scale
       real                        :: ddbh_avg        ! average DBH growth rates              
       !------------------------------------------------------------------------------------!
 
@@ -108,10 +110,13 @@ module mortality
       !------------------------------------------------------------------------------------!
       ! 6. Hydraulic failure mortality.                                                    !
       !------------------------------------------------------------------------------------!
-      plc_avg = sum(cpatch%plc_monthly(1:12,ico)) / 12.
-      cpatch%mort_rate(6,ico) = max(0., plc_avg - mort_plc_th(ipft))                       &
+      plc_mort = 0.
+      do imonth = 1,12
+        plc_mort = plc_mort + max(0., cpatch%plc_monthly(imonth,ico) - mort_plc_th(ipft))  &
                               / (1. - mort_plc_th(ipft))                                   &
-                              * mort_plc_max(ipft)
+                              * mort_plc_max(ipft) / 12.
+      enddo
+      cpatch%mort_rate(6,ico) = plc_mort
       !------------------------------------------------------------------------------------!
       case (2)
       !------------------------------------------------------------------------------------!
@@ -119,22 +124,40 @@ module mortality
       ! Note we need to zero the negative carbon mortality in this 
       ! case to avoid double counting                                                      !
       !------------------------------------------------------------------------------------!
+      ! calculate ddbh_avg
+      ddbh_avg = sum(cpatch%ddbh_monthly(1:12,ico)) / 12.
+      if (ddbh_avg <= 1e-8) then
+          ! use cbr instead
+          ddbh_avg = 1.2 * cpatch%cbr_bar(ico)
+      endif
+        
       cpatch%mort_rate(2,ico) = 0. ! reset the original negative carbon mortality
       expmort = max( lnexp_min, min( lnexp_max                                             &
-                                   , mort_beta(ipft) * cpatch%cbr_bar(ico)  ) )
+                                   , mort_beta(ipft) * ddbh_avg  ) )
       cpatch%mort_rate(7,ico) = mort_alpha(ipft) * exp(expmort)
       !------------------------------------------------------------------------------------!
 
       case (3)
       ! Both mortality is considered
-      plc_avg = sum(cpatch%plc_monthly(1:12,ico)) / 12.
-      cpatch%mort_rate(6,ico) = max(0., plc_avg - mort_plc_th(ipft))                       &
+
+      plc_mort = 0.
+      do imonth = 1,12
+        plc_mort = plc_mort + max(0., cpatch%plc_monthly(imonth,ico) - mort_plc_th(ipft))  &
                               / (1. - mort_plc_th(ipft))                                   &
-                              * mort_plc_max(ipft)
+                              * mort_plc_max(ipft) / 12.
+      enddo
+      cpatch%mort_rate(6,ico) = plc_mort
 
       cpatch%mort_rate(2,ico) = 0. ! reset the original negative carbon mortality
+      ! calculate ddbh_avg
+      ddbh_avg = sum(cpatch%ddbh_monthly(1:12,ico)) / 12.
+      if (ddbh_avg <= 1e-6) then
+          ! use cbr instead
+          ddbh_avg = 1.2 * cpatch%cbr_bar(ico)
+      endif
+        
       expmort = max( lnexp_min, min( lnexp_max                                             &
-                                   , mort_beta(ipft) * cpatch%cbr_bar(ico)  ) )
+                                   , mort_beta(ipft) * ddbh_avg  ) )
       cpatch%mort_rate(7,ico) = mort_alpha(ipft) * exp(expmort)
 
       end select

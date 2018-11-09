@@ -331,6 +331,7 @@ subroutine read_met_drivers_init
    use met_driver_coms   , only : nformats       & ! intent(in)
                                 , ishuffle       & ! intent(in)
                                 , met_names      & ! intent(in)
+                                , met_vars       & ! intent(in)
                                 , met_nv         & ! intent(in)
                                 , met_interp     & ! intent(in)
                                 , met_frq        & ! intent(in)
@@ -528,7 +529,11 @@ subroutine read_met_drivers_init
 
       !----- Loop over the different file formats -----------------------------------------!
       formloop: do iformat = 1, nformats
-         
+         ! modify the year_use if it is CO2 so that we disable cycling of CO2
+         if (any(met_vars(iformat,1:met_nv(iformat)) == 'co2')) then
+             year_use = current_time%year
+         endif
+
          !----- Create the file name and check whether it exists. -------------------------!
          write(infile,fmt='(a,i4.4,a,a)')   trim(met_names(iformat)), year_use             &
                                            ,mname(current_time%month),'.h5'
@@ -583,6 +588,9 @@ subroutine read_met_drivers_init
          iyear = y2 - iyeara + 1
          year_use_2 = metyears(iyear)
          
+         if (any(met_vars(iformat,1:met_nv(iformat)) == 'co2')) then
+             year_use_2 = y2
+         endif
          !----- Now, open the file once. --------------------------------------------------!
          write(infile,fmt='(a,i4.4,a,a)')  trim(met_names(iformat)), year_use_2            &
                                           ,mname(m2),'.h5'
@@ -691,6 +699,10 @@ subroutine read_met_drivers
       !----- Loop over the different file formats -----------------------------------------!
       formloop: do iformat = 1, nformats
          
+         if (any(met_vars(iformat,1:met_nv(iformat)) == 'co2')) then
+             year_use = current_time%year
+         endif
+
          !----- Create the file name and check whether it exists. -------------------------!
          write(infile,'(a,i4.4,a,a)')trim(met_names(iformat)), year_use,   &
               mname(current_time%month),'.h5'
@@ -759,6 +771,10 @@ subroutine read_met_drivers
             end do
          end if
          
+         if (any(met_vars(iformat,1:met_nv(iformat)) == 'co2')) then
+             year_use_2 = y2
+         endif
+
          !----- Now, open the file once. --------------------------------------------------!
          write(infile,fmt='(a,i4.4,a,a)')  trim(met_names(iformat)), year_use_2            &
                                           ,mname(m2),'.h5'
@@ -2660,7 +2676,6 @@ subroutine read_ol_file(infile,iformat, iv, mname, year, offset, cgrid)
       allocate(metvar(np,met_nlon(iformat),met_nlat(iformat)))
       allocate(metscalar(np_dset))
       call shdf5_irec_f(ndims,idims,trim(met_vars(iformat,iv)),rvara = metscalar)
-      
       if (np < np_dset) then     
          !----- No interpolation is needed, but we need two buffers. ----------------------!
          do ip=1,np
@@ -2727,16 +2742,17 @@ subroutine read_ol_file(infile,iformat, iv, mname, year, offset, cgrid)
    case default
       !----- Case 1 or 0, we must read time-and-space variable array. ---------------------!
       call shdf5_info_f(trim(met_vars(iformat,iv)),ndims,idims)
-      
+ 
+         !print*,"DATASET: ",trim(met_vars(iformat,iv))
+         !print*,"DOES NOT HAVE DIMENSIONS THAT MATCH THE"
+         !print*,"SPECIFIED INPUT, OR LAT/LON GRID"
+         !print*,ndims
+         !print*,np_dset,met_nlon(iformat),met_nlat(iformat)
+         !print*,idims
+     
       ! Check to see if the dimensions are consistent
       if (ndims /= 3 .or. idims(1).ne.np_dset .or. idims(2).ne.met_nlon(iformat)           &
                                               .or. idims(3).ne.met_nlat(iformat)) then
-         print*,"DATASET: ",trim(met_vars(iformat,iv))
-         print*,"DOES NOT HAVE DIMENSIONS THAT MATCH THE"
-         print*,"SPECIFIED INPUT, OR LAT/LON GRID"
-         print*,ndims
-         print*,np_dset,met_nlon(iformat),met_nlat(iformat)
-         print*,idims
          write (unit=*,fmt='(2(a,1x))') ' In file: ',trim(infile)
          write (unit=*,fmt='(2(a,1x))') ' Dataset: ', trim(met_vars(iformat,iv))
          write (unit=*,fmt='(a)')       ' doesn''t have dimensions that match the'

@@ -1439,7 +1439,8 @@ end subroutine init_can_lyr_params
 subroutine init_pft_photo_params()
 
    use ed_max_dims    , only : n_pft                   ! ! intent(in)
-   use ed_misc_coms   , only : ibigleaf                ! ! intent(in)
+   use ed_misc_coms   , only : ibigleaf                & ! intent(in)
+                             , iallom                  ! ! intent(in)
    use pft_coms       , only : D0                      & ! intent(out)
       , Vm_low_temp             & ! intent(out)
       , Vm_high_temp            & ! intent(out)
@@ -1541,10 +1542,10 @@ subroutine init_pft_photo_params()
    end select
    ! [XX] modifified tropical PFTs based on MLongo data
    !---- Define Vm0 for all PFTs. ---------------------------------------------------------!
-   Vm0(1)                    = 23.3484 !12.500000 * ssfact * vmfact_c4
-   Vm0(2)                    = 21.4929 !18.750000 * ssfact * vmfact_c3
-   Vm0(3)                    = 18.64!12.500000 * ssfact * vmfact_c3
-   Vm0(4)                    = 16.02! 6.250000 * ssfact * vmfact_c3
+   Vm0(1)                    = 12.500000 * ssfact * vmfact_c4
+   Vm0(2)                    = 18.750000 * ssfact * vmfact_c3
+   Vm0(3)                    = 12.500000 * ssfact * vmfact_c3
+   Vm0(4)                    = 6.250000 * ssfact * vmfact_c3
    Vm0(5)                    = 18.300000 * ssfact * vmfact_c3
    Vm0(6)                    = 11.350000 * ssfact * vmfact_c3
    Vm0(7)                    = 11.350000 * ssfact * vmfact_c3
@@ -1557,6 +1558,12 @@ subroutine init_pft_photo_params()
    Vm0(16)                   = 18.750000 * ssfact * vmfact_c3
    Vm0(17)                   = 9.0970000 * ssfact * vmfact_c3
    !---------------------------------------------------------------------------------------!
+   if (iallom == 3) then
+        Vm0(1)                    = 23.3484 !12.500000 * ssfact * vmfact_c4
+        Vm0(2)                    = 21.4929 !18.750000 * ssfact * vmfact_c3
+        Vm0(3)                    = 18.64!12.500000 * ssfact * vmfact_c3
+        Vm0(4)                    = 16.02! 6.250000 * ssfact * vmfact_c3
+   endif
 
 
 
@@ -1900,7 +1907,6 @@ subroutine init_pft_resp_params()
    growth_resp_factor(16)         = growthresp
    growth_resp_factor(17)         = growthresp
 
-   ![XX]
    leaf_turnover_rate(1)          = 2.0
    leaf_turnover_rate(2)          = 1.0
    leaf_turnover_rate(3)          = 0.5
@@ -2182,7 +2188,7 @@ subroutine init_pft_mort_params()
               ! multiply -1.2 to mort_beta to convert growth to CB_r
               mort3(ipft) = 0.8998337 * (0.0110928 * (rho(ipft) / 0.6) ** -2.234738)
               mort_alpha(ipft) = 0.8998337 * (0.0498774 * (rho(ipft) / 0.6) ** -0.5598224)
-              mort_beta(ipft) = -1.2 * (23.62589 * (rho(ipft) / 0.6) ** 0.3672854)
+              mort_beta(ipft) = -1. * (23.62589 * (rho(ipft) / 0.6) ** 0.3672854)
           end if
        end do
    end select
@@ -2195,7 +2201,7 @@ subroutine init_pft_mort_params()
    !      Hydraulic failure mortality parameters                                           !
    !---------------------------------------------------------------------------------------!
    mort_plc_max (1:17) = 1.0
-   mort_plc_th  (1:17) = 0.0
+   mort_plc_th  (1:17) = 0.05  ! 1 day of 0.6 PLC within a month 
    
 
 
@@ -2424,6 +2430,7 @@ subroutine init_pft_alloc_params()
    use ed_misc_coms , only : iallom                & ! intent(in)
       , igrass                & ! intent(in)
       , ibigleaf              ! ! intent(in)
+   use physiology_coms, only : plant_hydro_scheme           ! ! intent(in)
    use detailed_coms, only : idetailed             ! ! intent(in)
    implicit none
    !----- Local variables. ----------------------------------------------------------------!
@@ -2492,7 +2499,7 @@ subroutine init_pft_alloc_params()
    ! used only for branch area purposes.                                                   !
    !---------------------------------------------------------------------------------------!
    !---- [KIM] new tropical parameters. ---------------------------------------------------!
-   rho(1)     = 0.20   ! 0.40
+   rho(1)     = 0.35 ! for the purpose of hydraulic calculations   ! 0.40
    rho(2)     = 0.53   ! 0.40
    rho(3)     = 0.71   ! 0.60
    rho(4)     = 0.90   ! 0.87
@@ -2509,7 +2516,6 @@ subroutine init_pft_alloc_params()
 
    ! new tropical scheme from MLongo
    if (iallom == 3) then
-       rho(1) = 0.08
        rho(2) = 0.45
        rho(3) = 0.615
        rho(4) = 0.79
@@ -2608,6 +2614,9 @@ subroutine init_pft_alloc_params()
    qsw(14:15)  = SLA(14:15) / sapwood_ratio(14:15)  !new is SLA(14:15)(3900.0*2.0/1000.0)
    qsw(16)     = SLA(16)    / sapwood_ratio(16)
    qsw(17)     = SLA(17)    / sapwood_ratio(17)
+   if (plant_hydro_scheme /= 0) then
+       qsw(:) = 0.
+   endif
    !---------------------------------------------------------------------------------------!
 
    !---------------------------------------------------------------------------------------!

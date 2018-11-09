@@ -53,7 +53,6 @@ subroutine structural_growth(cgrid, month)
    type(polygontype), pointer    :: cpoly
    type(sitetype)   , pointer    :: csite
    type(patchtype)  , pointer    :: cpatch
-   type(simtime)                 :: lastmonth
    real                          :: ndaysi
    integer                       :: ipy
    integer                       :: isi
@@ -326,7 +325,6 @@ subroutine structural_growth(cgrid, month)
                !---------------------------------------------------------------------------!
                ! Update
 
-
                !----- Update annual average carbon balances for mortality. ----------------!
                if (month == 1) then
                   prev_month = 12
@@ -479,7 +477,6 @@ subroutine structural_growth(cgrid, month)
                select case (imort_scheme)
                case (1)
                    ! need to update plc
-                   call lastmonthdate(current_time,lastmonth,ndaysi)
                    cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
                    cpatch%plc_monthly(13,ico) = 0. ! reset
                case (2)
@@ -487,7 +484,6 @@ subroutine structural_growth(cgrid, month)
                    cpatch%ddbh_monthly(prev_month,ico) = cpatch%ddbh_dt(ico)
                case (3)
                    ! need to update both
-                   call lastmonthdate(current_time,lastmonth,ndaysi)
                    cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
                    cpatch%plc_monthly(13,ico) = 0. ! reset
                    cpatch%ddbh_monthly(prev_month,ico) = cpatch%ddbh_dt(ico)
@@ -605,7 +601,6 @@ subroutine structural_growth_eq_0(cgrid, month)
    type(polygontype), pointer    :: cpoly
    type(sitetype)   , pointer    :: csite
    type(patchtype)  , pointer    :: cpatch
-   type(simtime)                 :: lastmonth
    real                          :: ndaysi
    integer                       :: ipy
    integer                       :: isi
@@ -938,7 +933,6 @@ subroutine structural_growth_eq_0(cgrid, month)
                select case (imort_scheme)
                case (1)
                    ! need to update plc
-                   call lastmonthdate(current_time,lastmonth,ndaysi)
                    cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
                    cpatch%plc_monthly(13,ico) = 0. ! reset
                case (2)
@@ -946,7 +940,6 @@ subroutine structural_growth_eq_0(cgrid, month)
                    cpatch%ddbh_monthly(prev_month,ico) = cpatch%ddbh_dt(ico)
                case (3)
                    ! need to update both
-                   call lastmonthdate(current_time,lastmonth,ndaysi)
                    cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
                    cpatch%plc_monthly(13,ico) = 0. ! reset
                    cpatch%ddbh_monthly(prev_month,ico) = cpatch%ddbh_dt(ico)
@@ -1400,10 +1393,10 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
    real                        :: ksla         ! extinction coefficient for SLA
    real                        :: lma_slope    ! linearized slope of LMA with height
    real                        :: vm25
-   real                        :: old_la
-   real                        :: new_la
+   real                        :: old_sla
+   real                        :: new_sla
    real                        :: new_bleaf_max
-   real                        :: la_scaler
+   real                        :: transp_scaler
    !---------------------------------------------------------------------------------------!
 
 
@@ -1419,7 +1412,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
 
        ! before doing everything save the input leaf area in order to maintain
        ! water conservation after changing SLA
-       old_la = cpatch%bleaf(ico) * cpatch%sla(ico)
+       old_sla = cpatch%sla(ico)
 
        ! 1. calcualte the maximum cumulative lai above the current cohort using the
        ! current sla value
@@ -1494,6 +1487,23 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
            cpatch%sla(ico) = SLA(ipft) / (1. + lma_slope * cpatch%hite(ico))
        end select
 
+       ! when sla increases, we are going to dump carbon into bstorage, reducing bleaf
+       ! or we are going to increase leaf area.
+       ! In the first case, we need also to dump the equivalent fraction of transpiration as bleaf reduction
+       ! transp_scaler = old_la / new_la * new_bleaf / old_bleaf = old_sla / new_sla
+       ! In the second case, we need to reduce transpiration rate per area to maintain the same total transpiration rate
+       ! transp_scaler = old_la / new_la = old_bleaf * old_sla / new_bleaf / new_sla = ols_sla/new_sla ....
+
+       ! When SLA decreases, bleaf would not change bu la decreased
+       ! so we only need to increase transpiration rate per area to maintain the same total transpiration rate...
+       ! transp_scaler = old_la / new_la = old_sla / new_sla
+
+       ! So we always use sla
+
+       new_sla = cpatch%sla(ico)
+
+       transp_scaler = old_sla / new_sla
+ 
        ! Since SLA is changed, we might need to adjust leaf biomass if SLA is used
        ! in the leaf allometry (iallom == 3)
        select case (iallom)
@@ -1508,17 +1518,21 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
                 ! the extra carbon into bstorage and change phenology_status
 
                 ! No need to do anything if bleaf < new_bleaf_max
+
+                ! dump carbon
                 cpatch%bstorage(ico) = cpatch%bstorage(ico)             &
                                      + (cpatch%bleaf(ico) - new_bleaf_max)
+
+                ! Water content will be updated later in structural_growth
+
                 cpatch%bleaf(ico) = new_bleaf_max
 
                 cpatch%phenology_status(ico) = 0
             endif
        end select
 
-       new_la = cpatch%bleaf(ico) * cpatch%sla(ico)
-       la_scaler = old_la / new_la
-       
+
+      
 
        ! Here we also need to retrospectively change leaf level state variables
        ! because the leaf area has changed while we want to keep the flux the
@@ -1528,8 +1542,8 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        ! For now we only update psi_open and psi_closed, which will be used in
        ! plant_hydro_driver. We will leave A_open and A_closed unchanged because
        ! growth of the day has already happen at this time point in the model
-       cpatch%psi_open(ico)     = cpatch%psi_open(ico) * la_scaler
-       cpatch%psi_closed(ico)   = cpatch%psi_closed(ico) * la_scaler
+       cpatch%psi_open(ico)     = cpatch%psi_open(ico) * transp_scaler
+       cpatch%psi_closed(ico)   = cpatch%psi_closed(ico) * transp_scaler
    endif
 
    return
