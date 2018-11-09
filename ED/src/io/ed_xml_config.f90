@@ -1862,7 +1862,7 @@ subroutine putConfigSTRING(tag,value)
   character(*),intent(in) :: tag 
   character(*),intent(in) :: value
   integer :: lenval 
-  lenval = len(value)
+  lenval = len(trim(value))
   call libxml2f90_ll_opentag(tag)
   call libxml2f90_ll_addid(trim(tag),lenval,trim(value))
   call libxml2f90_ll_closetag(tag)
@@ -1887,7 +1887,7 @@ subroutine putConfigREAL(tag,rvalue)
   real,intent(in) :: rvalue
   character(str_len) :: value
   integer :: lenval 
-  write(value,"(f20.10)") rvalue
+  write(value,"(f40.20)") rvalue
   lenval = len(trim(value))
   call libxml2f90_ll_opentag(tag)
   call libxml2f90_ll_addid(trim(tag),lenval,trim(value))
