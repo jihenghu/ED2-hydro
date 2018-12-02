@@ -2201,7 +2201,7 @@ subroutine init_pft_mort_params()
    !      Hydraulic failure mortality parameters                                           !
    !---------------------------------------------------------------------------------------!
    mort_plc_max (1:17) = 1.0
-   mort_plc_th  (1:17) = 0.05  ! 1 day of 0.6 PLC within a month 
+   mort_plc_th  (1:17) = 0.6 ! from Adams et al.   
    
 
 

@@ -44,7 +44,9 @@ subroutine structural_growth(cgrid, month)
    use fuse_fiss_utils, only : sort_cohorts           ! ! subroutine
    use plant_hydro,     only : rwc2tw                 ! ! sub-routine
    use allometry,       only : dbh2sf                 & ! function
-                             , size2bl                ! ! function
+                             , size2bl                & ! function
+                             , bl2dbh                 & ! function
+                             , bd2dbh                 ! ! function
    implicit none
    !----- Arguments -----------------------------------------------------------------------!
    type(edtype)     , target     :: cgrid
@@ -53,6 +55,7 @@ subroutine structural_growth(cgrid, month)
    type(polygontype), pointer    :: cpoly
    type(sitetype)   , pointer    :: csite
    type(patchtype)  , pointer    :: cpatch
+   type(simtime)                 :: lastmonth
    real                          :: ndaysi
    integer                       :: ipy
    integer                       :: isi
@@ -66,6 +69,7 @@ subroutine structural_growth(cgrid, month)
    real                          :: balive_in
    real                          :: bdead_in
    real                          :: bleaf_in
+   real                          :: broot_in
    real                          :: hite_in
    real                          :: dbh_in
    real                          :: nplant_in
@@ -96,6 +100,8 @@ subroutine structural_growth(cgrid, month)
    real                          :: old_wood_hcap
    real                          :: bstorage_min
    real                          :: bstorage_available
+   real                          :: psuedo_dbh
+   real                          :: psuedo_growth
    logical          , parameter  :: printout  = .false.
    character(len=17), parameter  :: fracfile  = 'struct_growth.txt'
    !----- Locally saved variables. --------------------------------------------------------!
@@ -171,6 +177,7 @@ subroutine structural_growth(cgrid, month)
                balive_in   = cpatch%balive  (ico)
                bdead_in    = cpatch%bdead   (ico)
                bleaf_in    = cpatch%bleaf   (ico)
+               broot_in    = cpatch%broot   (ico)
                hite_in     = cpatch%hite    (ico)
                dbh_in      = cpatch%dbh     (ico)
                nplant_in   = cpatch%nplant  (ico)
@@ -462,6 +469,61 @@ subroutine structural_growth(cgrid, month)
                end select
                !---------------------------------------------------------------------------!
 
+               ! new mortality scheme
+               ! put it before update vital rate, in which we might update sla
+               call lastmonthdate(current_time,lastmonth,ndaysi)
+               if (imort_scheme == 1 .or. imort_scheme == 3) then
+                   ! need to update plc
+                   cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
+                   cpatch%plc_monthly(13,ico) = 0. ! reset
+               endif
+
+               if  (imort_scheme == 2 .or. imort_scheme == 3) then
+                   ! need to update DBH growth rates
+!                   if (cpatch%dbh(ico) > dbh_in) then
+!                       ! trees have grown
+!                       cpatch%ddbh_monthly(prev_month,ico) = (cpatch%dbh(ico) - dbh_in) * 12. ! conver to cm/year
+!                   else
+                       ! trees do not grow
+                       ! use the difficiency in balive to calculate a negative growth rate
+                       ! for later mortality calculations
+
+!                       select case (istruct_growth_scheme)
+!                       case (0)
+                           ! use CB
+                           !carbon_debt = cpatch%cb(prev_month,ico)
+!                       case (1)
+                           ! use bstorage
+!                           carbon_debt = min(0., bstorage_in                                &
+!                                               - size2bl(dbh_in,hite_in                     &
+!                                                ,cpatch%sla(ico),ipft)              &
+!                                                  * (1. + q(ipft)))
+!                       end select
+
+                       ! this should be negative
+
+                       !----- Get psuedo_dbh
+                       if (cpatch%cb(prev_month,ico) > 0.) then
+                           psuedo_growth = cpatch%cb(prev_month,ico) * f_bdead
+                       else
+                           psuedo_growth = cpatch%cb(prev_month,ico)
+                       endif
+
+                       if (is_grass(ipft) .and. igrass == 1) then
+                           !---- New grasses get dbh_effective and height from bleaf. -------------------------!
+                           psuedo_dbh = bl2dbh(max(1e-8,bleaf_in + psuedo_growth), cpatch%sla(ico), ipft)
+                       else
+                           !---- Trees and old grasses get dbh from bdead. ------------------------------------!
+                           psuedo_dbh = bd2dbh(ipft, max(1e-8,bdead_in + psuedo_growth))
+                       end if
+
+
+                       ! convert psuedo growth to the growth used for mortality
+                       cpatch%ddbh_monthly(prev_month,ico) =                                &
+                           0.51 * ((psuedo_dbh - dbh_in) * 12.) - 0.052
+!                   endif
+
+               endif
 
 
                !----- Update interesting output quantities. -------------------------------!
@@ -473,21 +535,6 @@ subroutine structural_growth(cgrid, month)
                                       ,cpoly%agb_mort(:,:,isi))
                !---------------------------------------------------------------------------!
 
-               ! new mortality scheme
-               select case (imort_scheme)
-               case (1)
-                   ! need to update plc
-                   cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
-                   cpatch%plc_monthly(13,ico) = 0. ! reset
-               case (2)
-                   ! need to update DBH growth rates
-                   cpatch%ddbh_monthly(prev_month,ico) = cpatch%ddbh_dt(ico)
-               case (3)
-                   ! need to update both
-                   cpatch%plc_monthly(prev_month,ico) = cpatch%plc_monthly(13,ico) * ndaysi
-                   cpatch%plc_monthly(13,ico) = 0. ! reset
-                   cpatch%ddbh_monthly(prev_month,ico) = cpatch%ddbh_dt(ico)
-               end select
 
 
                !---------------------------------------------------------------------------!

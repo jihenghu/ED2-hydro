@@ -126,10 +126,6 @@ module mortality
       !------------------------------------------------------------------------------------!
       ! calculate ddbh_avg
       ddbh_avg = sum(cpatch%ddbh_monthly(1:12,ico)) / 12.
-      if (ddbh_avg <= 1e-8) then
-          ! use cbr instead
-          ddbh_avg = 1.2 * cpatch%cbr_bar(ico)
-      endif
         
       cpatch%mort_rate(2,ico) = 0. ! reset the original negative carbon mortality
       expmort = max( lnexp_min, min( lnexp_max                                             &
@@ -151,10 +147,6 @@ module mortality
       cpatch%mort_rate(2,ico) = 0. ! reset the original negative carbon mortality
       ! calculate ddbh_avg
       ddbh_avg = sum(cpatch%ddbh_monthly(1:12,ico)) / 12.
-      if (ddbh_avg <= 1e-6) then
-          ! use cbr instead
-          ddbh_avg = 1.2 * cpatch%cbr_bar(ico)
-      endif
         
       expmort = max( lnexp_min, min( lnexp_max                                             &
                                    , mort_beta(ipft) * ddbh_avg  ) )
