@@ -311,7 +311,8 @@ module growth_balive
                   ! big-leaf simulations, this is now done at disturbance.f90.             !
                   !------------------------------------------------------------------------!
                   call mortality_rates(cpatch,ico,csite%avg_daily_temp(ipa),csite%age(ipa))
-                  dlnndt   = - sum(cpatch%mort_rate(1:n_mort,ico))
+                  dlnndt   = - (sum(cpatch%mort_rate(1:n_mort,ico)) - cpatch%mort_rate(5,ico))
+                  ! the 5th one is just for accounting, not used
                   dndt     = dlnndt * cpatch%nplant(ico)
                   !------------------------------------------------------------------------!
 

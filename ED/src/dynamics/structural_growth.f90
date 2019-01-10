@@ -229,10 +229,10 @@ subroutine structural_growth(cgrid, month)
                !---------------------------------------------------------------------------!
 
                select case (istruct_growth_scheme)
-               case (0)
+               case (0,2)
                    ! use all bstorage
                    bstorage_available = cpatch%bstorage(ico)
-               case (1)
+               case (1,3)
                    ! reserve enough carbon for reflushing canopy and fine roots
                    bstorage_min = size2bl(cpatch%dbh(ico),cpatch%hite(ico)                  &
                                          ,cpatch%sla(ico),ipft)                             &
@@ -520,7 +520,8 @@ subroutine structural_growth(cgrid, month)
 
                        ! convert psuedo growth to the growth used for mortality
                        cpatch%ddbh_monthly(prev_month,ico) =                                &
-                           0.51 * ((psuedo_dbh - dbh_in) * 12.) - 0.052
+                           0.56 * ((psuedo_dbh - dbh_in) * 12.)
+                       !cpatch%ddbh_monthly(prev_month,ico) = (cpatch%dbh(ico) - dbh_in) * 12. ! conver to cm/year
 !                   endif
 
                endif
@@ -1078,6 +1079,8 @@ subroutine plant_structural_allocation(ipft,hite,dbh,lat,phen_status, bdead, bst
    use ed_misc_coms  , only : ibigleaf     ! ! intent(in)
    use allometry     , only : size2bd      & ! intent(in)
                             , h2dbh        ! ! intent(in)
+   use physiology_coms, only : istruct_growth_scheme  ! ! intent(in)
+ 
    implicit none
    !----- Arguments -----------------------------------------------------------------------!
    integer          , intent(in)  :: ipft
@@ -1213,7 +1216,15 @@ subroutine plant_structural_allocation(ipft,hite,dbh,lat,phen_status, bdead, bst
                                  r_fract(ipft) < 1.0 - f_bdead), hite <= repro_min_h(ipft))
                end if
             else
-               f_bseeds = merge(0.0, r_fract(ipft), hite <= repro_min_h(ipft))
+               select case (istruct_growth_scheme)
+               case (0,1)
+                   f_bseeds = merge(0.0, r_fract(ipft), hite <= repro_min_h(ipft))
+               case (2,3)
+                   f_bseeds = merge( 0.,                                                    &
+                                     ( hite - repro_min_h(ipft) )                           &
+                                   / ( hgt_max(ipft) - repro_min_h(ipft)) * 0.4             &
+                                   , hite <= repro_min_h(ipft))
+               end select
                f_bdead  = 1.0 - st_fract(ipft) - f_bseeds
             end if
          end if
