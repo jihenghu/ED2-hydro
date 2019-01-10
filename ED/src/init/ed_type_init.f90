@@ -177,6 +177,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    !      Most variables start with zero.                                                  !
    !---------------------------------------------------------------------------------------!
    cpatch%today_leaf_resp       (ico) = 0.0
+   cpatch%today_stem_resp       (ico) = 0.0
    cpatch%today_root_resp       (ico) = 0.0
    cpatch%today_gpp             (ico) = 0.0
    cpatch%today_nppleaf         (ico) = 0.0
@@ -200,6 +201,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
 
    cpatch%gpp                   (ico) = 0.0
    cpatch%leaf_respiration      (ico) = 0.0
+   cpatch%stem_respiration      (ico) = 0.0
    cpatch%root_respiration      (ico) = 0.0
    cpatch%leaf_growth_resp      (ico) = 0.0
    cpatch%root_growth_resp      (ico) = 0.0
@@ -283,6 +285,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    cpatch%fmean_gpp               (ico) = 0.0
    cpatch%fmean_npp               (ico) = 0.0
    cpatch%fmean_leaf_resp         (ico) = 0.0
+   cpatch%fmean_stem_resp         (ico) = 0.0
    cpatch%fmean_root_resp         (ico) = 0.0
    cpatch%fmean_leaf_growth_resp  (ico) = 0.0
    cpatch%fmean_root_growth_resp  (ico) = 0.0
@@ -379,6 +382,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%dmean_gpp               (ico) = 0.0
       cpatch%dmean_npp               (ico) = 0.0
       cpatch%dmean_leaf_resp         (ico) = 0.0
+      cpatch%dmean_stem_resp         (ico) = 0.0
       cpatch%dmean_root_resp         (ico) = 0.0
       cpatch%dmean_leaf_growth_resp  (ico) = 0.0
       cpatch%dmean_root_growth_resp  (ico) = 0.0
@@ -460,6 +464,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%mmean_gpp                 (ico) = 0.0
       cpatch%mmean_npp                 (ico) = 0.0
       cpatch%mmean_leaf_resp           (ico) = 0.0
+      cpatch%mmean_stem_resp           (ico) = 0.0
       cpatch%mmean_root_resp           (ico) = 0.0
       cpatch%mmean_leaf_growth_resp    (ico) = 0.0
       cpatch%mmean_root_growth_resp    (ico) = 0.0
@@ -570,6 +575,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
       cpatch%qmean_gpp               (:,ico) = 0.0
       cpatch%qmean_npp               (:,ico) = 0.0
       cpatch%qmean_leaf_resp         (:,ico) = 0.0
+      cpatch%qmean_stem_resp         (:,ico) = 0.0
       cpatch%qmean_root_resp         (:,ico) = 0.0
       cpatch%qmean_leaf_growth_resp  (:,ico) = 0.0
       cpatch%qmean_root_growth_resp  (:,ico) = 0.0
@@ -1558,6 +1564,7 @@ subroutine init_ed_poly_vars(cgrid)
       cgrid%fmean_gpp                  (ipy) = 0.0
       cgrid%fmean_npp                  (ipy) = 0.0
       cgrid%fmean_leaf_resp            (ipy) = 0.0
+      cgrid%fmean_stem_resp            (ipy) = 0.0
       cgrid%fmean_root_resp            (ipy) = 0.0
       cgrid%fmean_leaf_growth_resp     (ipy) = 0.0
       cgrid%fmean_root_growth_resp     (ipy) = 0.0
@@ -1714,6 +1721,7 @@ subroutine init_ed_poly_vars(cgrid)
          cgrid%dmean_gpp                  (ipy) = 0.0
          cgrid%dmean_npp                  (ipy) = 0.0
          cgrid%dmean_leaf_resp            (ipy) = 0.0
+         cgrid%dmean_stem_resp            (ipy) = 0.0
          cgrid%dmean_root_resp            (ipy) = 0.0
          cgrid%dmean_leaf_growth_resp     (ipy) = 0.0
          cgrid%dmean_root_growth_resp     (ipy) = 0.0
@@ -1853,6 +1861,7 @@ subroutine init_ed_poly_vars(cgrid)
          cgrid%mmean_gpp                  (ipy) = 0.0
          cgrid%mmean_npp                  (ipy) = 0.0
          cgrid%mmean_leaf_resp            (ipy) = 0.0
+         cgrid%mmean_stem_resp            (ipy) = 0.0
          cgrid%mmean_root_resp            (ipy) = 0.0
          cgrid%mmean_leaf_growth_resp     (ipy) = 0.0
          cgrid%mmean_root_growth_resp     (ipy) = 0.0
@@ -2046,6 +2055,7 @@ subroutine init_ed_poly_vars(cgrid)
          cgrid%qmean_gpp                (:,ipy) = 0.0
          cgrid%qmean_npp                (:,ipy) = 0.0
          cgrid%qmean_leaf_resp          (:,ipy) = 0.0
+         cgrid%qmean_stem_resp          (:,ipy) = 0.0
          cgrid%qmean_root_resp          (:,ipy) = 0.0
          cgrid%qmean_leaf_growth_resp   (:,ipy) = 0.0
          cgrid%qmean_root_growth_resp   (:,ipy) = 0.0

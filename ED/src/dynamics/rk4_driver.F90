@@ -15,6 +15,7 @@ module rk4_driver
       use rk4_integ_utils
       use soil_respiration_module
       use photosyn_driv
+      use stem_resp_driv
       use plant_hydro
       use rk4_misc
       use update_derived_props_module
@@ -230,6 +231,9 @@ module rk4_driver
                                          ,cpoly%green_leaf_factor(:,isi))
                !---------------------------------------------------------------------------!
 
+               !----- Compute stem respiration  -------------------------------------------!
+               call stem_respiration(csite,ipa)
+               !---------------------------------------------------------------------------!
 
                !----- Compute root and heterotrophic respiration. -------------------------!
                call soil_respiration(csite,ipa,nzg,cpoly%ntext_soil(:,isi))

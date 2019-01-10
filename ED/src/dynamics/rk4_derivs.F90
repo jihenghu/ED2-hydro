@@ -1323,10 +1323,12 @@ subroutine canopy_derivs_two(mzg,initp,dinitp,csite,ipa,hflxsc,wflxsc,qwflxsc,hf
       ! Ground -> CAS : root respiration and non-CWD heterotrophic respiration.            !
       ! Wood   -> CAS : CWD respiration, Growth respiration, and storage (the latter due   !
       !                 to lack of a better place to put).                                 !
+      !                 and stem maintanence respiration [XXT]                             !
       ! Leaf   -> CAS : Leaf respiration, Virtual leaf respiration - GPP.                  !
       !------------------------------------------------------------------------------------!
       cflxlc_tot = cflxlc_tot + initp%leaf_growth_resp(ico) + initp%leaf_storage_resp(ico)
-      cflxwc_tot = cflxwc_tot + initp%sapa_growth_resp(ico) + initp%sapa_storage_resp(ico)
+      cflxwc_tot = cflxwc_tot + initp%sapa_growth_resp(ico) + initp%sapa_storage_resp(ico) &
+                 + initp%stem_resp(ico)
       !------------------------------------------------------------------------------------!
 
 

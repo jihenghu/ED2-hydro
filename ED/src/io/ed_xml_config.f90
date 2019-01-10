@@ -383,6 +383,8 @@ recursive subroutine read_ed_xml_config(filename)
            if(texist) f_labile(myPFT) = real(rval)
            call getConfigREAL  ('root_respiration_factor','pft',i,rval,texist)
            if(texist) root_respiration_factor(myPFT) = real(rval)
+           call getConfigREAL  ('stem_respiration_factor','pft',i,rval,texist)
+           if(texist) stem_respiration_factor(myPFT) = real(rval)
            call getConfigREAL  ('rrf_low_temp','pft',i,rval,texist)
            if(texist) rrf_low_temp(myPFT) = real(rval)
            call getConfigREAL  ('rrf_high_temp','pft',i,rval,texist)
@@ -1150,6 +1152,9 @@ recursive subroutine read_ed_xml_config(filename)
 
         call getConfigINT  ('istruct_growth_scheme','physiology',i,ival,texist)
         if(texist) istruct_growth_scheme = ival
+        
+        call getConfigINT  ('istem_respiration_scheme','physiology',i,ival,texist)
+        if(texist) istem_respiration_scheme = ival
 
         call getConfigINT  ('trait_plasticity_scheme','physiology',i,ival,texist)
         if(texist) trait_plasticity_scheme = ival
@@ -1523,6 +1528,7 @@ subroutine write_ed_xml_config
         call putConfigREAL("storage_turnover_rate",storage_turnover_rate(i))
         call putConfigREAL("f_labile",             f_labile(i))
         call putConfigREAL("root_respiration_factor",root_respiration_factor(i))
+        call putConfigREAL("stem_respiration_factor",stem_respiration_factor(i))
         call putConfigREAL("rrf_low_temp",         rrf_low_temp(i))
         call putConfigREAL("rrf_high_temp",        rrf_high_temp(i))
         call putConfigREAL("rrf_decay_e",          rrf_decay_e(i))
@@ -1834,6 +1840,7 @@ subroutine write_ed_xml_config
      call putConfigINT("plant_hydro_scheme",plant_hydro_scheme)
      call putConfigINT("istomata_scheme",istomata_scheme)
      call putConfigINT("istruct_growth_scheme",istruct_growth_scheme)
+     call putConfigINT("istem_respiration_scheme",istem_respiration_scheme)
      call putConfigINT("trait_plasticity_scheme",trait_plasticity_scheme)
   call libxml2f90_ll_closetag("physiology")
 

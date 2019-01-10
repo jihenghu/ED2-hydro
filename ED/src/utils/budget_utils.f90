@@ -96,6 +96,7 @@ module budget_utils
       real                                                    :: co2budget_deltastorage
       real                                                    :: co2curr_gpp
       real                                                    :: co2curr_leafresp
+      real                                                    :: co2curr_stemresp
       real                                                    :: co2curr_rootresp
       real                                                    :: co2curr_leafgrowthresp
       real                                                    :: co2curr_rootgrowthresp
@@ -123,6 +124,7 @@ module budget_utils
       real                                                    :: curr_can_enthalpy
       real                                                    :: gpp
       real                                                    :: leaf_resp
+      real                                                    :: stem_resp
       real                                                    :: root_resp
       real                                                    :: leaf_growth_resp
       real                                                    :: root_growth_resp
@@ -253,12 +255,14 @@ module budget_utils
       !------------------------------------------------------------------------------------!
       !     Compute the carbon flux components.                                            !
       !------------------------------------------------------------------------------------!
-      call sum_plant_cfluxes(csite,ipa,gpp,leaf_resp,root_resp,leaf_growth_resp            &
-                            ,root_growth_resp,sapa_growth_resp,sapb_growth_resp            &
+      call sum_plant_cfluxes(csite,ipa,gpp,leaf_resp,stem_resp,root_resp                   &
+                            ,leaf_growth_resp,root_growth_resp                             &
+                            ,sapa_growth_resp,sapb_growth_resp                             &
                             ,leaf_storage_resp,root_storage_resp,sapa_storage_resp         &
                             ,sapb_storage_resp)
       co2curr_gpp             = gpp              * dtlsm
       co2curr_leafresp        = leaf_resp        * dtlsm
+      co2curr_stemresp        = stem_resp        * dtlsm
       co2curr_rootresp        = root_resp        * dtlsm
       co2curr_leafstorageresp = leaf_storage_resp* dtlsm
       co2curr_rootstorageresp = root_storage_resp* dtlsm
@@ -270,7 +274,8 @@ module budget_utils
       co2curr_sapagrowthresp  = sapa_growth_resp * dtlsm
       co2curr_sapbgrowthresp  = sapb_growth_resp * dtlsm
       
-      co2curr_nep         = co2curr_gpp - co2curr_leafresp - co2curr_rootresp              &
+      co2curr_nep         = co2curr_gpp - co2curr_leafresp - co2curr_stemresp              &
+                          - co2curr_rootresp                                               &
                           - co2curr_leafgrowthresp  - co2curr_rootgrowthresp               &
                           - co2curr_sapagrowthresp  - co2curr_sapbgrowthresp               &
                           - co2curr_leafstorageresp - co2curr_rootstorageresp              &
@@ -326,11 +331,11 @@ module budget_utils
       !----- 1. Carbon dioxide. -----------------------------------------------------------!
       csite%co2budget_gpp(ipa)         = csite%co2budget_gpp(ipa)       + gpp       *dtlsm
       csite%co2budget_plresp(ipa)      = csite%co2budget_plresp(ipa)                       &
-                                       + ( leaf_resp + root_resp + leaf_growth_resp        &
-                                         + root_growth_resp  + sapa_growth_resp            &
-                                         + sapb_growth_resp  + leaf_storage_resp           &
-                                         + root_storage_resp + sapa_storage_resp           &
-                                         + sapb_storage_resp ) * dtlsm
+                                       + ( leaf_resp + root_resp + stem_resp               &
+                                         + leaf_growth_resp + root_growth_resp             & 
+                                         + sapa_growth_resp + sapb_growth_resp             &
+                                         + leaf_storage_resp+ root_storage_resp            &
+                                         + sapa_storage_resp+ sapb_storage_resp ) * dtlsm
       csite%co2budget_rh(ipa)          = csite%co2budget_rh(ipa)                           &
                                        + csite%rh(ipa) * dtlsm
       csite%co2budget_denseffect(ipa)  = csite%co2budget_denseffect(ipa)                   &
@@ -413,6 +418,7 @@ module budget_utils
             write (unit=*,fmt=fmtf ) ' DELTA_STORAGE    : ',co2budget_deltastorage
             write (unit=*,fmt=fmtf ) ' GPP              : ',co2curr_gpp
             write (unit=*,fmt=fmtf ) ' LEAF_RESP        : ',co2curr_leafresp
+            write (unit=*,fmt=fmtf ) ' STEM_RESP        : ',co2curr_stemresp
             write (unit=*,fmt=fmtf ) ' ROOT_RESP        : ',co2curr_rootresp
             write (unit=*,fmt=fmtf ) ' LEAF_GROWTH_RESP : ',co2curr_leafgrowthresp
             write (unit=*,fmt=fmtf ) ' ROOT_GROWTH_RESP : ',co2curr_rootgrowthresp
@@ -746,7 +752,8 @@ module budget_utils
    !=======================================================================================!
    !    This subroutine computes the carbon flux terms.                                    !
    !---------------------------------------------------------------------------------------!
-   subroutine sum_plant_cfluxes(csite,ipa, gpp, leaf_resp,root_resp,leaf_growth_resp       &
+   subroutine sum_plant_cfluxes(csite,ipa, gpp, leaf_resp,stem_resp,root_resp              &
+                               ,leaf_growth_resp                                           &
                                ,root_growth_resp,sapa_growth_resp,sapb_growth_resp         &
                                ,leaf_storage_resp,root_storage_resp,sapa_storage_resp      &
                                ,sapb_storage_resp)
@@ -761,6 +768,7 @@ module budget_utils
       integer               , intent(in)  :: ipa
       real                  , intent(out) :: gpp
       real                  , intent(out) :: leaf_resp
+      real                  , intent(out) :: stem_resp
       real                  , intent(out) :: root_resp
       real                  , intent(out) :: leaf_growth_resp
       real                  , intent(out) :: root_growth_resp
@@ -778,6 +786,7 @@ module budget_utils
       !----- Initializing some variables. -------------------------------------------------!
       gpp          = 0.0
       leaf_resp    = 0.0
+      stem_resp    = 0.0
       root_resp    = 0.0
       leaf_storage_resp = 0.0
       root_storage_resp = 0.0
@@ -799,7 +808,8 @@ module budget_utils
             leaf_resp = leaf_resp + cpatch%leaf_respiration(ico)
 
          end if
-         !----- Root respiration happens even when the LAI is tiny ------------------------!
+         !----- Stem and Root respiration happens even when the LAI is tiny ---------------!
+         stem_resp = stem_resp + cpatch%stem_respiration(ico)
          root_resp = root_resp + cpatch%root_respiration(ico)
 
          !---------------------------------------------------------------------------------!

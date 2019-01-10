@@ -9,6 +9,7 @@ subroutine euler_timestep(cgrid)
    use rk4_integ_utils
    use soil_respiration_module
    use photosyn_driv
+   use stem_resp_driv
    use plant_hydro
    use rk4_misc
    use update_derived_props_module
@@ -179,6 +180,10 @@ subroutine euler_timestep(cgrid)
                                       ,cpoly%leaf_aging_factor(:,isi)                      &
                                       ,cpoly%green_leaf_factor(:,isi))
             !------------------------------------------------------------------------------!
+
+            !----- Compute stem respiration  -------------------------------------------!
+            call stem_respiration(csite,ipa)
+            !---------------------------------------------------------------------------!
 
 
             !----- Compute root and heterotrophic respiration. ----------------------------!

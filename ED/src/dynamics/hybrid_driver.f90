@@ -10,6 +10,7 @@ subroutine hybrid_timestep(cgrid)
   use rk4_integ_utils
   use soil_respiration_module
   use photosyn_driv
+  use stem_resp_driv
   use plant_hydro
   use rk4_misc
   use update_derived_props_module
@@ -227,6 +228,11 @@ subroutine hybrid_timestep(cgrid)
            call canopy_photosynthesis(csite,cmet,nzg,ipa,                     &
                 cpoly%ntext_soil(:,isi),cpoly%leaf_aging_factor(:,isi),       &
                 cpoly%green_leaf_factor(:,isi))
+
+
+           !----- Compute stem respiration  -------------------------------------------!
+           call stem_respiration(csite,ipa)
+           !---------------------------------------------------------------------------!
 
 
             !----- Compute root and heterotrophic respiration. ----------------!
@@ -896,6 +902,7 @@ subroutine hybrid_timestep(cgrid)
       targetp%fs_open         (k) = sourcep%fs_open         (k)
       targetp%gpp             (k) = sourcep%gpp             (k)
       targetp%leaf_resp       (k) = sourcep%leaf_resp       (k)
+      targetp%stem_resp       (k) = sourcep%stem_resp       (k)
       targetp%root_resp       (k) = sourcep%root_resp       (k)
       targetp%leaf_growth_resp(k) = sourcep%leaf_growth_resp(k)
       targetp%root_growth_resp(k) = sourcep%root_growth_resp(k)

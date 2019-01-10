@@ -514,6 +514,7 @@ subroutine copy_patch_init_carbon(sourcesite,ipa,targetp)
       !----- Copy the variables that are already in �mol/m�/s. ----------------------------!
       targetp%gpp         (ico) = dble(cpatch%gpp                (ico))
       targetp%leaf_resp   (ico) = dble(cpatch%leaf_respiration   (ico))
+      targetp%stem_resp   (ico) = dble(cpatch%stem_respiration   (ico))
       targetp%root_resp   (ico) = dble(cpatch%root_respiration   (ico))
 
       !------------------------------------------------------------------------------------!
@@ -3561,8 +3562,8 @@ subroutine print_csiteipa(csite, ipa)
               ,cpatch%gpp(ico),cpatch%leaf_respiration(ico)
       end if
    end do
-   write (unit=*,fmt='(2(a7,1x),2(a12,1x),8(a16,1x))')                                     &
-         '    PFT','KRDEPTH','         LAI','   ROOT_RESP'                                 &
+   write (unit=*,fmt='(2(a7,1x),3(a12,1x),8(a16,1x))')                                     &
+         '    PFT','KRDEPTH','         LAI','   ROOT_RESP','   STEM_RESP'                  &
         ,'  LEAF_STORE_RESP','  ROOT_STORE_RESP','  SAPA_STORE_RESP','  SAPB_STORE_RESP'   &
         ,' LEAF_GROWTH_RESP',' ROOT_GROWTH_RESP',' SAPA_GROWTH_RESP',' SAPB_GROWTH_RESP'
    do ico = 1,cpatch%ncohorts
@@ -3584,9 +3585,9 @@ subroutine print_csiteipa(csite, ipa)
          sapb_storage_resp = cpatch%sapb_storage_resp(ico) * cpatch%nplant(ico)            &
                            / (day_sec * umol_2_kgC)
 
-         write(unit=*,fmt='(2(i7,1x),3(es12.4,1x),4(es17.4,1x))')                          &
+         write(unit=*,fmt='(2(i7,1x),3(es12.4,1x),8(es17.4,1x))')                          &
                cpatch%pft(ico), cpatch%krdepth(ico)                                        &
-              ,cpatch%lai(ico),cpatch%root_respiration(ico)                                &
+              ,cpatch%lai(ico),cpatch%root_respiration(ico),cpatch%stem_respiration(ico)   &
               ,leaf_storage_resp, root_storage_resp, sapa_storage_resp, sapb_storage_resp  &
               ,leaf_growth_resp , root_growth_resp , sapa_growth_resp , sapb_growth_resp
       end if
@@ -3798,16 +3799,17 @@ subroutine print_rk4patch(y,csite,ipa)
       end if
    end do
    write (unit=*,fmt='(80a)') ('-',k=1,80)
-   write (unit=*,fmt='(2(a7,1x),5(a12,1x),8(a17,1x))')                                     &
+   write (unit=*,fmt='(2(a7,1x),6(a12,1x),8(a17,1x))')                                     &
          '    PFT','KRDEPTH','         LAI','         GPP','   LEAF_RESP','   ROOT_RESP'   &
+                            ,'   STEM_RESP'                                                &
                             ,'   LEAF_STOR_RESP','   ROOT_STOR_RESP','   SAPA_STOR_RESP'   &
                             ,'   SAPB_STOR_RESP',' LEAF_GROWTH_RESP',' ROOT_GROWTH_RESP'   &
                             ,' SAPA_GROWTH_RESP',' SAPB_GROWTH_RESP'
    do ico = 1,cpatch%ncohorts
       if (cpatch%leaf_resolvable(ico)) then
-         write(unit=*,fmt='(2(i7,1x),4(es12.4,1x),8(es17.4,1x))')                          &
+         write(unit=*,fmt='(2(i7,1x),5(es12.4,1x),8(es17.4,1x))')                          &
                cpatch%pft(ico), cpatch%krdepth(ico)                                        &
-              ,y%lai(ico),y%gpp(ico),y%leaf_resp(ico),y%root_resp(ico)                     &
+              ,y%lai(ico),y%gpp(ico),y%leaf_resp(ico),y%root_resp(ico),y%stem_resp(ico)    &
               ,y%leaf_storage_resp(ico),y%root_storage_resp(ico),y%sapa_storage_resp(ico)  &
               ,y%sapb_storage_resp(ico),y%leaf_growth_resp(ico),y%root_growth_resp(ico)    &
               ,y%sapa_growth_resp(ico) ,y%sapb_growth_resp(ico)
@@ -4065,8 +4067,8 @@ subroutine print_rk4_state(initp,fluxp,csite,ipa,isi,elapsed,hdid)
    !----- Local constants. ----------------------------------------------------------------!
    character(len=10), parameter :: phfmt='(86(a,1x))'
    character(len=48), parameter :: pbfmt='(3(i13,1x),4(es13.6,1x),3(i13,1x),76(es13.6,1x))'
-   character(len=10), parameter :: chfmt='(60(a,1x))'
-   character(len=48), parameter :: cbfmt='(3(i13,1x),2(es13.6,1x),3(i13,1x),52(es13.6,1x))'
+   character(len=10), parameter :: chfmt='(61(a,1x))'
+   character(len=48), parameter :: cbfmt='(3(i13,1x),2(es13.6,1x),3(i13,1x),53(es13.6,1x))'
    !---------------------------------------------------------------------------------------!
 
 
@@ -4102,6 +4104,7 @@ subroutine print_rk4_state(initp,fluxp,csite,ipa,isi,elapsed,hdid)
          sum_leaf_hcap   = sum_leaf_hcap   + initp%leaf_hcap(ico)
          sum_gpp         = sum_gpp         + initp%gpp(ico)
          sum_plresp      = sum_plresp      + initp%leaf_resp(ico)                          &
+                                           + initp%stem_resp(ico)                          &
                                            + initp%root_resp(ico)                          &
                                            + initp%leaf_growth_resp(ico)                   &
                                            + initp%root_growth_resp(ico)                   &
@@ -4328,6 +4331,7 @@ subroutine print_rk4_state(initp,fluxp,csite,ipa,isi,elapsed,hdid)
                            ,'         LINT_SHV', '         LEAF_GBH', '         LEAF_GBW'  &
                            ,'         WOOD_GBH', '         WOOD_GBW', '         GSW_OPEN'  &
                            ,'         GSW_CLOS', '              GPP', '        LEAF_RESP'  &
+                           ,'        STEM_RESP'                                            &
                            ,'        ROOT_RESP', ' LEAF_GROWTH_RESP', ' ROOT_GROWTH_RESP'  &
                            ,' SAPA_GROWTH_RESP', ' SAPB_GROWTH_RESP', '  LEAF_STORE_RESP'  &
                            ,'  ROOT_STORE_RESP', '  SAPA_STORE_RESP', '  SAPB_STORE_RESP'  &
@@ -4363,6 +4367,7 @@ subroutine print_rk4_state(initp,fluxp,csite,ipa,isi,elapsed,hdid)
       ,initp%lint_shv(ico)        ,initp%leaf_gbh(ico)        ,initp%leaf_gbw(ico)         &
       ,initp%wood_gbh(ico)        ,initp%wood_gbw(ico)        ,initp%gsw_open(ico)         &
       ,initp%gsw_closed(ico)      ,initp%gpp(ico)             ,initp%leaf_resp(ico)        &
+      ,initp%stem_resp(ico)                                                                &
       ,initp%root_resp(ico)       ,initp%leaf_growth_resp(ico),initp%root_growth_resp(ico) &
       ,initp%sapa_growth_resp(ico),initp%sapb_growth_resp(ico),initp%leaf_storage_resp(ico)&
       ,initp%root_storage_resp(ico)                           ,initp%sapa_storage_resp(ico)&

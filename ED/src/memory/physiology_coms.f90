@@ -101,6 +101,14 @@ module physiology_coms
    !<                      to non-zero values and set ISTOMATA_SCHEME to 1.                \n
    !---------------------------------------------------------------------------------------!
 
+   integer               :: istem_respiration_scheme
+   !---------------------------------------------------------------------------------------!
+   !< ISTEM_RESPIRATION_SCHEME -- Different methods to calculate stem respiration.\n
+   !<                          0. No stem respiration (default by ED2.2 and before) \n
+   !<                          1. Calculate stem respiration assuming respiration per stem
+   !< area is the same .\n
+   !---------------------------------------------------------------------------------------!
+
    integer               :: istruct_growth_scheme
    !---------------------------------------------------------------------------------------!
    !< ISTRUCT_GROWTH_SCHEME -- Different methods to perform structural growth.\n

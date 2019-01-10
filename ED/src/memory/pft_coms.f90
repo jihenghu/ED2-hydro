@@ -246,6 +246,9 @@ module pft_coms
    ! temperature of 15C.  Its units is �mol_CO2/kg_fine_roots/s.                           !
    !---------------------------------------------------------------------------------------!
    real, dimension(n_pft) :: root_respiration_factor 
+   
+   ! 15C Unit is umol_CO2/m2 stem area/s
+   real, dimension(n_pft) :: stem_respiration_factor 
 
    !----- Temperature [�C] below which root metabolic activity begins to rapidly decline. -!
    real, dimension(n_pft) :: rrf_low_temp 

@@ -979,6 +979,15 @@ $ED_NL
    !---------------------------------------------------------------------------------------!
 
    !---------------------------------------------------------------------------------------!
+   ! ISTEM_RESPIRATION_SCHEME -- Different methods to calculate stem respiration           !
+   !                          0. Stem respiration is 0. (default by ED2.2 and before)      !
+   !                          1. Assume stem respiration per stem area is a function of    !
+   !                             Temperature                                               ! 
+   !---------------------------------------------------------------------------------------!
+   NL%ISTEM_RESPIRATION_SCHEME = 0
+   !---------------------------------------------------------------------------------------!
+
+   !---------------------------------------------------------------------------------------!
    ! ISTOMATA_SCHEME -- Which stomatal conductance model to use.                           !
    !                    0. Leuning (default by ED2.2 and before)                           !
    !                    1. Katul's optimization based model (see Xu et al. 2016)           !

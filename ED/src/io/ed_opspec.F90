@@ -1187,6 +1187,7 @@ subroutine ed_opspec_misc
                                     , plant_hydro_scheme           & ! intent(in)
                                     , istomata_scheme              & ! intent(in)
                                     , istruct_growth_scheme        & ! intent(in)
+                                    , istem_respiration_scheme     & ! intent(in)
                                     , trait_plasticity_scheme      & ! intent(in)
                                     , iddmort_scheme               & ! intent(in)
                                     , imort_scheme                 & ! intent(in)
@@ -1674,6 +1675,14 @@ end do
       write (reason,fmt='(a,1x,i4,a)')                                                     &
                     'Invalid ISTRUCT_GROWTH_SCHEME, it must be between 0 and 3. Yours is set to'   &
                     ,istruct_growth_scheme,'...'
+      call opspec_fatal(reason,'opspec_misc')
+      ifaterr = ifaterr +1
+   end if
+
+   if (istem_respiration_scheme < 0 .or. istem_respiration_scheme > 1) then
+      write (reason,fmt='(a,1x,i4,a)')                                                     &
+                    'Invalid ISTEM_RESPIRATION_SCHEME, it must be between 0 and 1. Yours is set to'   &
+                    ,istem_respiration_scheme,'...'
       call opspec_fatal(reason,'opspec_misc')
       ifaterr = ifaterr +1
    end if

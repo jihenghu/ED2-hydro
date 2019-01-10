@@ -764,6 +764,7 @@ module growth_balive
       if(cpatch%nplant(ico) > tiny(1.0)) then
          daily_C_gain = umol_2_kgC * day_sec * ( cpatch%today_gpp(ico)                 &
                                                - cpatch%today_leaf_resp(ico)           &
+                                               - cpatch%today_stem_resp(ico)           &
                                                - cpatch%today_root_resp(ico))          &
                                              / cpatch%nplant(ico)
       else
@@ -1412,6 +1413,7 @@ module growth_balive
       if(cpatch%nplant(ico) > tiny(1.0)) then
          daily_C_gain = umol_2_kgC * day_sec * ( cpatch%today_gpp(ico)                     &
                                                - cpatch%today_leaf_resp(ico)               &
+                                               - cpatch%today_stem_resp(ico)               &
                                                - cpatch%today_root_resp(ico))              &
                                              / cpatch%nplant(ico)
       else
@@ -1489,6 +1491,7 @@ module growth_balive
          !---------------------------------------------------------------------------------!
          daily_C_gain_pot       = umol_2_kgC * day_sec * ( cpatch%today_gpp_pot(ico)       &
                                                          - cpatch%today_leaf_resp(ico)     &
+                                                         - cpatch%today_stem_resp(ico)     &
                                                          - cpatch%today_root_resp(ico))    &
                                                        / cpatch%nplant(ico)
          growth_respiration_pot = max(0.0, daily_C_gain_pot * growth_resp_factor(ipft))
@@ -1505,6 +1508,7 @@ module growth_balive
          daily_C_gain_lightmax       = umol_2_kgC * day_sec                                &
                                      * ( cpatch%today_gpp_lightmax(ico)                    &
                                        - cpatch%today_leaf_resp   (ico)                    &
+                                       - cpatch%today_stem_resp   (ico)                    &
                                        - cpatch%today_root_resp   (ico) )                  &
                                      / cpatch%nplant(ico)
          growth_respiration_lightmax = max(0.0, daily_C_gain_lightmax                      &
@@ -1514,6 +1518,7 @@ module growth_balive
          daily_C_gain_moistmax       = umol_2_kgC * day_sec                                &
                                      * ( cpatch%today_gpp_moistmax(ico)                    &
                                        - cpatch%today_leaf_resp   (ico)                    &
+                                       - cpatch%today_stem_resp   (ico)                    &
                                        - cpatch%today_root_resp   (ico) )                  &
                                      / cpatch%nplant(ico)
          growth_respiration_moistmax = max(0.0, daily_C_gain_moistmax                      &
@@ -1523,6 +1528,7 @@ module growth_balive
          daily_C_gain_mlmax          = umol_2_kgC * day_sec                                &
                                      * ( cpatch%today_gpp_mlmax(ico)                       &
                                        - cpatch%today_leaf_resp   (ico)                    &
+                                       - cpatch%today_stem_resp   (ico)                    &
                                        - cpatch%today_root_resp   (ico) )                  &
                                      / cpatch%nplant(ico)
          growth_respiration_mlmax    = max(0.0, daily_C_gain_mlmax                         &
@@ -1546,24 +1552,26 @@ module growth_balive
 
          if (first_time(ipft)) then
             first_time(ipft) = .false.
-            write (unit=30+ipft,fmt='(a10,23(1x,a18))')                                    &
+            write (unit=30+ipft,fmt='(a10,24(1x,a18))')                                    &
                '      TIME','             PATCH','            COHORT','            NPLANT' &
                            ,'          CB_TODAY','  LEAF_GROWTH_RESP','  ROOT_GROWTH_RESP' &
                            ,'  SAPA_GROWTH_RESP','  SAPB_GROWTH_RESP'                      &
                            ,'         TODAY_GPP','TODAY_GPP_LIGHTMAX','TODAY_GPP_MOISTMAX' &
-                           ,'   TODAY_GPP_MLMAX','   TODAY_LEAF_RESP','   TODAY_ROOT_RESP' &
+                           ,'   TODAY_GPP_MLMAX','   TODAY_LEAF_RESP'                      &
+                           ,'   TODAY_STEM_RESP','   TODAY_ROOT_RESP'                      &
                            ,' CB_LIGHTMAX_TODAY',' CB_MOISTMAX_TODAY','    CB_MLMAX_TODAY' &
                            ,'                CB','       CB_LIGHTMAX','       CB_MOISTMAX' &
                            ,'          CB_MLMAX','  LEAF_MAINTENANCE','  ROOT_MAINTENANCE'
          end if
 
-         write(unit=30+ipft,fmt='(2(i2.2,a1),i4.4,2(1x,i18),22(1x,es18.5))')               &
+         write(unit=30+ipft,fmt='(2(i2.2,a1),i4.4,2(1x,i18),23(1x,es18.5))')               &
               current_time%month,'/',current_time%date,'/',current_time%year               &
              ,ipa,ico,cpatch%nplant(ico),carbon_balance,cpatch%leaf_growth_resp(ico)       &
              ,cpatch%root_growth_resp(ico),cpatch%sapa_growth_resp(ico)                    &
              ,cpatch%sapb_growth_resp(ico),cpatch%today_gpp(ico)                           &
              ,cpatch%today_gpp_lightmax(ico),cpatch%today_gpp_moistmax(ico)                &
              ,cpatch%today_gpp_mlmax(ico),cpatch%today_leaf_resp(ico)                      &
+             ,cpatch%today_stem_resp(ico)                                                  &
              ,cpatch%today_root_resp(ico),carbon_balance_lightmax,carbon_balance_moistmax  &
              ,carbon_balance_mlmax,cpatch%cb(13,ico),cpatch%cb_lightmax(13,ico)            &
              ,cpatch%cb_moistmax(13,ico),cpatch%cb_mlmax(13,ico)                           &
