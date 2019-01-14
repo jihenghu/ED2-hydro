@@ -221,7 +221,6 @@ subroutine init_nbg_cohorts(csite,lsl,ipa_a,ipa_z)
          cpatch%bleaf(ico)            = size2bl(cpatch%dbh(ico),cpatch%hite(ico)           &
                                                ,cpatch%sla(ico),ipft)
 
-
          salloc                       = 1.0 + q(ipft) + qsw(ipft) * cpatch%hite(ico)
          salloci                      = 1. / salloc
 

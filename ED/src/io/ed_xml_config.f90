@@ -74,7 +74,7 @@ recursive subroutine read_ed_xml_config(filename)
   use soil_coms  !, only: infiltration_method, dewmax, water_stab_thresh
 !  use ed_data
   use ed_misc_coms!, only: ied_init_mode,ffilout,integration_scheme,sfilin,sfilout,thsums_database
-  use rk4_coms, only : rk4min_veg_temp
+  use rk4_coms!, only : rk4min_veg_temp
   implicit none
   integer(4) :: i,npft,ntag,myPFT,nlu,myLU,len,ival = 0
   logical(4) :: texist = .false.
@@ -369,7 +369,8 @@ recursive subroutine read_ed_xml_config(filename)
            if(texist) water_conductance(myPFT) = real(rval)
            call getConfigREAL  ('leaf_width','pft',i,rval,texist)
            if(texist) leaf_width(myPFT) = real(rval)
-
+           call getConfigREAL  ('effarea_transp','pft',i,rval,texist)
+           if(texist) effarea_transp(myPFT) = real(rval)
 ! respiration & turnover variables
            call getConfigREAL  ('growth_resp_factor','pft',i,rval,texist)
            if(texist) growth_resp_factor(myPFT) = real(rval)
@@ -1519,6 +1520,7 @@ subroutine write_ed_xml_config
         call putConfigREAL("cuticular_cond",   cuticular_cond(i))
         call putConfigREAL("water_conductance",water_conductance(i))
         call putConfigREAL("leaf_width",       leaf_width(i))
+        call putConfigREAL("effarea_transp",   real(effarea_transp(i)))
 
 
 !! RESPIRAION AND TURNOVER
