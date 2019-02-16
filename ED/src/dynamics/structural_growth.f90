@@ -480,28 +480,14 @@ subroutine structural_growth(cgrid, month)
 
                if  (imort_scheme == 2 .or. imort_scheme == 3) then
                    ! need to update DBH growth rates
-!                   if (cpatch%dbh(ico) > dbh_in) then
-!                       ! trees have grown
-!                       cpatch%ddbh_monthly(prev_month,ico) = (cpatch%dbh(ico) - dbh_in) * 12. ! conver to cm/year
-!                   else
-                       ! trees do not grow
-                       ! use the difficiency in balive to calculate a negative growth rate
-                       ! for later mortality calculations
-
-!                       select case (istruct_growth_scheme)
-!                       case (0)
-                           ! use CB
-                           !carbon_debt = cpatch%cb(prev_month,ico)
-!                       case (1)
-                           ! use bstorage
-!                           carbon_debt = min(0., bstorage_in                                &
-!                                               - size2bl(dbh_in,hite_in                     &
-!                                                ,cpatch%sla(ico),ipft)              &
-!                                                  * (1. + q(ipft)))
-!                       end select
-
-                       ! this should be negative
-
+                   ! If average growth rate of the past year is zero
+                   ! Use CB to calculate a psuedo growth
+                   ! Otherwise use the raw growth
+                   
+                   if (cpatch%dbh(ico) - dbh_in < 1e-8 .and. &
+                       count(cpatch%ddbh_monthly(1:12,ico) .le. 0.) == 12 ) then
+                       ! No growth in this month or the past year
+                       ! use CB to calculate a psuedo growth, which should usually be negative
                        !----- Get psuedo_dbh
                        if (cpatch%cb(prev_month,ico) > 0.) then
                            psuedo_growth = cpatch%cb(prev_month,ico) * f_bdead
@@ -517,12 +503,13 @@ subroutine structural_growth(cgrid, month)
                            psuedo_dbh = bd2dbh(ipft, max(1e-8,bdead_in + psuedo_growth))
                        end if
 
-
-                       ! convert psuedo growth to the growth used for mortality
-                       cpatch%ddbh_monthly(prev_month,ico) =                                &
-                           0.56 * ((psuedo_dbh - dbh_in) * 12.)
-                       !cpatch%ddbh_monthly(prev_month,ico) = (cpatch%dbh(ico) - dbh_in) * 12. ! conver to cm/year
-!                   endif
+                       ! convert psuedo growth to the annual DBH growth used for mortality
+                       cpatch%ddbh_monthly(prev_month,ico) = (psuedo_dbh - dbh_in) * 12. ! cm/yr
+                   else
+                       ! Trees are growing
+                       ! Use the real growth
+                       cpatch%ddbh_monthly(prev_month,ico) = (cpatch%dbh(ico) - dbh_in) * 12. !cm/yr
+                   endif
 
                endif
 
@@ -1222,7 +1209,7 @@ subroutine plant_structural_allocation(ipft,hite,dbh,lat,phen_status, bdead, bst
                case (2,3)
                    f_bseeds = merge( 0.,                                                    &
                                      ( hite - repro_min_h(ipft) )                           &
-                                   / ( hgt_max(ipft) - repro_min_h(ipft)) * 0.4             &
+                                   / ( hgt_max(ipft) - repro_min_h(ipft)) * r_fract(ipft)   &
                                    , hite <= repro_min_h(ipft))
                end select
                f_bdead  = 1.0 - st_fract(ipft) - f_bseeds
@@ -1516,8 +1503,13 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        end select
 
 
-       kvm0 = exp(0.00963 * vm25 - 2.43)
+       !kvm0 = exp(0.00963 * vm25 - 2.43)
        ! This function is from Lloyd et al. 2010
+
+       kvm0 = 0.073 + 0.0035 * vm25
+       ! This function is inferred from data at BCI
+       ! which will lead to more extinction for high Vcmax PFT than the Lloyd et al. 2010
+       ! Need to think about which one is more reasonable.
 
        ksla = kvm0 - 0.035
        ! This value is estimated from canopy and underground 

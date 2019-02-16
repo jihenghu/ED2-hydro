@@ -62,7 +62,7 @@ subroutine stem_respiration(csite,ipa)
         case (0)
             cpatch%stem_respiration(ico) = 0.
         case (1)
-            cpatch%stem_respiration(ico) = stem_resp_norm(ipft,cpatch%wood_temp(ico)) &
+            cpatch%stem_respiration(ico) = stem_resp_norm(ipft,cpatch%dbh(ico),cpatch%wood_temp(ico)) &
                                          * stem_area
                                          ! umol/m2 ground/s
         end select
@@ -90,8 +90,9 @@ end subroutine stem_respiration
 !==========================================================================================!
 !     This function determines the normalised stem respiration (umol/m2 stem surface/s)    !
 !------------------------------------------------------------------------------------------!
-real function stem_resp_norm(ipft,wood_temp)
+real function stem_resp_norm(ipft,dbh,wood_temp)
    use pft_coms       , only : stem_respiration_factor  & ! intent(in)
+                             , stem_resp_size_factor    & ! intent(in)
                              , rrf_low_temp             & ! intent(in)
                              , rrf_high_temp            & ! intent(in)
                              , rrf_decay_e              & ! intent(in)
@@ -107,6 +108,7 @@ real function stem_resp_norm(ipft,wood_temp)
    implicit none
    !----- Arguments. ----------------------------------------------------------------------!
    integer     , intent(in) :: ipft
+   real(kind=4), intent(in) :: dbh
    real(kind=4), intent(in) :: wood_temp
    !----- Local variables. ----------------------------------------------------------------!
    real(kind=8)             :: wood_temp8
@@ -127,7 +129,8 @@ real function stem_resp_norm(ipft,wood_temp)
 
    !----- Copy some variables to double precision temporaries. ----------------------------!
    wood_temp8      = dble(wood_temp                    )
-   srf08           = dble(stem_respiration_factor(ipft))
+   srf08           = dble(stem_respiration_factor(ipft))                                   &
+                   * dble(exp(stem_resp_size_factor(ipft) * dbh))
    rrf_low_temp8   = dble(rrf_low_temp           (ipft)) + t008
    rrf_high_temp8  = dble(rrf_high_temp          (ipft)) + t008
    rrf_decay_e8    = dble(rrf_decay_e            (ipft))

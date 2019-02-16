@@ -1879,6 +1879,7 @@ subroutine init_pft_resp_params()
       , storage_turnover_rate     & ! intent(out)
       , root_respiration_factor   & ! intent(out)
       , stem_respiration_factor   & ! intent(out)
+      , stem_resp_size_factor     & ! intent(out)
       , rrf_low_temp              & ! intent(out)
       , rrf_high_temp             & ! intent(out)
       , rrf_decay_e               & ! intent(out)
@@ -1982,7 +1983,9 @@ subroutine init_pft_resp_params()
          root_respiration_factor(1:17)   = 0.280 * rrffact
    end select
    !---------------------------------------------------------------------------------------!
-    stem_respiration_factor(1:17) = 0.4  ! umol/m2 stem area / s  value for tropics
+   ! Value from Chambers et al. 2004 Ecological Applications
+    stem_respiration_factor(1:17) = 0.2  ! umol/m2 stem area / s  value for tropics
+    stem_resp_size_factor(1:17) = 0.0041  ! cm-1  value for tropics
 
 
    !---------------------------------------------------------------------------------------!
