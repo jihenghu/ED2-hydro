@@ -550,6 +550,8 @@ module ed_state_vars
       !------------------------------------------------------------------------------------!
       real, pointer, dimension(:) :: vm0
       !<The maximum rate of carboxylation at reference temperature (15 degC) [umol/m2l/s]
+      real, pointer, dimension(:) :: rd0
+      !<The dark respiration rate at reference temperature (15 degC) [umol/m2l/s]
 
       !------------------------------------------------------------------------------------!
       !     The following variables are used for plant hydraulic calculations              !
@@ -4854,6 +4856,7 @@ module ed_state_vars
       allocate(cpatch%vm_bar                       (                    ncohorts))
       allocate(cpatch%sla                          (                    ncohorts))
       allocate(cpatch%vm0                          (                    ncohorts))
+      allocate(cpatch%rd0                          (                    ncohorts))
 
       allocate(cpatch%leaf_psi                     (                    ncohorts))
       allocate(cpatch%wood_psi                     (                    ncohorts))
@@ -6731,6 +6734,7 @@ module ed_state_vars
       nullify(cpatch%vm_bar                )
       nullify(cpatch%sla                   )
       nullify(cpatch%vm0                   )
+      nullify(cpatch%rd0                   )
       nullify(cpatch%leaf_psi              )
       nullify(cpatch%wood_psi              )
       nullify(cpatch%leaf_rwc              )
@@ -7721,6 +7725,7 @@ module ed_state_vars
       if(associated(cpatch%vm_bar              )) deallocate(cpatch%vm_bar              )
       if(associated(cpatch%sla                 )) deallocate(cpatch%sla                 )
       if(associated(cpatch%vm0                 )) deallocate(cpatch%vm0                 )
+      if(associated(cpatch%rd0                 )) deallocate(cpatch%rd0                 )
 
       if(associated(cpatch%leaf_psi            )) deallocate(cpatch%leaf_psi            )
       if(associated(cpatch%wood_psi            )) deallocate(cpatch%wood_psi            )
@@ -9620,6 +9625,7 @@ module ed_state_vars
          opatch%vm_bar                (oco) = ipatch%vm_bar                (ico)
          opatch%sla                   (oco) = ipatch%sla                   (ico)
          opatch%vm0                   (oco) = ipatch%vm0                   (ico)
+         opatch%rd0                   (oco) = ipatch%rd0                   (ico)
 
          opatch%leaf_psi              (oco) = ipatch%leaf_psi              (ico)
          opatch%wood_psi              (oco) = ipatch%wood_psi              (ico)
@@ -10307,6 +10313,7 @@ module ed_state_vars
       opatch%vm_bar                (1:z) = pack(ipatch%vm_bar                    ,lmask)
       opatch%sla                   (1:z) = pack(ipatch%sla                       ,lmask)
       opatch%vm0                   (1:z) = pack(ipatch%vm0                       ,lmask)
+      opatch%rd0                   (1:z) = pack(ipatch%rd0                       ,lmask)
 
       opatch%leaf_psi              (1:z) = pack(ipatch%leaf_psi                  ,lmask)
       opatch%wood_psi              (1:z) = pack(ipatch%wood_psi                  ,lmask)
@@ -25095,6 +25102,14 @@ module ed_state_vars
            call vtable_edio_r(npts,cpatch%vm0,nvar,igr,init,cpatch%coglob_id, &
            var_len,var_len_global,max_ptrs,'VM0 :41:hist') 
          call metadata_edio(nvar,igr,'Vcmax at ref. temperature for each cohort',  &
+            '[umol/m2l/s]','icohort') 
+      end if
+
+      if (associated(cpatch%rd0)) then
+         nvar=nvar+1
+           call vtable_edio_r(npts,cpatch%rd0,nvar,igr,init,cpatch%coglob_id, &
+           var_len,var_len_global,max_ptrs,'RD0 :41:hist') 
+         call metadata_edio(nvar,igr,'Dark respiration at ref. temperature for each cohort',  &
             '[umol/m2l/s]','icohort') 
       end if
 

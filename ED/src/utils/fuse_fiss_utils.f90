@@ -1579,6 +1579,8 @@ module fuse_fiss_utils
                                 + cpatch%vm_bar      (donc) * dnplant
       cpatch%vm0         (recc) = cpatch%vm0         (recc) * rnplant                      &
                                 + cpatch%vm0         (donc) * dnplant
+      cpatch%rd0         (recc) = cpatch%rd0         (recc) * rnplant                      &
+                                + cpatch%rd0         (donc) * dnplant
       ! since SLA will be influenced by LAI, we update SLA at the end after LAI
       ! is updated
       !------------------------------------------------------------------------------------!

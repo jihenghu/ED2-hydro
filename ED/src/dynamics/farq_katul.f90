@@ -39,7 +39,7 @@ Contains
    !---------------------------------------------------------------------------------------!
 
   subroutine katul_lphys(can_prss,can_shv,can_co2,ipft,leaf_par,leaf_temp                 &
-                        ,lint_shv,green_leaf_factor,leaf_aging_factor,llspan,vm0in        &
+                        ,lint_shv,green_leaf_factor,leaf_aging_factor,llspan,vm0in,rd0in  &
                         ,leaf_gbw,leaf_psi,last_gV,last_gJ,A_open,A_closed,A_light        &
                         ,A_rubp,A_co2,gsw_open,gsw_closed,lsfc_shv_open,lsfc_shv_closed   &
                         ,lsfc_co2_open,lsfc_co2_closed,lint_co2_open,lint_co2_closed      &
@@ -108,6 +108,7 @@ Contains
       real(kind=4), intent(in)    :: leaf_aging_factor ! Ageing parameter       [      ---]
       real(kind=4), intent(in)    :: llspan            ! Leaf life span         [     mnth]
       real(kind=4), intent(in)    :: vm0in             ! Input Vm0              [µmol/m²/s]
+      real(kind=4), intent(in)    :: rd0in             ! Input Rd0              [µmol/m²/s]
       real(kind=4), intent(in)    :: leaf_gbw          ! B.lyr. cnd. of H2O     [  kg/m²/s]
       real(kind=4), intent(in)    :: leaf_psi          ! leaf water potential   [        m]
       real(kind=4), intent(inout) :: last_gV           ! gs for last timestep   [  kg/m²/s]
@@ -147,6 +148,7 @@ Contains
       real(kind=4)                :: Jmax25             ! current Jmax at 25 degC umol/m2/s
       real(kind=4)                :: Jmax15             ! current Jmax at 15 degC umol/m2/s
       real(kind=4)                :: Jrate              ! current Jrate umol/m2/s
+      real(kind=4)                :: Rd15               ! current Rdark at 15 degC umol/m2/s
       real(kind=4)                :: Rdark              ! current dark respiration rate umol/m2/s
       real(kind=4)                :: cuticular_gsc      ! current cuticular_conductance for CO2 mol/m2/s
       real(kind=4)                :: lambda             ! current lambda factor    numo/mol/kPa
@@ -221,6 +223,9 @@ Contains
       end select
       !------------------------------------------------------------------------------------!
 
+      Rd15 = rd0in
+
+
 
 
       !------------------------------------------------------------------------------------!
@@ -266,8 +271,7 @@ Contains
                      vm_decay_e(ipft),                 &
                      .true.)
 
-          Rdark = Vcmax15                              &
-                * dark_respiration_factor(ipft)        &
+          Rdark = Rd15                                 &
                 * mod_arrhenius(leaf_temp,             &
                       rd_hor(ipft),                    &        
                       rd_low_temp(ipft),               &
@@ -318,8 +322,7 @@ Contains
                      vm_decay_e(ipft),                 &
                      .true.)
 
-          Rdark = Vcmax15                              &
-                * dark_respiration_factor(ipft)        &
+          Rdark = Rd15                                 &
                 * mod_collatz(leaf_temp,               &
                       rd_q10(ipft),                    &        
                       rd_low_temp(ipft),               &
@@ -359,8 +362,8 @@ Contains
                                 220.)                     ! Hd
 
           ! Rd
-          Rdark = Vcmax25 * dark_respiration_factor(ipft)   &
-                * harley_arrhenius(leaf_temp,298.15,      &
+          Rdark = Rd15                                      &
+                * harley_arrhenius(leaf_temp,298.15,        &
                                 64.5,                       & ! Hv
                                 0.71,                       & ! Sv
                                 220.)                         ! Hd

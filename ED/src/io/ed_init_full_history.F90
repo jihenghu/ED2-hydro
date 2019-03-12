@@ -4603,6 +4603,8 @@ subroutine fill_history_patch(cpatch,paco_index,ncohorts_global)
                      ,'SLA                       ',dsetrank,iparallel,.true. ,foundvar)
    call hdf_getslab_r(cpatch%vm0                                                           &
                      ,'VM0                       ',dsetrank,iparallel,.true. ,foundvar)
+   call hdf_getslab_r(cpatch%rd0                                                           &
+                     ,'RD0                       ',dsetrank,iparallel,.true. ,foundvar)
    call hdf_getslab_r(cpatch%leaf_psi                                                      &
                      ,'LEAF_PSI                  ',dsetrank,iparallel,.true. ,foundvar)
    call hdf_getslab_r(cpatch%wood_psi                                                      &

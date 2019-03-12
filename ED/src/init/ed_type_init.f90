@@ -11,7 +11,8 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    use pft_coms      , only : phenology           & ! intent(in)
                             , leaf_turnover_rate  & ! intent(in)
                             , Vm0                 & ! intent(in)
-                            , sla                 ! ! intent(in)
+                            , sla                 & ! intent(in)
+                            , dark_respiration_factor ! intent(in)
    use ed_misc_coms  , only : writing_long        & ! intent(in)
                             , writing_eorq        & ! intent(in)
                             , writing_dcyc        ! ! intent(in)
@@ -72,6 +73,8 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    ! SLA and Vm0 can change if within canopy trait plasticity is enabled
    cpatch%sla(ico) = sla(cpatch%pft(ico))
    cpatch%vm0(ico) = Vm0(cpatch%pft(ico))
+
+   cpatch%rd0(ico) = Vm0(cpatch%pft(ico)) * dark_respiration_factor(cpatch%pft(ico))
    !---------------------------------------------------------------------------------------!
 
 

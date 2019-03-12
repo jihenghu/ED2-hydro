@@ -77,7 +77,7 @@ module farq_leuning
    !      This is the main driver for the photosynthesis model.                            !
    !---------------------------------------------------------------------------------------!
    subroutine lphysiol_full(can_prss,can_rhos,can_shv,can_co2,ipft,leaf_par,leaf_temp      &
-                           ,lint_shv,green_leaf_factor,leaf_aging_factor,llspan,vm_bar     &
+                           ,lint_shv,green_leaf_factor,leaf_aging_factor,llspan,vm_bar,rd0in &
                            ,leaf_gbw,A_open,A_closed,A_light,A_rubp,A_co2,gsw_open         &
                            ,gsw_closed,lsfc_shv_open,lsfc_shv_closed,lsfc_co2_open         &
                            ,lsfc_co2_closed,lint_co2_open,lint_co2_closed,leaf_resp,vmout  &
@@ -145,6 +145,7 @@ module farq_leuning
       real(kind=4), intent(in)    :: leaf_aging_factor ! Ageing parameter       [      ---]
       real(kind=4), intent(in)    :: llspan            ! Leaf life span         [     mnth]
       real(kind=4), intent(in)    :: vm_bar            ! Average Vm function    [�mol/m�/s]
+      real(kind=4), intent(in)    :: rd0in             ! Input leaf dark resp   [�mol/m�/s]
       real(kind=4), intent(in)    :: leaf_gbw          ! B.lyr. cnd. of H2O     [  kg/m�/s]
       real(kind=4), intent(out)   :: A_open            ! Photosyn. rate (op.)   [�mol/m�/s]
       real(kind=4), intent(out)   :: A_closed          ! Photosyn. rate (cl.)   [�mol/m�/s]
@@ -258,11 +259,12 @@ module farq_leuning
              ! no within-canopy trait plasticity
              thispft(ib)%vm0 = dble(vm0(ipft)) * umol_2_mol8
              thispft(ib)%rd0 = dble(rd0(ipft)) * umol_2_mol8
-         case (-1,-2,1,2)
+         case (-1,-2,-3,1,2,3)
              ! consider within-canopy trait plasticity
              ! in this case, the input vm_bar is the realized Vm0
+             ! rd0in is the realized dark respiration rate
              thispft(ib)%vm0 = dble(vm_bar) * umol_2_mol8
-             thispft(ib)%rd0 = dble(vm_bar) * umol_2_mol8 * dble(dark_respiration_factor(ipft))
+             thispft(ib)%rd0 = dble(rd0in) * umol_2_mol8
          end select
       end select
       !------------------------------------------------------------------------------------!

@@ -1412,6 +1412,8 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
    use ed_state_vars , only : patchtype           ! ! structure
    use pft_coms      , only : SLA                 & ! intent(in)
                             , Vm0                 & ! intent(in)
+                            , rho                 & ! intent(in)
+                            , dark_respiration_factor & ! intent(in)
                             , vm_hor              & ! intent(in)
                             , vm_low_temp         & ! intent(in)
                             , vm_high_temp        & ! intent(in)
@@ -1436,6 +1438,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
    real                        :: max_cum_lai
    real                        :: kvm0         ! extinction coefficient for Vcmax
    real                        :: ksla         ! extinction coefficient for SLA
+   real                        :: krd0         ! extinction coefficient for wd
    real                        :: lma_slope    ! linearized slope of LMA with height
    real                        :: vm25
    real                        :: old_sla
@@ -1511,12 +1514,19 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        ! which will lead to more extinction for high Vcmax PFT than the Lloyd et al. 2010
        ! Need to think about which one is more reasonable.
 
-       ksla = kvm0 - 0.035
+       !ksla = kvm0 - 0.035
        ! This value is estimated from canopy and underground 
        ! leaf traits data from BCI, Panama. It reflects that 
        ! LMA goes down sloer than Vcmax within canopy.
        ! So that at lower canopy, Vcmax/LMA is smaller than
        ! the value at canopy
+       ksla = log(1. / .4) / 4.
+       ! estimtated from BCI data, LMA/SLA plasticity is not correlated with any traits
+       ! Use the average value (LMA of the understory [shaded by an LAI of 4] is 40% of the
+       ! overstory)
+
+       krd0 = log(1.05 - 1.09 * rho(ipft)) / -4.
+       ! estimated from BCI data
 
        lma_slope = 0.015  ! linearized slope, should only be used
                           ! when trait_plasticity_scheme < 0
@@ -1525,12 +1535,20 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        ! Vm0 should be defined at the top of canopy [sun-lit leaves]
        cpatch%vm0(ico) = Vm0(ipft) * exp(-kvm0 * max_cum_lai)
 
+       select case (trait_plasticity_scheme)
+       case (-1,-2,1,2)
+           cpatch%rd0(ico) = cpatch%vm0(ico) * dark_respiration_factor(ipft)
+       case (-3,3)
+           ! include pheno-plasticity in dark respiration
+           cpatch%rd0(ico) = Vm0(ipft) * dark_respiration_factor(ipft) * exp(-krd0 * max_cum_lai)
+       end select
+
        ! SLA should be defined at the bottom of canopy [shaded leaves]
        select case (trait_plasticity_scheme)
        case (1,2)
            ! SLA is defined at the top of canopy, use LAI to change SLA
-           ! However, we only allow SLA to be doubled at the deepest shading
-           cpatch%sla(ico) = SLA(ipft) * min(2.,exp(ksla * max_cum_lai))
+           ! However, we only allow SLA to be tripled at the deepest shading
+           cpatch%sla(ico) = SLA(ipft) * min(3.,exp(ksla * max_cum_lai))
            
        case (-1,-2)
            ! SLA is defined at the bottom of canopy, use height to change SLA

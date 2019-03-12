@@ -1687,7 +1687,7 @@ end do
       ifaterr = ifaterr +1
    end if
 
-   if (trait_plasticity_scheme < -2 .or. trait_plasticity_scheme > 2) then
+   if (trait_plasticity_scheme < -3 .or. trait_plasticity_scheme > 3) then
       write (reason,fmt='(a,1x,i4,a)')                                                     &
                     'Invalid TRAIT_PLASTICITY_SCHEME, it must be between 0 and 2. Yours is set to'   &
                     ,trait_plasticity_scheme,'...'
