@@ -1350,7 +1350,7 @@ subroutine update_derived_cohort_props(cpatch,ico,lsl,month)
 
    !----- Update SLA and Vm0 before calculating bleaf_max or LAI  -------------------------!
    select case (trait_plasticity_scheme)
-   case (-1,1)
+   case (-1,1,3)
        ! update trait every year
        if (month == 1) then
            call update_cohort_plastic_trait(cpatch,ico)
@@ -1538,7 +1538,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        select case (trait_plasticity_scheme)
        case (-1,-2,1,2)
            cpatch%rd0(ico) = cpatch%vm0(ico) * dark_respiration_factor(ipft)
-       case (-3,3)
+       case (3)
            ! include pheno-plasticity in dark respiration
            cpatch%rd0(ico) = Vm0(ipft) * dark_respiration_factor(ipft) * exp(-krd0 * max_cum_lai)
        end select
