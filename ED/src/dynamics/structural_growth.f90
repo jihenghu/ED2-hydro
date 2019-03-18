@@ -1575,7 +1575,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        ! Since SLA is changed, we might need to adjust leaf biomass if SLA is used
        ! in the leaf allometry (iallom == 3)
        select case (iallom)
-       case (3)
+       case (3,4)
             new_bleaf_max = size2bl(cpatch%dbh(ico),       &
                                     cpatch%hite(ico),      &
                                     cpatch%sla(ico),       &

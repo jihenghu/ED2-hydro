@@ -21,6 +21,7 @@ subroutine load_ed_ecosystem_params()
       , include_pft_ag      & ! intent(out)
       , include_pft_fp      ! ! intent(out)
    use disturb_coms, only : ianth_disturb       ! ! intent(in)
+   use ed_misc_coms, only : iallom              ! ! intent(in)
 
    implicit none
    !----- Arguments -----------------------------------------------------------------------!
@@ -98,6 +99,10 @@ subroutine load_ed_ecosystem_params()
    !    This flag should be used to define whether the plant is tree or grass              !
    !---------------------------------------------------------------------------------------!
    is_grass(1)     = .true.
+   if (iallom .eq. 4) then
+       ! for HKK simulations, use 4 tropical tree PFT
+       is_grass(1) = .false.
+   endif
    is_grass(2:4)   = .false.
    is_grass(5)     = .true.
    is_grass(6:11)  = .false.
@@ -555,6 +560,7 @@ subroutine init_can_rad_params()
    use consts_coms           , only : pio180                      & ! intent(out)
       , twothirds8                  ! ! intent(out)
    use ed_max_dims           , only : n_pft                       ! ! intent(out)
+   use ed_misc_coms          , only : iallom  ! intent(in)
    implicit none
    !----- Arguments. ----------------------------------------------------------------------!
    integer :: ipft
@@ -579,6 +585,9 @@ subroutine init_can_rad_params()
    !  1 -- homogeneous, no clumping.                                                       !
    !---------------------------------------------------------------------------------------!
    clumping_factor(1)     = dble(clump_grass)
+   if (iallom == 4) then
+       clumping_factor(1) = dble(clump_tree)
+   endif
    clumping_factor(2:4)   = dble(clump_tree )
    clumping_factor(5)     = 8.400d-1
    clumping_factor(6:8)   = 7.350d-1
@@ -599,6 +608,9 @@ subroutine init_can_rad_params()
    ! -1 -- all leaves are perfectly vertical.                                              !
    !---------------------------------------------------------------------------------------!
    orient_factor(    1) = dble(orient_grass)
+   if (iallom == 4) then
+       orient_factor(1) = dble(orient_tree)
+   endif
    orient_factor(  2:4) = dble(orient_tree)
    orient_factor(    5) = 0.0d0 ! -3.0d-1 ! CLM value for C3 grass
    orient_factor(  6:8) = 0.0d0 !  1.0d-2 ! CLM value for temperate evergreen needleef tree
@@ -619,6 +631,9 @@ subroutine init_can_rad_params()
    !---------------------------------------------------------------------------------------!
    !----- Leaves. -------------------------------------------------------------------------!
    leaf_emiss_tir(1)     = 9.60d-1
+   if (iallom == 4) then
+       leaf_emiss_tir(1) = 9.50d-1
+   endif
    leaf_emiss_tir(2:4)   = 9.50d-1
    leaf_emiss_tir(5)     = 9.60d-1
    leaf_emiss_tir(6:8)   = 9.70d-1
@@ -628,6 +643,9 @@ subroutine init_can_rad_params()
    leaf_emiss_tir(17)    = 9.50d-1
    !----- Branches. -----------------------------------------------------------------------!
    wood_emiss_tir(1)     = 9.60d-1
+   if (iallom == 4) then
+       wood_emiss_tir(1) = 9.00d-1
+   endif
    wood_emiss_tir(2:4)   = 9.00d-1
    wood_emiss_tir(5)     = 9.60d-1
    wood_emiss_tir(6:8)   = 9.00d-1
@@ -688,6 +706,9 @@ subroutine init_can_rad_params()
    !---------------------------------------------------------------------------------------!
    !----- Visible (PAR). ------------------------------------------------------------------!
    wood_reflect_vis(1)     = 1.60d-1  ! 3.10d-1
+   if (iallom == 4) then
+       wood_reflect_vis(1) = 1.10d-1
+   endif
    wood_reflect_vis(2:4)   = 1.10d-1  ! 1.60d-1
    wood_reflect_vis(5)     = 1.60d-1  ! 3.10d-1
    wood_reflect_vis(6:11)  = 1.10d-1  ! 1.60d-1
@@ -745,6 +766,9 @@ subroutine init_can_rad_params()
    !---------------------------------------------------------------------------------------!
    !----- Visible (PAR). ------------------------------------------------------------------!
    wood_trans_vis(    1) = 2.80d-2
+   if (iallom == 4) then
+       wood_trans_vis(1) = 1.00d-3
+   endif
    wood_trans_vis(  2:4) = 1.00d-3
    wood_trans_vis(    5) = 2.80d-2
    wood_trans_vis( 6:11) = 1.00d-3
@@ -1498,6 +1522,9 @@ subroutine init_pft_photo_params()
    !---------------------------------------------------------------------------------------!
 
    D0(1)                     = d0_grass
+   if (iallom == 4) then
+       D0(1) = d0_tree
+   endif
    D0(2:4)                   = d0_tree
    D0(5)                     = d0_grass
    D0(6:8)                   = d0_tree
@@ -1563,6 +1590,11 @@ subroutine init_pft_photo_params()
         Vm0(2)                    = 21.4929 !18.750000 * ssfact * vmfact_c3
         Vm0(3)                    = 18.64!12.500000 * ssfact * vmfact_c3
         Vm0(4)                    = 16.02! 6.250000 * ssfact * vmfact_c3
+   else if (iallom == 4) then
+       Vm0(1)   = 23.
+       Vm0(2)   = 20.
+       Vm0(3)   = 17.
+       Vm0(4)   = 14.
    endif
 
 
@@ -1574,6 +1606,9 @@ subroutine init_pft_photo_params()
    vm_hor(1:17)              = 3000.
    !----- Here we distinguish between C3 and C4 photosynthesis as in Collatz et al 91/92. -!
    vm_q10(1)                 = q10_c4
+   if (iallom == 4) then
+       vm_q10(1) = q10_c3
+   endif
    vm_q10(2:13)              = q10_c3
    vm_q10(14:15)             = q10_c4
    vm_q10(16:17)             = q10_c3
@@ -1584,6 +1619,9 @@ subroutine init_pft_photo_params()
    !    Dark_respiration_factor is the lower-case gamma in Moorcroft et al. (2001).        !
    !---------------------------------------------------------------------------------------!
    dark_respiration_factor(1)     = gamma_c4
+   if (iallom == 4) then
+       dark_respiration_factor(1) = gamma_c3
+   endif
    dark_respiration_factor(2)     = gamma_c3
    dark_respiration_factor(3)     = gamma_c3
    dark_respiration_factor(4)     = gamma_c3
@@ -1636,6 +1674,9 @@ subroutine init_pft_photo_params()
 
    !----- Define the stomatal slope (aka the M factor). -----------------------------------!
    stomatal_slope(1)         = mphoto_c4
+   if (iallom == 4) then
+       stomatal_slope(1)     = mphoto_trc3
+   endif
    stomatal_slope(2)         = mphoto_trc3
    stomatal_slope(3)         = mphoto_trc3
    stomatal_slope(4)         = mphoto_trc3
@@ -1655,6 +1696,9 @@ subroutine init_pft_photo_params()
 
    !----- Define the stomatal slope (aka the b term, given in umol/m2/s). -----------------!
    cuticular_cond(1)         = bphoto_c4
+   if (iallom == 4) then
+       cuticular_cond(1)     = bphoto_c4
+   endif
    cuticular_cond(2)         = bphoto_blc3
    cuticular_cond(3)         = bphoto_blc3
    cuticular_cond(4)         = bphoto_blc3
@@ -1673,6 +1717,9 @@ subroutine init_pft_photo_params()
    cuticular_cond(17)        = bphoto_blc3
 
    quantum_efficiency(1)     = alpha_c4
+   if (iallom == 4) then
+        quantum_efficiency(1)= alpha_c3
+   endif
    quantum_efficiency(2)     = alpha_c3
    quantum_efficiency(3)     = alpha_c3
    quantum_efficiency(4)     = alpha_c3
@@ -1696,6 +1743,9 @@ subroutine init_pft_photo_params()
    !  m�/s/kg_C_root.                                                                      !
    !---------------------------------------------------------------------------------------!
    water_conductance(1)      = kw_grass / yr_sec
+   if (iallom == 4) then
+       water_conductance(1)  = kw_tree / yr_sec
+   endif
    water_conductance(2:4)    = kw_tree  / yr_sec
    water_conductance(5)      = kw_grass / yr_sec
    water_conductance(6:11)   = kw_tree  / yr_sec
@@ -1706,6 +1756,9 @@ subroutine init_pft_photo_params()
 
 
    photosyn_pathway(1)       = 4
+   if (iallom == 4) then
+       photosyn_pathway(1)   = 3
+   endif
    photosyn_pathway(2:4)     = 3
    photosyn_pathway(5)       = 3
    photosyn_pathway(6:13)    = 3
@@ -1714,6 +1767,9 @@ subroutine init_pft_photo_params()
 
    !----- Leaf width [m].  This controls the boundary layer conductance. ------------------!
    leaf_width( 1)    = lwidth_grass
+   if (iallom == 4) then
+       leaf_width(1) = lwidth_bltree
+   endif
    leaf_width( 2)    = lwidth_bltree
    leaf_width( 3)    = lwidth_bltree
    leaf_width( 4)    = lwidth_bltree
@@ -1889,6 +1945,7 @@ subroutine init_pft_resp_params()
    use consts_coms    , only : onesixth                  & ! intent(in)
       , onethird                  & ! intent(in)
       , t00                       ! ! intent(in)
+   use ed_misc_coms   , only : iallom  ! ! intent(in)
    implicit none
 
    growth_resp_factor(1)          = growthresp
@@ -1910,6 +1967,9 @@ subroutine init_pft_resp_params()
    growth_resp_factor(17)         = growthresp
 
    leaf_turnover_rate(1)          = 2.0
+   if (iallom == 4) then
+       leaf_turnover_rate(1)      = 1.5
+   endif
    leaf_turnover_rate(2)          = 1.0
    leaf_turnover_rate(3)          = 0.5
    leaf_turnover_rate(4)          = onethird
@@ -1947,6 +2007,9 @@ subroutine init_pft_resp_params()
    root_turnover_rate(17)         = leaf_turnover_rate(17)
 
    storage_turnover_rate(1)       = onethird
+   if (iallom == 4) then
+        storage_turnover_rate(1)  = onesixth
+   endif
    storage_turnover_rate(2)       = onesixth
    storage_turnover_rate(3)       = onesixth
    storage_turnover_rate(4)       = onesixth
@@ -2523,6 +2586,12 @@ subroutine init_pft_alloc_params()
        rho(2) = 0.45
        rho(3) = 0.615
        rho(4) = 0.79
+   else if (iallom == 4) then
+       ! HKK simulations
+       rho(1) = 0.4
+       rho(2) = 0.55
+       rho(3) = 0.7
+       rho(4) = 0.85
    endif
 
 
@@ -2565,6 +2634,11 @@ subroutine init_pft_alloc_params()
        SLA(2) = 26.221
        SLA(3) = 19.744
        SLA(4) = 14.615
+   else if (iallom == 4) then
+       SLA(1) = 28.
+       SLA(2) = 23.
+       SLA(3) = 18.
+       SLA(4) = 13.
    endif
    !---------------------------------------------------------------------------------------!
    !    Fraction of vertical branches.  Values are from Poorter et al. (2006):             !
@@ -2744,6 +2818,27 @@ subroutine init_pft_alloc_params()
             end if
          end do
 
+     case (4)
+         !------------------------------------------------------------------------------------!
+         !     Use the allometry proposed by:                                                 !
+         !                                                                                    !
+         ! Feldpausch et al. 2011: Height-diameter allometry of tropical forest trees.        !
+         !    Biogeosciences, 8, 1081-1106                                                    !
+         ! But calibrated from in-situ data at Huai Khae Khaeng from Pieter Zuidema
+         !                                                                                    !
+         !------------------------------------------------------------------------------------!
+          
+         do ipft=1,n_pft
+            if (is_tropical(ipft) .and. (.not. is_liana(ipft))) then
+               !----- Regular log-log fit, b1 is the intercept and b2 is the slope. ----------!
+               ! Using South America values from the reference
+               b1Ht   (ipft) = 1.519
+               b2Ht   (ipft) = 0.4597
+               !----- hgt_ref is not used. ---------------------------------------------------!
+               ! hgt_ref(ipft) = 0.0
+            end if
+         end do
+
       case default
          !------------------------------------------------------------------------------------!
          !     Use the allometry proposed by:                                                 !
@@ -2775,6 +2870,9 @@ subroutine init_pft_alloc_params()
    !---------------------------------------------------------------------------------------!
 
    hgt_min(1)     = 0.50
+   if (iallom == 4) then
+       hgt_min(1) = 1.30
+   endif
    hgt_min(2:4)   = 1.30
    hgt_min(5)     = 0.15
    hgt_min(6)     = 1.50
@@ -2794,6 +2892,10 @@ subroutine init_pft_alloc_params()
    hgt_max( 2) = 45.0
    hgt_max( 3) = 45.0
    hgt_max( 4) = 45.0
+   if (iallom == 4) then
+       hgt_max(1:4) = 60.
+   endif
+
    hgt_max( 5) = 0.95  * b1Ht( 5)
    hgt_max( 6) = 0.999 * b1Ht( 6)
    hgt_max( 7) = 0.999 * b1Ht( 7)
@@ -2940,7 +3042,7 @@ subroutine init_pft_alloc_params()
                bleaf_adult(ipft) = b1Bl_large(ipft) / C2B * dbh_adult(ipft) ** b2Bl_large(ipft)
                bleaf_crit(ipft) = b1Bl_large(ipft) / C2B * dbh_crit(ipft) ** b2Bl_large(ipft)
                !------------------------------------------------------------------------------!
-            case (3)
+            case (3,4)
                !------------------------------------------------------------------------------!
                !     Test allometry, based on analysis over the BAAD dataset                  !
                !   Falster et al. BAAD: a Biomass And Allometry Database for woody plants.    !
@@ -3032,7 +3134,7 @@ subroutine init_pft_alloc_params()
                b1Bs_large(ipft) = C2B * exp(odead_large(1)) * rho(ipft) / odead_large(3)
                b2Bs_large(ipft) = odead_large(2)
 
-            case (3)
+            case (3,4)
                 !---- Based on Chave et al. 2014
                 b1Bs_small(ipft) = 0.0673 * exp(0.5 * (0.357 ** 2)) * (rho(ipft) ** 0.976)
                 b2Bs_small(ipft) = 2. * 0.976
@@ -3291,7 +3393,7 @@ subroutine init_pft_alloc_params()
          b2Rd(6:11)  = 0.277
          b2Rd(12:16) = 0.000
          b2Rd(17)    = 0.277
-      case (3)
+      case (3,4)
          ! XXT new height based allometry
          ! Based on C. Smith unpublished data from root excavation at Panama
          ! The relationship is close to Kenzo et al. 2009.
@@ -3352,6 +3454,10 @@ subroutine init_pft_alloc_params()
                init_density(16)    = 0.1
                init_density(17)    = 0.1
          end select
+
+         if (iallom == 4) then
+             init_density(1) = 1.0
+         endif
 
          !----- Define a non-sense number. ---------------------------------------------------!
          init_laimax(1:17)   = huge_num
@@ -3690,7 +3796,8 @@ end subroutine init_pft_hydro_params
 !------------------------------------------------------------------------------------------!
 subroutine init_pft_leaf_params()
    use phenology_coms , only : iphen_scheme         ! ! intent(in)
-   use ed_misc_coms   , only : igrass               ! ! intent(in)
+   use ed_misc_coms   , only : igrass               & ! intent(in)
+                             , iallom               ! ! intent(in)
    use ed_max_dims    , only : n_pft                ! ! intent(in)
    use pft_coms       , only : phenology            & ! intent(out)
       , high_psi_threshold   & ! intent(out)
@@ -3884,6 +3991,11 @@ subroutine init_pft_leaf_params()
    b2Cl(17)    = 1.098
    !---------------------------------------------------------------------------------------!
 
+   if (iallom == 4) then
+       b1Cl(1)     = 0.3106775
+       b2Cl(1)     = 1.098
+   endif
+
    return
 end subroutine init_pft_leaf_params
 !==========================================================================================!
@@ -3904,6 +4016,7 @@ subroutine init_pft_repro_params()
       , st_fract           & ! intent(out)
       , nonlocal_dispersal & ! intent(out)
       , repro_min_h        ! ! intent(out)
+   use ed_misc_coms, only : iallom    ! ! intent(in)
    implicit none
 
    r_fract(1)              = 0.3
@@ -3947,6 +4060,10 @@ subroutine init_pft_repro_params()
    repro_min_h(12:15)      =  0.0
    repro_min_h(16)         =  0.0
    repro_min_h(17)         = 18.0
+
+   if (iallom == 4) then
+       repro_min_h(1)      = 18.0
+   endif
 
    return
 end subroutine init_pft_repro_params

@@ -29,7 +29,7 @@ contains
       !----- Size- and age-structure (typical ED model). ----------------------------------!
       if (is_tropical(ipft)) then
          select case (iallom)
-            case (0,1,3)
+            case (0,1,3,4)
                !----- Default ED-2.1 allometry. -------------------------------------------!
                h2dbh = exp((log(h)-b1Ht(ipft))/b2Ht(ipft))
             case default
@@ -81,7 +81,7 @@ contains
             if (is_tropical(ipft)) then
                mdbh = min(dbh,dbh_crit(ipft))
                select case (iallom)
-                  case (0,1,3)
+                  case (0,1,3,4)
                      !----- Default ED-2.1 allometry. -------------------------------------!
                      dbh2h = exp (b1Ht(ipft) + b2Ht(ipft) * log(mdbh) )
                   case default
@@ -140,7 +140,8 @@ contains
       !------------------------------------------------------------------------------------!
       if (igrass == 1 .and. is_grass(ipft)   ) then
          size2bd = 0.0
-      else if (iallom == 3 .and. is_tropical(ipft) .and. (.not. is_liana(ipft))) then
+      else if ( (iallom == 3 .or. iallom == 4)              &
+          .and. is_tropical(ipft) .and. (.not. is_liana(ipft))) then
          !----- Decide parameters based on seedling/adult size. ---------------------------!
          if (dbh <= dbh_crit(ipft)) then
             size2bd = b1Bs_small(ipft) / C2B * (dbh ** b2Bs_small(ipft)) * (hite ** b2Bs_hite(ipft))
@@ -202,7 +203,7 @@ contains
       !------------------------------------------------------------------------------------!
       !    Decide which coefficients to use based on the critical bdead.                   !
       !------------------------------------------------------------------------------------!
-      if (iallom == 3 .and. is_tropical(ipft) .and. (.not. is_liana(ipft)) ) then
+      if ((iallom == 3 .or. iallom == 4) .and. is_tropical(ipft) .and. (.not. is_liana(ipft)) ) then
          if (bdead >= bdead_crit(ipft)) then
             !------------------------------------------------------------------------------!
             !     Bdead is above critical value, height is known.                          !
@@ -326,7 +327,7 @@ contains
       !     Find leaf biomass depending on the allometry.  The new allometry uses dbh and  !
       ! height, whereas the old allometry uses dbh only.                                   !
       !------------------------------------------------------------------------------------!
-      if (iallom == 3 .and. is_tropical(ipft) .and. (.not. is_liana(ipft))) then
+      if ((iallom == 3 .or. iallom == 4) .and. is_tropical(ipft) .and. (.not. is_liana(ipft))) then
          size2bl = b1Bl_large(ipft) / C2B / sla                                            &
                  * (mdbh ** b2Bl_large(ipft))                                              &
                  * (hite ** b2Bl_hite(ipft))
@@ -381,7 +382,7 @@ contains
       !------------------------------------------------------------------------------------!
 
 
-      if ( iallom == 3 .and. is_tropical(ipft) .and. (.not. is_liana(ipft)) ) then
+      if ( (iallom == 3 .or. iallom == 4) .and. is_tropical(ipft) .and. (.not. is_liana(ipft)) ) then
          if (bleaf * sla_in < bleaf_crit(ipft) * SLA(ipft)) then
              ! Before the saturation point of bleaf-dbh relationship
              ! Need to incorporate height allometry
@@ -728,7 +729,7 @@ contains
          !     Decide the WAI according to the allometry.                                  !
          !---------------------------------------------------------------------------------!
          select case (iallom)
-         case (3)
+         case (3,4)
             !------------------------------------------------------------------------------!
             !     Assume a simple extrapolation based on Olivas et al. (2013).  WAI is     !
             ! always 11% of the potential LAI.                                             !
