@@ -358,6 +358,14 @@ recursive subroutine read_ed_xml_config(filename)
            call getConfigREAL  ('Rd0','pft',i,rval,texist)
            if(texist) Rd0(myPFT) = real(rval)
 
+!! Pheno-plasticity parameters
+           call getConfigREAL  ('k_pp_sla','pft',i,rval,texist)
+           if(texist) k_pp_sla(myPFT) = real(rval)
+           call getConfigREAL  ('k_pp_vm0','pft',i,rval,texist)
+           if(texist) k_pp_vm0(myPFT) = real(rval)
+           call getConfigREAL  ('k_pp_rd0','pft',i,rval,texist)
+           if(texist) k_pp_rd0(myPFT) = real(rval)
+
 !! Stomatal parameters
            call getConfigREAL  ('D0','pft',i,rval,texist)
            if(texist) D0(myPFT) = real(rval)
@@ -1515,6 +1523,11 @@ subroutine write_ed_xml_config
         call putConfigREAL("Rd_hor",       Rd_hor(i))
         call putConfigREAL("Rd_q10",       Rd_q10(i))
         call putConfigREAL("Rd0",          Rd0(i))
+
+!! PHENO-PLASTICITY PARAMETERS
+        call putConfigREAL("k_pp_sla",     k_pp_sla(i))
+        call putConfigREAL("k_pp_rd0",     k_pp_rd0(i))
+        call putConfigREAL("k_pp_vm0",     k_pp_vm0(i))
 
 !! STOMATAL PARAMETERS
         call putConfigREAL("D0",               D0(i))

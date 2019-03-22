@@ -1412,6 +1412,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
    use ed_state_vars , only : patchtype           ! ! structure
    use pft_coms      , only : SLA                 & ! intent(in)
                             , Vm0                 & ! intent(in)
+                            , Rd0                 & ! intent(in)
                             , rho                 & ! intent(in)
                             , dark_respiration_factor & ! intent(in)
                             , vm_hor              & ! intent(in)
@@ -1419,6 +1420,9 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
                             , vm_high_temp        & ! intent(in)
                             , vm_decay_e          & ! intent(in)
                             , vm_q10              & ! intent(in)
+                            , k_pp_sla            & ! intent(in)
+                            , k_pp_vm0            & ! intent(in)
+                            , k_pp_rd0            & ! intent(in)
                             , is_tropical         & ! intent(in)
                             , is_grass            ! ! intent(in)
    use allometry     , only : size2bl             ! ! function
@@ -1533,22 +1537,30 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
 
        ! 3. update traits
        ! Vm0 should be defined at the top of canopy [sun-lit leaves]
-       cpatch%vm0(ico) = Vm0(ipft) * exp(-kvm0 * max_cum_lai)
+       select case (trait_plasticity_scheme)
+       case (-1,-2,1,2)
+        cpatch%vm0(ico) = Vm0(ipft) * exp(-kvm0 * max_cum_lai)
+       case (3)
+        cpatch%vm0(ico) = Vm0(ipft) * exp(-k_pp_vm0(ipft) * max_cum_lai)
+       end select
+
 
        select case (trait_plasticity_scheme)
        case (-1,-2,1,2)
-           cpatch%rd0(ico) = cpatch%vm0(ico) * dark_respiration_factor(ipft)
+           cpatch%rd0(ico) = Rd0(ipft) !cpatch%vm0(ico) * dark_respiration_factor(ipft)
        case (3)
            ! include pheno-plasticity in dark respiration
-           cpatch%rd0(ico) = Vm0(ipft) * dark_respiration_factor(ipft) * exp(-krd0 * max_cum_lai)
+!           cpatch%rd0(ico) = Vm0(ipft) * dark_respiration_factor(ipft) * exp(-krd0 * max_cum_lai)
+           cpatch%rd0(ico) = Rd0(ipft) * exp(-k_pp_rd0(ipft) * max_cum_lai)
        end select
 
        ! SLA should be defined at the bottom of canopy [shaded leaves]
        select case (trait_plasticity_scheme)
-       case (1,2)
+       case (1,2,3)
            ! SLA is defined at the top of canopy, use LAI to change SLA
            ! However, we only allow SLA to be tripled at the deepest shading
-           cpatch%sla(ico) = SLA(ipft) * min(3.,exp(ksla * max_cum_lai))
+           !cpatch%sla(ico) = SLA(ipft) * min(3.,exp(ksla * max_cum_lai))
+           cpatch%sla(ico) = SLA(ipft) * min(3.,exp(-k_pp_sla(ipft) * max_cum_lai))
            
        case (-1,-2)
            ! SLA is defined at the bottom of canopy, use height to change SLA

@@ -206,6 +206,17 @@ module pft_coms
 
    !----- Specifies photosynthetic pathway.  3 corresponds to C3, 4 corresponds to C4. ----!
    integer, dimension(n_pft) :: photosyn_pathway
+   
+   ! pheno-plasticity
+   ! We calculate extinction factors mimicing the Beer's law
+   ! Trait_shade = Trait_sun * exp(-k * LAI_overtop)
+   ! Therefore, all pheno-plasiticity parameters k_pp_[trait] and have the unit of m2/m2 (inverse of
+   ! LAI)
+   ! for now only include SLA, vm0, rd0. But leaf turnover rate should be included in the merged
+   ! version
+   real, dimension(n_pft) :: k_pp_sla ! SLA
+   real, dimension(n_pft) :: k_pp_vm0 ! vm0
+   real, dimension(n_pft) :: k_pp_rd0 ! rd0
    !=======================================================================================!
    !=======================================================================================!
 
