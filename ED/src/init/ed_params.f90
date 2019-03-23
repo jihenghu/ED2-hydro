@@ -3480,7 +3480,7 @@ subroutine init_pft_alloc_params()
                init_density(17)    = 1.0
             case default
                init_density(1)     = 0.1
-               init_density(2:4)   = 0.5
+               init_density(2:4)   = 1.0
                init_density(5)     = 0.1
                init_density(6:8)   = 0.1
                init_density(9:11)  = 0.1
@@ -3491,7 +3491,7 @@ subroutine init_pft_alloc_params()
          end select
 
          if ((iallom == 4) .or. (iallom == 3)) then
-             init_density(1) = 1.0
+             init_density(1) = init_density(2)
          endif
 
          !----- Define a non-sense number. ---------------------------------------------------!
@@ -3715,6 +3715,7 @@ subroutine init_pft_hydro_params()
    !----------------------------------------------------------!
    ! Key traits that drive plant hydrodynamics                 
    ! Again Based on Christofferson et al. 2016 GMD
+   ! Also from Xu et al. 2016 New Phyt
    !----------------------------------------------------------!
    do ipft = 1, n_pft
        ! Calculate capacitance based on linearizing the water retention curve
@@ -3728,15 +3729,22 @@ subroutine init_pft_hydro_params()
                             * wood_water_sat(ipft) / (4. * abs(wood_psi_tlp(ipft)))
 
        ! Wood P50 [m]
-       wood_psi50(ipft) = (-1.09-(3.57 * rho(ipft)) ** 1.73) * MPa2m 
+       ! XXT modified. This number makes more sense....
+       wood_psi50(ipft)     = (-3. * rho(ipft) - 0.599) * MPa2m
+
+       !wood_psi50(ipft) = (-1.09-(3.57 * rho(ipft)) ** 1.73) * MPa2m 
        
-       Amax_25 = Vm0(ipft) * 2.4 / 4.1 ! umol/m2/s
-       ! This is only an estimate. 2.4 is Q10, converting to Vcmax_25, 4.1
-       ! is conversion factor from Vcmax to Amax at ~25degC
+       !Amax_25 = Vm0(ipft) * 2.4 / 4.1 ! umol/m2/s
+       !! This is only an estimate. 2.4 is Q10, converting to Vcmax_25, 4.1
+       !! is conversion factor from Vcmax to Amax at ~25degC
 
        ! Sapwood maximum conductivity [kg/m/s/m]
-       wood_Kmax(ipft)  = exp(2.11 - 20.05 * rho(ipft) / Amax_25) / MPa2m 
-       ! This is estimated from Figure S2.2 in Christofferson et al. 2016 GMD
+       !wood_Kmax(ipft)  = exp(2.11 - 20.05 * rho(ipft) / Amax_25) / MPa2m 
+       !! This is estimated from Figure S2.2 in Christofferson et al. 2016 GMD
+
+       wood_Kmax = exp(2.32 - 2.27 * rho(ipft) - 0.48 * log(-wood_psi50(ipft) / MPa2m) + 0.5 * 0.89) / MPa2m
+       ! from analysis of the Gleason et al. and Xu et al. data.
+       ! Again this makes more sense....
 
        wood_Kexp(ipft)  = 0.544 * 4. * (-wood_psi50(ipft) / MPa2m) ** (-0.17)
        ! Christofferson et al. 2016 GMD only reports the slope of PLC at psi50,
@@ -3749,50 +3757,50 @@ subroutine init_pft_hydro_params()
    ! overwrite some parameters if PLANT_HYDRO_SCHEME is 2
    ! Using meta-analysis from Xu et al. 2016 New Phytologist
    ! Again this is also for tropical PFTs
-   select case (plant_hydro_scheme)
-   case(-2,2)
-      do ipft = 1, n_pft
+   !select case (plant_hydro_scheme)
+   !case(-2,2)
+   !   do ipft = 1, n_pft
 
-        !----------------------------------------------------------!
-        !  Capacitance is estimated from Scholz et al. 2011        !
-        !  Since the capacitance is treated as a constant in the   !
-        !  model, it should be way smaller than lab/field measured !
-        !  capacitance [Sack et al. 2003 PCE;Steppe et al. 2006    !
-        !  Tree Physiology]. Thus, here Cap_leaf is multiplied by  !
-        !  1/2 and Cap_stem is multipled by 1/3                    !
-        !                                                          !
-        !  Scholz, F. G., N. G. Phillips, et al. (2011). Hydraulic !
-        !  Capacitance: Biophysics and Functional Significance of  !
-        !  Internal Water Sources in Relation to Tree Size.        !
-        !----------------------------------------------------------!
-        leaf_water_cap(ipft) = 3.e-3 * SLA(ipft) / C2B / MPa2m / 2.
-        wood_water_cap(ipft) = min(400.,max(50.,                         &
-                               -700. * (rho(ipft) - 0.3) + 400.))        &
-                             / (rho(ipft) * 1.e3) / MPa2m / 3.
+   !     !----------------------------------------------------------!
+   !     !  Capacitance is estimated from Scholz et al. 2011        !
+   !     !  Since the capacitance is treated as a constant in the   !
+   !     !  model, it should be way smaller than lab/field measured !
+   !     !  capacitance [Sack et al. 2003 PCE;Steppe et al. 2006    !
+   !     !  Tree Physiology]. Thus, here Cap_leaf is multiplied by  !
+   !     !  1/2 and Cap_stem is multipled by 1/3                    !
+   !     !                                                          !
+   !     !  Scholz, F. G., N. G. Phillips, et al. (2011). Hydraulic !
+   !     !  Capacitance: Biophysics and Functional Significance of  !
+   !     !  Internal Water Sources in Relation to Tree Size.        !
+   !     !----------------------------------------------------------!
+   !     leaf_water_cap(ipft) = 3.e-3 * SLA(ipft) / C2B / MPa2m / 2.
+   !     wood_water_cap(ipft) = min(400.,max(50.,                         &
+   !                            -700. * (rho(ipft) - 0.3) + 400.))        &
+   !                          / (rho(ipft) * 1.e3) / MPa2m / 3.
 
-        ! Copied from wat_dry_ratio_grn and wat_dry_ratio_ngrn
-        leaf_water_sat(ipft) = 1.85
-        wood_water_sat(ipft) = 0.7
+   !     ! Copied from wat_dry_ratio_grn and wat_dry_ratio_ngrn
+   !     leaf_water_sat(ipft) = 1.85
+   !     wood_water_sat(ipft) = 0.7
 
-        ! Set some rwc_min so that psi_min makes sense
-        leaf_rwc_min(ipft) = 0.5
-        wood_rwc_min(ipft) = 0.05
+   !     ! Set some rwc_min so that psi_min makes sense
+   !     leaf_rwc_min(ipft) = 0.5
+   !     wood_rwc_min(ipft) = 0.05
 
 
-        leaf_psi_tlp(ipft)   = (-4.59 + 0.62 * log(SLA(ipft))            &
-                             - 1.15 * log(rho(ipft))) * MPa2m
+   !     leaf_psi_tlp(ipft)   = (-4.59 + 0.62 * log(SLA(ipft))            &
+   !                          - 1.15 * log(rho(ipft))) * MPa2m
 
-        wood_psi50(ipft)     = (-3. * rho(ipft) - 0.599) * MPa2m
-        wood_Kmax(ipft)      = exp(-2.455 * rho(ipft)                    &
-                             + 2.348 + 0.5 * 0.6186) / MPa2m
+   !     wood_psi50(ipft)     = (-3. * rho(ipft) - 0.599) * MPa2m
+   !     wood_Kmax(ipft)      = exp(-2.455 * rho(ipft)                    &
+   !                          + 2.348 + 0.5 * 0.6186) / MPa2m
 
-        wood_Kexp(ipft)      = 4.
+   !     wood_Kexp(ipft)      = 4.
 
-      enddo
+   !   enddo
        
 
 
-   end select
+   !end select
 
    ! Equivalent leaf/wood minimum water potential calculated from leaf_rwc
    ! with the assumption of constant capacitance [m]
@@ -4212,7 +4220,8 @@ subroutine init_pft_derived_params()
 
       !----- Find the DBH and carbon pools associated with a newly formed recruit. --------!
       dbh          = h2dbh(hgt_min(ipft),ipft)
-      bleaf_min    = size2bl(dbh,hgt_min(ipft),sla(ipft),ipft)
+      !bleaf_min    = size2bl(dbh,hgt_min(ipft),sla(ipft),ipft)
+      bleaf_min    = size2bl(dbh,hgt_min(ipft),sla(ipft)*2.5,ipft) ! highest sla is 2.5 times default sla
       broot_min    = bleaf_min * q(ipft)
       bsapwood_min = bleaf_min * qsw(ipft) * hgt_min(ipft)
       balive_min   = bleaf_min + broot_min + bsapwood_min

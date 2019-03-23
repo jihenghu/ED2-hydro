@@ -1350,7 +1350,7 @@ subroutine update_derived_cohort_props(cpatch,ico,lsl,month)
 
    !----- Update SLA and Vm0 before calculating bleaf_max or LAI  -------------------------!
    select case (trait_plasticity_scheme)
-   case (-1,1,3)
+   case (-1,1)
        ! update trait every year
        if (month == 1) then
            call update_cohort_plastic_trait(cpatch,ico)
@@ -1358,6 +1358,13 @@ subroutine update_derived_cohort_props(cpatch,ico,lsl,month)
    case (-2,2)
        ! update trait every month
        call update_cohort_plastic_trait(cpatch,ico)
+   case (3)
+       ! update trait every quarter and restrict the amount of change every adjustment
+       ! so that the energy can be well resolved
+       if (month == 1 .or. month == 7 .or. month == 4 .or. month == 10) then
+           call update_cohort_plastic_trait(cpatch,ico)
+       endif
+     
    end select
    !---------------------------------------------------------------------------------------!
 
@@ -1449,6 +1456,8 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
    real                        :: new_sla
    real                        :: new_bleaf_max
    real                        :: transp_scaler
+   real                        :: frac_change  ! fractional change of trait relative to current trait value
+   real, parameter             :: max_frac_change = 0.20 ! maximum fractional change of functional trait each time
    !---------------------------------------------------------------------------------------!
 
 
@@ -1541,7 +1550,13 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        case (-1,-2,1,2)
         cpatch%vm0(ico) = Vm0(ipft) * exp(-kvm0 * max_cum_lai)
        case (3)
-        cpatch%vm0(ico) = Vm0(ipft) * exp(-k_pp_vm0(ipft) * max_cum_lai)
+        ! the fractional change cannot go over max_frac
+        frac_change = (Vm0(ipft) * exp(-k_pp_vm0(ipft) * max_cum_lai)) / cpatch%vm0(ico) - 1.
+
+        frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
+                            max(frac_change,-max_frac_change),      & ! trait decrease
+                            frac_change > 0)
+        cpatch%vm0(ico) = cpatch%vm0(ico) * (1. + frac_change)
        end select
 
 
@@ -1549,14 +1564,23 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        case (-1,-2,1,2)
            cpatch%rd0(ico) = Rd0(ipft) !cpatch%vm0(ico) * dark_respiration_factor(ipft)
        case (3)
-           ! include pheno-plasticity in dark respiration
+
+            ! the fractional change cannot go over max_frac
+            frac_change = (Rd0(ipft) * exp(-k_pp_rd0(ipft) * max_cum_lai)) / cpatch%rd0(ico) - 1.
+
+            frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
+                                max(frac_change,-max_frac_change),      & ! trait decrease
+                                frac_change > 0)
+            cpatch%rd0(ico) = cpatch%rd0(ico) * (1. + frac_change)
+
+
 !           cpatch%rd0(ico) = Vm0(ipft) * dark_respiration_factor(ipft) * exp(-krd0 * max_cum_lai)
-           cpatch%rd0(ico) = Rd0(ipft) * exp(-k_pp_rd0(ipft) * max_cum_lai)
+!           cpatch%rd0(ico) = Rd0(ipft) * exp(-k_pp_rd0(ipft) * max_cum_lai)
        end select
 
        ! SLA should be defined at the bottom of canopy [shaded leaves]
        select case (trait_plasticity_scheme)
-       case (1,2,3)
+       case (1,2)
            ! SLA is defined at the top of canopy, use LAI to change SLA
            ! However, we only allow SLA to be tripled at the deepest shading
            !cpatch%sla(ico) = SLA(ipft) * min(3.,exp(ksla * max_cum_lai))
@@ -1565,6 +1589,15 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        case (-1,-2)
            ! SLA is defined at the bottom of canopy, use height to change SLA
            cpatch%sla(ico) = SLA(ipft) / (1. + lma_slope * cpatch%hite(ico))
+
+       case (3)
+            frac_change = (SLA(ipft) * min(2.5,exp(-k_pp_sla(ipft) * max_cum_lai))) / cpatch%sla(ico) - 1.
+
+            frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
+                                max(frac_change,-max_frac_change),      & ! trait decrease
+                                frac_change > 0)
+            cpatch%sla(ico) = cpatch%sla(ico) * (1. + frac_change)
+
        end select
 
        ! when sla increases, we are going to dump carbon into bstorage, reducing bleaf
