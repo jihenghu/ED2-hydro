@@ -1422,14 +1422,17 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
                             , Rd0                 & ! intent(in)
                             , rho                 & ! intent(in)
                             , dark_respiration_factor & ! intent(in)
+                            , leaf_turnover_rate  & ! intent(in)
                             , vm_hor              & ! intent(in)
                             , vm_low_temp         & ! intent(in)
                             , vm_high_temp        & ! intent(in)
                             , vm_decay_e          & ! intent(in)
                             , vm_q10              & ! intent(in)
+                            , rd_q10              & ! intent(in)
                             , k_pp_sla            & ! intent(in)
                             , k_pp_vm0            & ! intent(in)
                             , k_pp_rd0            & ! intent(in)
+                            , k_pp_ll             & ! intent(in)
                             , is_tropical         & ! intent(in)
                             , is_grass            ! ! intent(in)
    use allometry     , only : size2bl             ! ! function
@@ -1566,7 +1569,10 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        case (3)
 
             ! the fractional change cannot go over max_frac
-            frac_change = (Rd0(ipft) * exp(-k_pp_rd0(ipft) * max_cum_lai)) / cpatch%rd0(ico) - 1.
+!            frac_change = (Rd0(ipft) * exp(-k_pp_rd0(ipft) * max_cum_lai)) / cpatch%rd0(ico) - 1.
+            frac_change = (cpatch%vm0(ico) * vm_q10(ipft) / rd_q10(ipft)  & ! converting factor
+                           * dark_respiration_factor(ipft)                &
+                           * exp(-k_pp_rd0(ipft) * max_cum_lai)) / cpatch%rd0(ico) - 1.
 
             frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
                                 max(frac_change,-max_frac_change),      & ! trait decrease
@@ -1591,7 +1597,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
            cpatch%sla(ico) = SLA(ipft) / (1. + lma_slope * cpatch%hite(ico))
 
        case (3)
-            frac_change = (SLA(ipft) * min(2.5,exp(-k_pp_sla(ipft) * max_cum_lai))) / cpatch%sla(ico) - 1.
+            frac_change = (SLA(ipft) * min(3.,exp(-k_pp_sla(ipft) * max_cum_lai))) / cpatch%sla(ico) - 1.
 
             frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
                                 max(frac_change,-max_frac_change),      & ! trait decrease
@@ -1599,6 +1605,18 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
             cpatch%sla(ico) = cpatch%sla(ico) * (1. + frac_change)
 
        end select
+
+       ! leaf longevity, only change it if trait_plasticity is 3
+       select case (trait_plasticity_scheme)
+       case (3)
+            frac_change = (365./leaf_turnover_rate(ipft) * exp(-k_pp_ll(ipft) * max_cum_lai)) / cpatch%llspan(ico) - 1.
+
+            frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
+                                max(frac_change,-max_frac_change),      & ! trait decrease
+                                frac_change > 0)
+            cpatch%llspan(ico) = cpatch%llspan(ico) * (1. + frac_change)
+       end select
+
 
        ! when sla increases, we are going to dump carbon into bstorage, reducing bleaf
        ! or we are going to increase leaf area.

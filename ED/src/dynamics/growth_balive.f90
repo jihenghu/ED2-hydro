@@ -658,6 +658,7 @@ module growth_balive
    !=======================================================================================!
    subroutine get_maintenance(cpatch,ico,tfact,tempk)
       use ed_state_vars, only : patchtype             ! ! structure
+      use physiology_coms,only : trait_plasticity_scheme
       use pft_coms     , only : phenology             & ! intent(in)
                               , root_turnover_rate    & ! intent(in)
                               , leaf_turnover_rate    ! ! intent(in)
@@ -682,6 +683,15 @@ module growth_balive
       !------------------------------------------------------------------------------------!
       cpatch%root_maintenance(ico) = root_turnover_rate(ipft) *cpatch%broot(ico) *tfact
       cpatch%leaf_maintenance(ico) = leaf_turnover_rate(ipft) *cpatch%bleaf(ico) *tfact
+
+      select case (trait_platicity_scheme)
+      case (3)
+          ! use llspan if case 3
+          cpatch%leaf_maintenance(ico) = 365. / cpatch%llspan(ico) * cpatch%bleaf(ico) * tfact
+          cpatch%root_maintenance(ico) = 365. / cpatch%llspan(ico) * cpatch%bleaf(ico) * tfact
+      end select
+
+
 
       select case (phenology(ipft))
       case (0)

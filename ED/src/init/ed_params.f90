@@ -99,10 +99,6 @@ subroutine load_ed_ecosystem_params()
    !    This flag should be used to define whether the plant is tree or grass              !
    !---------------------------------------------------------------------------------------!
    is_grass(1)     = .true.
-   if ((iallom == 4) .or. (iallom == 3)) then
-       ! for HKK simulations, use 4 tropical tree PFT
-       is_grass(1) = .false.
-   endif
    is_grass(2:4)   = .false.
    is_grass(5)     = .true.
    is_grass(6:11)  = .false.
@@ -585,9 +581,6 @@ subroutine init_can_rad_params()
    !  1 -- homogeneous, no clumping.                                                       !
    !---------------------------------------------------------------------------------------!
    clumping_factor(1)     = dble(clump_grass)
-   if ((iallom == 4) .or. (iallom == 3)) then
-       clumping_factor(1) = dble(clump_tree)
-   endif
    clumping_factor(2:4)   = dble(clump_tree )
    clumping_factor(5)     = 8.400d-1
    clumping_factor(6:8)   = 7.350d-1
@@ -608,9 +601,6 @@ subroutine init_can_rad_params()
    ! -1 -- all leaves are perfectly vertical.                                              !
    !---------------------------------------------------------------------------------------!
    orient_factor(    1) = dble(orient_grass)
-   if ((iallom == 4) .or. (iallom == 3)) then
-       orient_factor(1) = dble(orient_tree)
-   endif
    orient_factor(  2:4) = dble(orient_tree)
    orient_factor(    5) = 0.0d0 ! -3.0d-1 ! CLM value for C3 grass
    orient_factor(  6:8) = 0.0d0 !  1.0d-2 ! CLM value for temperate evergreen needleef tree
@@ -631,9 +621,6 @@ subroutine init_can_rad_params()
    !---------------------------------------------------------------------------------------!
    !----- Leaves. -------------------------------------------------------------------------!
    leaf_emiss_tir(1)     = 9.60d-1
-   if ((iallom == 4) .or. (iallom == 3)) then
-       leaf_emiss_tir(1) = 9.50d-1
-   endif
    leaf_emiss_tir(2:4)   = 9.50d-1
    leaf_emiss_tir(5)     = 9.60d-1
    leaf_emiss_tir(6:8)   = 9.70d-1
@@ -643,9 +630,6 @@ subroutine init_can_rad_params()
    leaf_emiss_tir(17)    = 9.50d-1
    !----- Branches. -----------------------------------------------------------------------!
    wood_emiss_tir(1)     = 9.60d-1
-   if ((iallom == 4) .or. (iallom == 3)) then
-       wood_emiss_tir(1) = 9.00d-1
-   endif
    wood_emiss_tir(2:4)   = 9.00d-1
    wood_emiss_tir(5)     = 9.60d-1
    wood_emiss_tir(6:8)   = 9.00d-1
@@ -706,9 +690,6 @@ subroutine init_can_rad_params()
    !---------------------------------------------------------------------------------------!
    !----- Visible (PAR). ------------------------------------------------------------------!
    wood_reflect_vis(1)     = 1.60d-1  ! 3.10d-1
-   if ((iallom == 4) .or. (iallom == 3)) then
-       wood_reflect_vis(1) = 1.10d-1
-   endif
    wood_reflect_vis(2:4)   = 1.10d-1  ! 1.60d-1
    wood_reflect_vis(5)     = 1.60d-1  ! 3.10d-1
    wood_reflect_vis(6:11)  = 1.10d-1  ! 1.60d-1
@@ -766,9 +747,6 @@ subroutine init_can_rad_params()
    !---------------------------------------------------------------------------------------!
    !----- Visible (PAR). ------------------------------------------------------------------!
    wood_trans_vis(    1) = 2.80d-2
-   if ((iallom == 4) .or. (iallom == 3)) then
-       wood_trans_vis(1) = 1.00d-3
-   endif
    wood_trans_vis(  2:4) = 1.00d-3
    wood_trans_vis(    5) = 2.80d-2
    wood_trans_vis( 6:11) = 1.00d-3
@@ -1522,9 +1500,6 @@ subroutine init_pft_photo_params()
    !---------------------------------------------------------------------------------------!
 
    D0(1)                     = d0_grass
-   if ((iallom == 4) .or. (iallom == 3)) then
-       D0(1) = d0_tree
-   endif
    D0(2:4)                   = d0_tree
    D0(5)                     = d0_grass
    D0(6:8)                   = d0_tree
@@ -1585,17 +1560,6 @@ subroutine init_pft_photo_params()
    Vm0(16)                   = 18.750000 * ssfact * vmfact_c3
    Vm0(17)                   = 9.0970000 * ssfact * vmfact_c3
    !---------------------------------------------------------------------------------------!
-   if ((iallom == 4) .or. (iallom == 3)) then
-!        Vm0(1)                    = 23.3484 !12.500000 * ssfact * vmfact_c4
-!        Vm0(2)                    = 21.4929 !18.750000 * ssfact * vmfact_c3
-!        Vm0(3)                    = 18.64!12.500000 * ssfact * vmfact_c3
-!        Vm0(4)                    = 16.02! 6.250000 * ssfact * vmfact_c3
-!   else if (iallom == 4) then
-       Vm0(1)   = 25.3!23.
-       Vm0(2)   = 20.6!20.
-       Vm0(3)   = 17.8!17.
-       Vm0(4)   = 15.6!14.
-   endif
 
 
 
@@ -1606,9 +1570,6 @@ subroutine init_pft_photo_params()
    vm_hor(1:17)              = 3000.
    !----- Here we distinguish between C3 and C4 photosynthesis as in Collatz et al 91/92. -!
    vm_q10(1)                 = q10_c4
-   if ((iallom == 4) .or. (iallom == 3)) then
-       vm_q10(1) = q10_c3
-   endif
    vm_q10(2:13)              = q10_c3
    vm_q10(14:15)             = q10_c4
    vm_q10(16:17)             = q10_c3
@@ -1619,9 +1580,6 @@ subroutine init_pft_photo_params()
    !    Dark_respiration_factor is the lower-case gamma in Moorcroft et al. (2001).        !
    !---------------------------------------------------------------------------------------!
    dark_respiration_factor(1)     = gamma_c4
-   if ((iallom == 4) .or. (iallom == 3)) then
-       dark_respiration_factor(1) = gamma_c3
-   endif
    dark_respiration_factor(2)     = gamma_c3
    dark_respiration_factor(3)     = gamma_c3
    dark_respiration_factor(4)     = gamma_c3
@@ -1668,21 +1626,12 @@ subroutine init_pft_photo_params()
          Rd0         (1:17) = dark_respiration_factor(1:17) * Vm0(1:17)                       &
             * Vm_q10(1:17) / Rd_q10(1:17)
    end select
-   if ((iallom == 4) .or. (iallom == 3)) then
-       Rd0(1) = 0.422
-       Rd0(2) = 0.366
-       Rd0(3) = 0.443
-       Rd0(4) = 0.481
-   endif
    !---------------------------------------------------------------------------------------!
 
 
 
    !----- Define the stomatal slope (aka the M factor). -----------------------------------!
    stomatal_slope(1)         = mphoto_c4
-   if ((iallom == 4) .or. (iallom == 3)) then
-       stomatal_slope(1)     = mphoto_trc3
-   endif
    stomatal_slope(2)         = mphoto_trc3
    stomatal_slope(3)         = mphoto_trc3
    stomatal_slope(4)         = mphoto_trc3
@@ -1702,9 +1651,6 @@ subroutine init_pft_photo_params()
 
    !----- Define the stomatal slope (aka the b term, given in umol/m2/s). -----------------!
    cuticular_cond(1)         = bphoto_c4
-   if ((iallom == 4) .or. (iallom == 3)) then
-       cuticular_cond(1)     = bphoto_c4
-   endif
    cuticular_cond(2)         = bphoto_blc3
    cuticular_cond(3)         = bphoto_blc3
    cuticular_cond(4)         = bphoto_blc3
@@ -1723,9 +1669,6 @@ subroutine init_pft_photo_params()
    cuticular_cond(17)        = bphoto_blc3
 
    quantum_efficiency(1)     = alpha_c4
-   if ((iallom == 4) .or. (iallom == 3)) then
-        quantum_efficiency(1)= alpha_c3
-   endif
    quantum_efficiency(2)     = alpha_c3
    quantum_efficiency(3)     = alpha_c3
    quantum_efficiency(4)     = alpha_c3
@@ -1749,9 +1692,6 @@ subroutine init_pft_photo_params()
    !  m�/s/kg_C_root.                                                                      !
    !---------------------------------------------------------------------------------------!
    water_conductance(1)      = kw_grass / yr_sec
-   if ((iallom == 4) .or. (iallom == 3)) then
-       water_conductance(1)  = kw_tree / yr_sec
-   endif
    water_conductance(2:4)    = kw_tree  / yr_sec
    water_conductance(5)      = kw_grass / yr_sec
    water_conductance(6:11)   = kw_tree  / yr_sec
@@ -1762,9 +1702,6 @@ subroutine init_pft_photo_params()
 
 
    photosyn_pathway(1)       = 4
-   if ((iallom == 4) .or. (iallom == 3)) then
-       photosyn_pathway(1)   = 3
-   endif
    photosyn_pathway(2:4)     = 3
    photosyn_pathway(5)       = 3
    photosyn_pathway(6:13)    = 3
@@ -1773,9 +1710,6 @@ subroutine init_pft_photo_params()
 
    !----- Leaf width [m].  This controls the boundary layer conductance. ------------------!
    leaf_width( 1)    = lwidth_grass
-   if ((iallom == 4) .or. (iallom == 3)) then
-       leaf_width(1) = lwidth_bltree
-   endif
    leaf_width( 2)    = lwidth_bltree
    leaf_width( 3)    = lwidth_bltree
    leaf_width( 4)    = lwidth_bltree
@@ -1976,12 +1910,6 @@ subroutine init_pft_resp_params()
    leaf_turnover_rate(2)          = 1.0
    leaf_turnover_rate(3)          = 0.5
    leaf_turnover_rate(4)          = onethird
-   if ((iallom == 4) .or. (iallom == 3)) then
-       leaf_turnover_rate(1)      = 1.75
-       leaf_turnover_rate(2)      = 1.25
-       leaf_turnover_rate(3)      = 0.75
-       leaf_turnover_rate(4)      = 0.75
-   endif
    leaf_turnover_rate(5)          = 2.0
    leaf_turnover_rate(6)          = onethird
    leaf_turnover_rate(7)          = onethird
@@ -2016,9 +1944,6 @@ subroutine init_pft_resp_params()
    root_turnover_rate(17)         = leaf_turnover_rate(17)
 
    storage_turnover_rate(1)       = onethird
-   if ((iallom == 4) .or. (iallom == 3)) then
-        storage_turnover_rate(1)  = onesixth
-   endif
    storage_turnover_rate(2)       = onesixth
    storage_turnover_rate(3)       = onesixth
    storage_turnover_rate(4)       = onesixth
@@ -2440,12 +2365,17 @@ end subroutine init_pft_mort_params
 !==========================================================================================!
 subroutine init_pft_alloc_params()
 
-   use pft_coms     , only : leaf_turnover_rate    & ! intent(in)
+   use pft_coms     , only : leaf_turnover_rate    & ! intent(inout)
       , is_tropical           & ! intent(in)
       , is_liana              & ! intent(in)
       , is_grass              & ! intent(in)
       , rho                   & ! intent(out)
       , SLA                   & ! intent(out)
+      , Vm0                   & ! intent(out)
+      , vm_q10                & ! intent(in)
+      , rd_q10                & ! intent(in)
+      , Rd0                   & ! intent(out)
+      , dark_respiration_factor & ! intent(out)
       , horiz_branch          & ! intent(out)
       , q                     & ! intent(out)
       , qsw                   & ! intent(out)
@@ -2492,9 +2422,6 @@ subroutine init_pft_alloc_params()
       , sla_scale             & ! intent(out)
       , sla_inter             & ! intent(out)
       , sla_slope             & ! intent(out)
-      , k_pp_sla              & ! intent(out)
-      , k_pp_vm0              & ! intent(out)
-      , k_pp_rd0              & ! intent(out)
       , sapwood_ratio         ! ! intent(out)
    use allometry    , only : h2dbh                 & ! function
       , size2bd                & ! function
@@ -2598,38 +2525,13 @@ subroutine init_pft_alloc_params()
 !       rho(2) = 0.45
 !       rho(3) = 0.615
 !       rho(4) = 0.79
-!   else if (iallom == 4) then
-       ! HKK simulations
-       rho(1) = 0.35
-       rho(2) = 0.5
-       rho(3) = 0.65
+       rho(2) = 0.3
+       rho(3) = 0.55
        rho(4) = 0.8
    endif
 
 
 
-   ! pheno-plasticity
-   k_pp_sla(:) = 0. ! by default there is no pheno-plasticity
-   k_pp_vm0(:) = 0. ! by default there is no pheno-plasticity
-   k_pp_rd0(:) = 0. ! by default there is no pheno-plasticity
-
-   if ((iallom == 4) .or. (iallom == 3)) then
-       ! New Pan-tropical simulations
-       k_pp_sla(1) = -0.23
-       k_pp_sla(2) = -0.16
-       k_pp_sla(3) = -0.20
-       k_pp_sla(4) = -0.13
-
-       k_pp_vm0(1) = 0.27
-       k_pp_vm0(2) = 0.24
-       k_pp_vm0(3) = 0.19
-       k_pp_vm0(4) = 0.11
-
-       k_pp_rd0(1) = 0.24
-       k_pp_rd0(2) = 0.27
-       k_pp_rd0(3) = 0.62
-       k_pp_rd0(4) = 0.57
-   endif
 
    !---------------------------------------------------------------------------------------!
    !     Specific leaf area [m� leaf / kg C].   For tropical PFTs, this is a turnover rate !
@@ -2665,16 +2567,19 @@ subroutine init_pft_alloc_params()
 
    ! new tropical scheme from MLongo
    if ((iallom == 4) .or. (iallom == 3)) then
-!       SLA(1) = 27.585
-!       SLA(2) = 26.221
-!       SLA(3) = 19.744
-!       SLA(4) = 14.615
-!   else if (iallom == 4) then
-       SLA(1) = 30.7 !28.
-       SLA(2) = 28.1 !23.
-       SLA(3) = 25.5 !18.
-       SLA(4) = 22.4 !13.
+       SLA(2:4) = 2000. / exp(2.442 * rho(2:4) + 3.337) ! m2/kgC
+       Vm0(2:4) = exp(-1.05 * rho(2:4) + 4.401) / vm_q10(2:4) ! umol/m2/s @ 15degC
+       dark_respiration_factor(2:4) = exp(-1.075 * rho(2:4) - 3.979)
+       Rd0(2:4) = dark_respiration_factor(2:4) * Vm0(2:4) * Vm_q10(2:4) / Rd_q10(2:4)
+       leaf_turnover_rate(2:4) = 365. / exp(1.675 * log(2000. / SLA(2:4)) - 2.004)
+
+       print(SLA(2:4))
+       print(Vm0(2:4))
+       print(dark_respiration_factor(2:4))
+       print(Rd0(2:4))
+       print(leaf_turnover_rate(2:4))
    endif
+
    !---------------------------------------------------------------------------------------!
    !    Fraction of vertical branches.  Values are from Poorter et al. (2006):             !
    !                                                                                       !
@@ -2905,9 +2810,6 @@ subroutine init_pft_alloc_params()
    !---------------------------------------------------------------------------------------!
 
    hgt_min(1)     = 0.50
-   if ((iallom == 4) .or. (iallom == 3)) then
-       hgt_min(1) = 1.30
-   endif
    hgt_min(2:4)   = 1.30
    hgt_min(5)     = 0.15
    hgt_min(6)     = 1.50
@@ -2928,7 +2830,7 @@ subroutine init_pft_alloc_params()
    hgt_max( 3) = 45.0
    hgt_max( 4) = 45.0
    if (iallom == 4) then
-       hgt_max(1:4) = 60.
+       hgt_max(2:4) = 60.
    endif
 
    hgt_max( 5) = 0.95  * b1Ht( 5)
@@ -3490,10 +3392,6 @@ subroutine init_pft_alloc_params()
                init_density(17)    = 0.1
          end select
 
-         if ((iallom == 4) .or. (iallom == 3)) then
-             init_density(1) = init_density(2)
-         endif
-
          !----- Define a non-sense number. ---------------------------------------------------!
          init_laimax(1:17)   = huge_num
 
@@ -4034,11 +3932,6 @@ subroutine init_pft_leaf_params()
    b2Cl(17)    = 1.098
    !---------------------------------------------------------------------------------------!
 
-   if ((iallom == 4) .or. (iallom == 3)) then
-       b1Cl(1)     = 0.3106775
-       b2Cl(1)     = 1.098
-   endif
-
    return
 end subroutine init_pft_leaf_params
 !==========================================================================================!
@@ -4104,9 +3997,6 @@ subroutine init_pft_repro_params()
    repro_min_h(16)         =  0.0
    repro_min_h(17)         = 18.0
 
-   if ((iallom == 4) .or. (iallom == 3)) then
-       repro_min_h(1)      = 18.0
-   endif
 
    return
 end subroutine init_pft_repro_params
@@ -4126,7 +4016,8 @@ end subroutine init_pft_repro_params
 subroutine init_pft_derived_params()
    use decomp_coms          , only : f_labile             ! ! intent(in)
    use detailed_coms        , only : idetailed            ! ! intent(in)
-   use ed_misc_coms         , only : ibigleaf             ! ! intent(in)
+   use ed_misc_coms         , only : ibigleaf             & ! intent(in)
+                                   , iallom               ! ! intent(in)
    use ed_max_dims          , only : n_pft                & ! intent(in)
       , str_len              ! ! intent(in)
    use consts_coms          , only : onesixth             & ! intent(in)
@@ -4137,7 +4028,6 @@ subroutine init_pft_derived_params()
       , hgt_min              & ! intent(in)
       , q                    & ! intent(in)
       , qsw                  & ! intent(in)
-      , sla                  & ! intent(in)
       , pft_name16           & ! intent(in)
       , hgt_max              & ! intent(in)
       , dbh_crit             & ! intent(in)
@@ -4150,6 +4040,14 @@ subroutine init_pft_derived_params()
       , negligible_nplant    & ! intent(out)
       , c2n_recruit          & ! intent(out)
       , veg_hcap_min         & ! intent(out)
+      , k_pp_sla              & ! intent(out)
+      , k_pp_vm0              & ! intent(out)
+      , k_pp_rd0              & ! intent(out)
+      , k_pp_ll               & ! intent(out)
+      , sla                  & ! intent(in)
+      , Vm0                  & ! intent(in)
+      , vm_q10               & ! intent(in)
+      , dark_respiration_factor  & ! intent(in)
       , seed_rain            ! ! intent(out)
    use allometry            , only : h2dbh                & ! function
       , dbh2h                & ! function
@@ -4185,6 +4083,26 @@ subroutine init_pft_derived_params()
    logical                           :: print_zero_table
    character(len=str_len), parameter :: zero_table_fn    = 'pft_sizes.txt'
    !---------------------------------------------------------------------------------------!
+   ! pheno-plasticity
+   k_pp_sla(:) = 0. ! by default there is no pheno-plasticity
+   k_pp_vm0(:) = 0. ! by default there is no pheno-plasticity
+   k_pp_rd0(:) = 0. ! by default there is no pheno-plasticity
+   k_pp_ll (:) = 0. ! by default there is no pheno-plasticity
+
+   if ((iallom == 4) .or. (iallom == 3)) then
+       ! New Pan-tropical simulations
+       ! from Panama data sets
+       k_pp_sla(2:4) = - (0.214 * log(1./sla(2:4) * 2000.) - 0.088) / 4.
+       k_pp_vm0(2:4) = (0.0156 * (Vm0(2:4) * vm_q10(2:4)) + 0.3) / 4.
+       k_pp_rd0(2:4) = (0.618 * log(dark_respiration_factor(2:4)) + 2.16) / 4.
+       k_pp_ll(2:4) = (0.954 * (Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 1.17) / 4.
+
+       print(k_pp_sla(2:4))
+       print(k_pp_vm0(2:4))
+       print(k_pp_rd0(2:4))
+       print(k_pp_ll(2:4))
+
+   endif
 
    !---------------------------------------------------------------------------------------!
    !     Decide whether to write the table with the sizes.                                 !

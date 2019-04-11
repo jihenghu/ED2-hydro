@@ -365,6 +365,8 @@ recursive subroutine read_ed_xml_config(filename)
            if(texist) k_pp_vm0(myPFT) = real(rval)
            call getConfigREAL  ('k_pp_rd0','pft',i,rval,texist)
            if(texist) k_pp_rd0(myPFT) = real(rval)
+           call getConfigREAL  ('k_pp_ll','pft',i,rval,texist)
+           if(texist) k_pp_ll(myPFT) = real(rval)
 
 !! Stomatal parameters
            call getConfigREAL  ('D0','pft',i,rval,texist)
@@ -1528,6 +1530,7 @@ subroutine write_ed_xml_config
         call putConfigREAL("k_pp_sla",     k_pp_sla(i))
         call putConfigREAL("k_pp_rd0",     k_pp_rd0(i))
         call putConfigREAL("k_pp_vm0",     k_pp_vm0(i))
+        call putConfigREAL("k_pp_ll",     k_pp_ll(i))
 
 !! STOMATAL PARAMETERS
         call putConfigREAL("D0",               D0(i))

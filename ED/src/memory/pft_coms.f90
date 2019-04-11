@@ -217,6 +217,8 @@ module pft_coms
    real, dimension(n_pft) :: k_pp_sla ! SLA
    real, dimension(n_pft) :: k_pp_vm0 ! vm0
    real, dimension(n_pft) :: k_pp_rd0 ! rd0
+   real, dimension(n_pft) :: k_pp_ll ! leaf lifespan
+   ! rd0 is actually for dark_respriation ratio, need to change the name in the merged version
    !=======================================================================================!
    !=======================================================================================!
 
