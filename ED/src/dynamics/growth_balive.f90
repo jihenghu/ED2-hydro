@@ -684,11 +684,12 @@ module growth_balive
       cpatch%root_maintenance(ico) = root_turnover_rate(ipft) *cpatch%broot(ico) *tfact
       cpatch%leaf_maintenance(ico) = leaf_turnover_rate(ipft) *cpatch%bleaf(ico) *tfact
 
-      select case (trait_platicity_scheme)
+      select case (trait_plasticity_scheme)
       case (3)
           ! use llspan if case 3
-          cpatch%leaf_maintenance(ico) = 365. / cpatch%llspan(ico) * cpatch%bleaf(ico) * tfact
-          cpatch%root_maintenance(ico) = 365. / cpatch%llspan(ico) * cpatch%bleaf(ico) * tfact
+          ! llspan is in month
+          cpatch%leaf_maintenance(ico) = 12. / cpatch%llspan(ico) * cpatch%bleaf(ico) * tfact
+          cpatch%root_maintenance(ico) = 12. / cpatch%llspan(ico) * cpatch%broot(ico) * tfact
       end select
 
 

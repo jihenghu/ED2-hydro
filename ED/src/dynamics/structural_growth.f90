@@ -1607,9 +1607,10 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        end select
 
        ! leaf longevity, only change it if trait_plasticity is 3
+       ! note that llspan is in month
        select case (trait_plasticity_scheme)
        case (3)
-            frac_change = (365./leaf_turnover_rate(ipft) * exp(-k_pp_ll(ipft) * max_cum_lai)) / cpatch%llspan(ico) - 1.
+            frac_change = (12./leaf_turnover_rate(ipft) * exp(-k_pp_ll(ipft) * max_cum_lai)) / cpatch%llspan(ico) - 1.
 
             frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
                                 max(frac_change,-max_frac_change),      & ! trait decrease

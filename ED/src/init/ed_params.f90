@@ -2521,12 +2521,18 @@ subroutine init_pft_alloc_params()
    !---------------------------------------------------------------------------------------!
 
    ! new tropical scheme from MLongo
-   if ((iallom == 4) .or. (iallom == 3)) then
+   if (iallom == 3) then
 !       rho(2) = 0.45
 !       rho(3) = 0.615
 !       rho(4) = 0.79
+       ! Pan-tropical
        rho(2) = 0.3
        rho(3) = 0.55
+       rho(4) = 0.8
+   else if (iallom == 4) then
+       ! HKK
+       rho(2) = 0.5
+       rho(3) = 0.6
        rho(4) = 0.8
    endif
 
@@ -2573,11 +2579,11 @@ subroutine init_pft_alloc_params()
        Rd0(2:4) = dark_respiration_factor(2:4) * Vm0(2:4) * Vm_q10(2:4) / Rd_q10(2:4)
        leaf_turnover_rate(2:4) = 365. / exp(1.675 * log(2000. / SLA(2:4)) - 2.004)
 
-       print(SLA(2:4))
-       print(Vm0(2:4))
-       print(dark_respiration_factor(2:4))
-       print(Rd0(2:4))
-       print(leaf_turnover_rate(2:4))
+       print*,SLA(2:4)
+       print*,Vm0(2:4)
+       print*,dark_respiration_factor(2:4)
+       print*,Rd0(2:4)
+       print*,leaf_turnover_rate(2:4)
    endif
 
    !---------------------------------------------------------------------------------------!
@@ -4097,10 +4103,10 @@ subroutine init_pft_derived_params()
        k_pp_rd0(2:4) = (0.618 * log(dark_respiration_factor(2:4)) + 2.16) / 4.
        k_pp_ll(2:4) = (0.954 * (Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 1.17) / 4.
 
-       print(k_pp_sla(2:4))
-       print(k_pp_vm0(2:4))
-       print(k_pp_rd0(2:4))
-       print(k_pp_ll(2:4))
+       print*,k_pp_sla(2:4)
+       print*,k_pp_vm0(2:4)
+       print*,k_pp_rd0(2:4)
+       print*,k_pp_ll(2:4)
 
    endif
 
