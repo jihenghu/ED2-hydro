@@ -1876,6 +1876,7 @@ subroutine init_pft_resp_params()
       , root_respiration_factor   & ! intent(out)
       , stem_respiration_factor   & ! intent(out)
       , stem_resp_size_factor     & ! intent(out)
+      , stem_resp_growth_factor     & ! intent(out)
       , rrf_low_temp              & ! intent(out)
       , rrf_high_temp             & ! intent(out)
       , rrf_decay_e               & ! intent(out)
@@ -1944,9 +1945,9 @@ subroutine init_pft_resp_params()
    root_turnover_rate(17)         = leaf_turnover_rate(17)
 
    storage_turnover_rate(1)       = onethird
-   storage_turnover_rate(2)       = onesixth
-   storage_turnover_rate(3)       = onesixth
-   storage_turnover_rate(4)       = onesixth
+   storage_turnover_rate(2)       = 0.0!onesixth
+   storage_turnover_rate(3)       = 0.0!onesixth
+   storage_turnover_rate(4)       = 0.0!onesixth
    storage_turnover_rate(5)       = 0.00
    storage_turnover_rate(6)       = 0.00 ! 0.25
    storage_turnover_rate(7)       = 0.00 ! 0.25
@@ -1981,8 +1982,10 @@ subroutine init_pft_resp_params()
    end select
    !---------------------------------------------------------------------------------------!
    ! Value from Chambers et al. 2004 Ecological Applications
-    stem_respiration_factor(1:17) = 0.2  ! umol/m2 stem area / s  value for tropics
+    root_respiration_factor(2:4) = 0.6
+    stem_respiration_factor(1:17) = 10. ** (-0.672) / 2.  ! umol/m2 stem area / s  value for tropics
     stem_resp_size_factor(1:17) = 0.0041  ! cm-1  value for tropics
+    stem_resp_growth_factor(1:17) = 0.5 / 2. ! per (cm/yr) value for tropics
 
 
    !---------------------------------------------------------------------------------------!
@@ -2372,10 +2375,12 @@ subroutine init_pft_alloc_params()
       , rho                   & ! intent(out)
       , SLA                   & ! intent(out)
       , Vm0                   & ! intent(out)
+      , D0                    & ! intent(out)
       , vm_q10                & ! intent(in)
       , rd_q10                & ! intent(in)
       , Rd0                   & ! intent(out)
       , dark_respiration_factor & ! intent(out)
+      , quantum_efficiency    & ! intent(out)
       , horiz_branch          & ! intent(out)
       , q                     & ! intent(out)
       , qsw                   & ! intent(out)
@@ -2526,8 +2531,8 @@ subroutine init_pft_alloc_params()
 !       rho(3) = 0.615
 !       rho(4) = 0.79
        ! Pan-tropical
-       rho(2) = 0.3
-       rho(3) = 0.55
+       rho(2) = 0.4
+       rho(3) = 0.6
        rho(4) = 0.8
    else if (iallom == 4) then
        ! HKK
@@ -2573,11 +2578,11 @@ subroutine init_pft_alloc_params()
 
    ! new tropical scheme from MLongo
    if ((iallom == 4) .or. (iallom == 3)) then
-       SLA(2:4) = 2000. / exp(2.442 * rho(2:4) + 3.337) ! m2/kgC
-       Vm0(2:4) = exp(-1.05 * rho(2:4) + 4.401) / vm_q10(2:4) ! umol/m2/s @ 15degC
-       dark_respiration_factor(2:4) = exp(-1.075 * rho(2:4) - 3.979)
+       SLA(2:4) = 2000. / exp(1.51 * log(rho(2:4)) + 5.19) ! m2/kgC
+       Vm0(2:4) = exp(-1.40 * log(rho(2:4)) + 2.78) / vm_q10(2:4) ! umol/m2/s @ 15degC
+       dark_respiration_factor(2:4) = 0.015
        Rd0(2:4) = dark_respiration_factor(2:4) * Vm0(2:4) * Vm_q10(2:4) / Rd_q10(2:4)
-       leaf_turnover_rate(2:4) = 365. / exp(1.675 * log(2000. / SLA(2:4)) - 2.004)
+       leaf_turnover_rate(2:4) = 365. / exp(1.95 * log(rho(2:4)) + 7.06)
 
        print*,SLA(2:4)
        print*,Vm0(2:4)
@@ -3717,9 +3722,16 @@ subroutine init_pft_hydro_params()
 
    ! Parameters related with stomata conductance
    
-   stoma_lambda(1:n_pft)         = max(3.,(rho(1:n_pft) - 0.25) * 15. + 3.)
+   !stoma_lambda(1:n_pft)         = max(3.,(rho(1:n_pft) - 0.25) * 15. + 3.)
+   stoma_lambda(1:n_pft)         = max(3.,(rho(1:n_pft) - 0.4) * 10. + 6.)
    stoma_beta(1:n_pft)           = min(-0.1,(rho(1:n_pft) - 0.25) * 1.5 - 1.0) / MPa2m
    ! Estimated from Manzoni et al. 2011
+   
+   ! Modified based on Lin et al. 2015
+   ! using rho to determine stoma_lambda would generate unrealistically low gsw for hardwood species
+   ! Try using an average value according to Lin et al. 2015
+   stoma_lambda(2:4)             = 8.
+   stoma_beta(2:4)               = -1. * 0.8 / MPa2m
 
    stoma_psi_b(1:n_pft)          = leaf_psi_tlp(1:n_pft)   ! default
    stoma_psi_c(1:n_pft)          = 3.
@@ -3962,7 +3974,7 @@ subroutine init_pft_repro_params()
    implicit none
 
    r_fract(1)              = 0.3
-   r_fract(2:4)            = 0.3
+   r_fract(2:4)            = 0.4 !0.3
    r_fract(5)              = 0.3
    r_fract(6:11)           = 0.3
    r_fract(12:15)          = 0.3
@@ -4098,10 +4110,12 @@ subroutine init_pft_derived_params()
    if ((iallom == 4) .or. (iallom == 3)) then
        ! New Pan-tropical simulations
        ! from Panama data sets
-       k_pp_sla(2:4) = - (0.214 * log(1./sla(2:4) * 2000.) - 0.088) / 4.
-       k_pp_vm0(2:4) = (0.0156 * (Vm0(2:4) * vm_q10(2:4)) + 0.3) / 4.
-       k_pp_rd0(2:4) = (0.618 * log(dark_respiration_factor(2:4)) + 2.16) / 4.
-       k_pp_ll(2:4) = (0.954 * (Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 1.17) / 4.
+       ! based on the newest analysis results
+       k_pp_sla(2:4) = - (0.214 * log(1./sla(2:4) * 2000.)          - 0.088) / 4.
+       k_pp_vm0(2:4) =   (0.783 * log(Vm0(2:4) * vm_q10(2:4))       - 1.948) / 4. !(0.0156 * (Vm0(2:4) * vm_q10(2:4)) + 0.3) / 4.
+       ! now k_pp_rd0 actually means k_pp_rd2vc
+       k_pp_rd0(2:4) =   (0.924 * log(dark_respiration_factor(2:4)) + 3.89 ) / 4.!(0.618 * log(dark_respiration_factor(2:4)) + 2.16) / 4.
+       k_pp_ll(2:4) =    (0.533 * log(Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 0.254)!(0.954 * (Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 1.17) / 4.
 
        print*,k_pp_sla(2:4)
        print*,k_pp_vm0(2:4)
@@ -5313,7 +5327,7 @@ subroutine init_phen_coms
    !     Before plants drop their leaves, they retain this fraction of their leaf carbon   !
    ! and nitrogen and put it into storage.                                                 !
    !---------------------------------------------------------------------------------------!
-   retained_carbon_fraction = 0.5
+   retained_carbon_fraction = 0.25 !0.5
    !---------------------------------------------------------------------------------------!
 
 

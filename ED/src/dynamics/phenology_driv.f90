@@ -658,7 +658,7 @@ subroutine update_phenology(doy, cpoly, isi, lat)
             ! plants in the dry season but reducing it to zero would diable
             ! water uptake when rain comes. The current fraction 50% is kind of
             ! arbitrary, need updates in the future.
-            br_max = bl_full * q(ipft) * (elongf_try + 1.0) / 2.0
+            br_max = bl_full * q(ipft) * elongf_try !(elongf_try + 1.0) / 2.0
             !------------------------------------------------------------------------------!
 
 

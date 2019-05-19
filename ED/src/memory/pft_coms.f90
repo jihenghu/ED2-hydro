@@ -263,6 +263,7 @@ module pft_coms
    ! 15C Unit is umol_CO2/m2 stem area/s
    real, dimension(n_pft) :: stem_respiration_factor 
    real, dimension(n_pft) :: stem_resp_size_factor 
+   real, dimension(n_pft) :: stem_resp_growth_factor 
 
    !----- Temperature [�C] below which root metabolic activity begins to rapidly decline. -!
    real, dimension(n_pft) :: rrf_low_temp 

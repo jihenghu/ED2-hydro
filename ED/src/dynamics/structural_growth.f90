@@ -234,9 +234,9 @@ subroutine structural_growth(cgrid, month)
                    bstorage_available = cpatch%bstorage(ico)
                case (1,3)
                    ! reserve enough carbon for reflushing canopy and fine roots
-                   bstorage_min = size2bl(cpatch%dbh(ico),cpatch%hite(ico)                  &
+                   bstorage_min = (size2bl(cpatch%dbh(ico),cpatch%hite(ico)                  &
                                          ,cpatch%sla(ico),ipft)                             &
-                                * (1. + q(ipft))
+                                * (1. + q(ipft))) * 2.
                    bstorage_available = max(0., cpatch%bstorage(ico) - bstorage_min)
                end select
 
@@ -1615,7 +1615,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
             frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
                                 max(frac_change,-max_frac_change),      & ! trait decrease
                                 frac_change > 0)
-            cpatch%llspan(ico) = cpatch%llspan(ico) * (1. + frac_change)
+            cpatch%llspan(ico) = min(240.,cpatch%llspan(ico) * (1. + frac_change)) ! should be smaller than 20 years
        end select
 
 

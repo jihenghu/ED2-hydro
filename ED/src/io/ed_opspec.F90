@@ -1679,9 +1679,9 @@ end do
       ifaterr = ifaterr +1
    end if
 
-   if (istem_respiration_scheme < 0 .or. istem_respiration_scheme > 1) then
+   if (istem_respiration_scheme < 0 .or. istem_respiration_scheme > 2) then
       write (reason,fmt='(a,1x,i4,a)')                                                     &
-                    'Invalid ISTEM_RESPIRATION_SCHEME, it must be between 0 and 1. Yours is set to'   &
+                    'Invalid ISTEM_RESPIRATION_SCHEME, it must be between 0 and 2. Yours is set to'   &
                     ,istem_respiration_scheme,'...'
       call opspec_fatal(reason,'opspec_misc')
       ifaterr = ifaterr +1
