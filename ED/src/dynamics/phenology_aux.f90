@@ -590,7 +590,7 @@ module phenology_aux
       !------------------------------------------------------------------------------------!
 
       ! XXT, here we assume bstorage is at least equal to bleaf_max + broot_max
-      bstorage = max(0.0, bleaf_max * (1. + q(ipft))                                    &
+      bstorage = max(0.0, bleaf_max * (1. + q(ipft) * 2.)                                    &
                         + bleaf_max - bleaf)
       !------------------------------------------------------------------------------------!
 

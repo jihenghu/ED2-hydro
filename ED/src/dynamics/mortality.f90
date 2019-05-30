@@ -112,9 +112,7 @@ module mortality
       !------------------------------------------------------------------------------------!
       plc_mort = 0.
       do imonth = 1,12
-        plc_mort = plc_mort + max(0., cpatch%plc_monthly(imonth,ico) - mort_plc_th(ipft))  &
-                              / (1. - mort_plc_th(ipft))                                   &
-                              * mort_plc_max(ipft) / 12.
+        plc_mort = plc_mort + hydro_mort_rate(cpatch%plc_monthly(imonth,ico),ipft) / 12.
       enddo
       cpatch%mort_rate(6,ico) = plc_mort
       !------------------------------------------------------------------------------------!
@@ -138,9 +136,7 @@ module mortality
 
       plc_mort = 0.
       do imonth = 1,12
-        plc_mort = plc_mort + max(0., cpatch%plc_monthly(imonth,ico) - mort_plc_th(ipft))  &
-                              / (1. - mort_plc_th(ipft))                                   &
-                              * mort_plc_max(ipft) / 12.
+        plc_mort = plc_mort + hydro_mort_rate(cpatch%plc_monthly(imonth,ico),ipft) / 12.
       enddo
       cpatch%mort_rate(6,ico) = plc_mort
 
@@ -353,6 +349,41 @@ module mortality
    end function survivorship
    !=======================================================================================!
    !=======================================================================================!
+
+   !=======================================================================================!
+   !=======================================================================================!
+   !     This function computes the hydraulic failure mortality                    .       !
+   !---------------------------------------------------------------------------------------!
+   real function hydro_mort_rate(plc,ipft)
+       use pft_coms      , only : mort_plc_max               & ! intent(in)
+                               , mort_plc_th                 ! ! intent(in)
+     
+      implicit none
+      !----- Arguments. -------------------------------------------------------------------!
+      real                         , intent(in) :: plc
+      integer                      , intent(in) :: ipft
+      !------------------------------------------------------------------------------------!
+      ! local variables
+      real                                      :: slope, intercept
+
+      ! Here we assume the mort rate when plc is 100% (all conductance is lost) is 365 (die in one
+      ! day)
+
+      ! the mort rate when plc == mort_plc_th is mort_plc_max (die in one year by default)
+
+      ! we then extrapolate it linearly in log space
+      slope = (log(365.) - log(mort_plc_max(ipft))) / (log(1.) - log(mort_plc_th(ipft)))
+      intercept = log(mort_plc_max(ipft)) - slope * log(mort_plc_th(ipft))
+
+      if (plc <= 0.) then
+          hydro_mort_rate = 0.
+      else
+          hydro_mort_rate = exp(slope * log(plc) + intercept)
+      endif
+
+      return
+   end function hydro_mort_rate
+
 end module mortality
 !==========================================================================================!
 !==========================================================================================!

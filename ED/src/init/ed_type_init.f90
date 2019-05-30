@@ -11,6 +11,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    use pft_coms      , only : phenology           & ! intent(in)
                             , leaf_turnover_rate  & ! intent(in)
                             , Vm0                 & ! intent(in)
+                            , Rd0                 & ! intent(in)
                             , sla                 & ! intent(in)
                             , dark_respiration_factor ! intent(in)
    use ed_misc_coms  , only : writing_long        & ! intent(in)
@@ -74,7 +75,7 @@ subroutine init_ed_cohort_vars(cpatch,ico, lsl)
    cpatch%sla(ico) = sla(cpatch%pft(ico))
    cpatch%vm0(ico) = Vm0(cpatch%pft(ico))
 
-   cpatch%rd0(ico) = Vm0(cpatch%pft(ico)) * dark_respiration_factor(cpatch%pft(ico))
+   cpatch%rd0(ico) = Rd0(cpatch%pft(ico))!Vm0(cpatch%pft(ico)) * dark_respiration_factor(cpatch%pft(ico))
    !---------------------------------------------------------------------------------------!
 
 

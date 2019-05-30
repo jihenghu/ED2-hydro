@@ -398,6 +398,7 @@ Contains
                         1. / (1. + (leaf_psi / leaf_psi_tlp(ipft)) ** 6.0)))
           lambda =  stoma_lambda(ipft) * can_co2 / 400. * exp(stoma_beta(ipft) * leaf_psi)
       end select
+          
 
       Jmax      = Jmax * down_factor * greeness
       Vcmax     = Vcmax * down_factor * greeness

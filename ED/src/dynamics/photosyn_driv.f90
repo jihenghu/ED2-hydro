@@ -95,6 +95,7 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,ntext_soil                  
    real                                    :: can_ssh
    real                                    :: can_cp   
    integer, dimension(n_pft)               :: tuco_pft
+   logical, parameter                      :: idealized_flag = .false.
    !----- Locally saved variables. --------------------------------------------------------!
    real                          , save    :: dtlsm_o_frqsum
    logical                       , save    :: first_time = .true.
@@ -515,6 +516,45 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,ntext_soil                  
              , limit_flag                  & ! Photosynthesis limitation flag   [      ---]
              )
             case (1)
+                if (idealized_flag) then
+                    ! use idealized conditions
+            call katul_lphys(              & !
+               100000.         & ! Canopy air pressure              [       Pa]
+             , 0.02          & ! Canopy air sp. humidity          [    kg/kg]
+             , cmet%atm_co2          & ! Canopy air CO2 mixing ratio      [ �mol/mol]
+             , ipft                        & ! Plant functional type            [      ---]
+             , leaf_par                    & ! Absorbed photos. active rad.     [ W/m�leaf]
+             , 273.15 + 30.       & ! Leaf temperature                 [        K]
+             , cpatch%lint_shv(ico)        & ! Leaf intercellular spec. hum.    [    kg/kg]
+             , green_leaf_factor(ipft)     & ! Greenness rel. to on-allometry   [      ---]
+             , leaf_aging_factor(ipft)     & ! Ageing parameter to scale VM     [      ---]
+             , cpatch%llspan(ico)          & ! Leaf life span                   [       yr]
+             , vm0_ico                     & ! Vm0 of the leaf                  [�mol/m�/s]
+             , cpatch%rd0(ico)             & ! dark respiration of the leaf     [�mol/m�/s]
+             , 100.        & ! Aerodyn. condct. of water vapour [  kg/m�/s]
+             , 0.        & ! Leaf water potential             [        m]
+             , cpatch%last_gV(ico)         & ! gs from last timestep            [  kg/m2/s]
+             , cpatch%last_gJ(ico)         & ! gs from last timestep            [  kg/m2/s]
+             , cpatch%A_open(ico)          & ! Photosynthesis rate     (open)   [�mol/m�/s]
+             , cpatch%A_closed(ico)        & ! Photosynthesis rate     (closed) [�mol/m�/s]
+             , cpatch%A_light(ico)         & ! Photosynthesis rate     (light)  [�mol/m�/s]
+             , cpatch%A_rubp(ico)          & ! Photosynthesis rate     (RuBP)   [�mol/m�/s]
+             , cpatch%A_co2(ico)           & ! Photosynthesis rate     (CO2)    [�mol/m�/s]
+             , cpatch%gsw_open(ico)        & ! Stom. condct. of water  (open)   [  kg/m�/s]
+             , cpatch%gsw_closed(ico)      & ! Stom. condct. of water  (closed) [  kg/m�/s]
+             , cpatch%lsfc_shv_open(ico)   & ! Leaf sfc. sp. humidity  (open)   [    kg/kg]
+             , cpatch%lsfc_shv_closed(ico) & ! Leaf sfc. sp. humidity  (closed) [    kg/kg]
+             , cpatch%lsfc_co2_open(ico)   & ! Leaf sfc. CO2 mix. rat. (open)   [ �mol/mol]
+             , cpatch%lsfc_co2_closed(ico) & ! Leaf sfc. CO2 mix. rat. (closed) [ �mol/mol]
+             , cpatch%lint_co2_open(ico)   & ! Intercellular CO2       (open)   [ �mol/mol]
+             , cpatch%lint_co2_closed(ico) & ! Intercellular CO2       (closed) [ �mol/mol]
+             , leaf_resp                   & ! Leaf respiration rate            [�mol/m�/s]
+             , vm                          & ! Max. capacity of Rubisco         [�mol/m�/s]
+             , compp                       & ! Gross photo. compensation point  [ �mol/mol]
+             , limit_flag                  & ! Photosynthesis limitation flag   [      ---]
+             )
+
+                else
             call katul_lphys(              & !
                csite%can_prss(ipa)         & ! Canopy air pressure              [       Pa]
              , csite%can_shv(ipa)          & ! Canopy air sp. humidity          [    kg/kg]
@@ -550,6 +590,7 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,ntext_soil                  
              , compp                       & ! Gross photo. compensation point  [ �mol/mol]
              , limit_flag                  & ! Photosynthesis limitation flag   [      ---]
              )
+                 endif
              end select
 
             !----- Convert leaf respiration to [�mol/m�ground/s] --------------------------!

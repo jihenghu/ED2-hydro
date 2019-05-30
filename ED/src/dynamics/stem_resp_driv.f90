@@ -26,6 +26,7 @@ subroutine stem_respiration(csite,ipa)
    integer                                 :: ico                ! Current cohort #
    integer                                 :: ipft
    real                                    :: stem_area        ! m2
+   real                                    :: mdbh             ! cm
    real                                    :: ddbh_avg         ! cm/yr
    !----- Locally saved variables. --------------------------------------------------------!
    real                          , save    :: dtlsm_o_frqsum
@@ -53,10 +54,20 @@ subroutine stem_respiration(csite,ipa)
         !----- Alias for PFT and root layer. ------------------------------------------!
         ipft  = cpatch%pft(ico)
 
+        if (cpatch%dbh(ico) < 1.) then
         ! assume stem is a cylinder
-        stem_area = pi1 * cpatch%dbh(ico) / 100.            & ! meter
+        ! the correcting factor 5 is to ensure a continuous transition at 1cm
+        stem_area = 5. * pi1 * cpatch%dbh(ico) / 100.            & ! meter
                   * cpatch%hite(ico)                        & ! meter squared
                   * cpatch%nplant(ico)                      ! ! m2 stem/m2 ground
+        else
+        ! use the relationship from Chambers et al. 2004 [tropics only]
+        mdbh = max(1.,cpatch%dbh(ico)) ! cm
+        stem_area = cpatch%nplant(ico) * (10. ** (-0.105 - 0.686 * log10(mdbh) & ! /m2 ground
+                                                 + 2.208 * (log10(mdbh) ** 2) &
+                                                 - 0.627 * (log10(mdbh) ** 3)))  ! m2 stem area
+        endif
+
 
         ddbh_avg = max(0.,sum(cpatch%ddbh_monthly(1:12,ico)) / 12.) ! cm/yr
 
@@ -152,7 +163,7 @@ real function stem_resp_norm(ipft,dbh,wood_temp,ddbh_avg)
                         dble(                                                       &
                          log10(stem_respiration_factor(ipft))                       & ! baseline
                         +stem_resp_size_factor(ipft) * dbh                          & ! DBH effect
-                        +stem_resp_growth_factor(ipft) * min(ddbh_avg,2.5)          & ! Growth effect
+                        +stem_resp_growth_factor(ipft) * min(ddbh_avg,1.0)          & ! Growth effect
                         ))
    rrf_low_temp8   = dble(rrf_low_temp           (ipft)) + t008
    rrf_high_temp8  = dble(rrf_high_temp          (ipft)) + t008

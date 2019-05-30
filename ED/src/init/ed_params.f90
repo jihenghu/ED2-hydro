@@ -1516,7 +1516,7 @@ subroutine init_pft_photo_params()
    Vm_low_temp(16)           =  4.7137          ! subtropical C3 grass
    Vm_low_temp(17)           =  8.0             ! Liana
 
-   Vm_high_temp(1:17)        =  45.0
+   Vm_high_temp(1:17)        =  37.5 !45.0 # makes more sense based on Slot et al. 2017 paper
    !---------------------------------------------------------------------------------------!
    !    Vm_decay_e is the correction term for high and low temperatures when running the   !
    ! original ED-2.1 correction as in Moorcroft et al. (2001).                             !
@@ -1601,10 +1601,10 @@ subroutine init_pft_photo_params()
 
    !----- Currently we assume most parameters to be the same as the Vm ones. --------------!
    Rd_low_temp (1:17) = Vm_low_temp (1:17)
-   Rd_high_temp(1:17) = Vm_high_temp(1:17)
+   Rd_high_temp(1:17) = 60. !Vm_high_temp(1:17) # give it a very high value because Rd seems not to have a high temperature limitation
    Rd_decay_e  (1:17) = Vm_decay_e  (1:17)
    Rd_hor      (1:17) = Vm_hor      (1:17)
-   Rd_q10      (1:17) = Vm_q10      (1:17)
+   Rd_q10      (1:17) = 2.0 !Vm_q10      (1:17) # from Heskel et al. PNAS
 
    !---------------------------------------------------------------------------------------!
    !    Respiration terms.  Here we must check whether this will run Foley-based or        !
@@ -1982,10 +1982,10 @@ subroutine init_pft_resp_params()
    end select
    !---------------------------------------------------------------------------------------!
    ! Value from Chambers et al. 2004 Ecological Applications
-    root_respiration_factor(2:4) = 0.6
+    root_respiration_factor(2:4) = 0.6 * 5.  ! current root_resp is too small..
     stem_respiration_factor(1:17) = 10. ** (-0.672) / 2.  ! umol/m2 stem area / s  value for tropics
     stem_resp_size_factor(1:17) = 0.0041  ! cm-1  value for tropics
-    stem_resp_growth_factor(1:17) = 0.5 / 2. ! per (cm/yr) value for tropics
+    stem_resp_growth_factor(1:17) = 0.5 / 1. ! per (cm/yr) value for tropics
 
 
    !---------------------------------------------------------------------------------------!
@@ -2204,8 +2204,8 @@ subroutine init_pft_mort_params()
    !---------------------------------------------------------------------------------------!
    !      Hydraulic failure mortality parameters                                           !
    !---------------------------------------------------------------------------------------!
-   mort_plc_max (1:17) = 1.0
-   mort_plc_th  (1:17) = 0.6 ! from Adams et al.   
+   mort_plc_max (1:17) = 12.0
+   mort_plc_th  (1:17) = 0.6 ! estimated from Adams et al.   
    
 
 
@@ -2578,17 +2578,22 @@ subroutine init_pft_alloc_params()
 
    ! new tropical scheme from MLongo
    if ((iallom == 4) .or. (iallom == 3)) then
-       SLA(2:4) = 2000. / exp(1.51 * log(rho(2:4)) + 5.19) ! m2/kgC
-       Vm0(2:4) = exp(-1.40 * log(rho(2:4)) + 2.78) / vm_q10(2:4) ! umol/m2/s @ 15degC
-       dark_respiration_factor(2:4) = 0.015
-       Rd0(2:4) = dark_respiration_factor(2:4) * Vm0(2:4) * Vm_q10(2:4) / Rd_q10(2:4)
-       leaf_turnover_rate(2:4) = 365. / exp(1.95 * log(rho(2:4)) + 7.06)
+       ! SMA
+       !SLA(2:4) = 2000. / exp(1.51 * log(rho(2:4)) + 5.19) ! m2/kgC
+       !Vm0(2:4) = exp(-1.40 * log(rho(2:4)) + 2.78) / vm_q10(2:4) ! umol/m2/s @ 15degC
 
-       print*,SLA(2:4)
-       print*,Vm0(2:4)
-       print*,dark_respiration_factor(2:4)
-       print*,Rd0(2:4)
-       print*,leaf_turnover_rate(2:4)
+       ! OLS
+       SLA(2:4) = 2000. / exp(0.234 * log(rho(2:4)) + 4.52 + 0.5 * 0.154) ! m2/kgC
+       Vm0(2:4) = exp(-0.53 * log(rho(2:4)) + 3.31 + 0.5 * 0.164) / vm_q10(2:4) ! umol/m2/s @ 15degC
+
+       dark_respiration_factor(2:4) = 0.016
+       Rd0(2:4) = dark_respiration_factor(2:4) * Vm0(2:4) * Vm_q10(2:4) / Rd_q10(2:4)
+       leaf_turnover_rate(2:4) = 365. / exp(-0.673 * log(Vm0(2:4) * vm_q10(2:4) * SLA(2:4) / 2000.) + 5.13)
+
+       print*,'SLA',SLA(2:4)
+       print*,'Vm0',Vm0(2:4)
+       print*,'Rd0',Rd0(2:4)
+       print*,'LT',leaf_turnover_rate(2:4)
    endif
 
    !---------------------------------------------------------------------------------------!
@@ -3638,10 +3643,7 @@ subroutine init_pft_hydro_params()
                             * wood_water_sat(ipft) / (4. * abs(wood_psi_tlp(ipft)))
 
        ! Wood P50 [m]
-       ! XXT modified. This number makes more sense....
-       wood_psi50(ipft)     = (-3. * rho(ipft) - 0.599) * MPa2m
-
-       !wood_psi50(ipft) = (-1.09-(3.57 * rho(ipft)) ** 1.73) * MPa2m 
+       wood_psi50(ipft) = (-1.09-3.57 * (rho(ipft)) ** 1.73) * MPa2m 
        
        !Amax_25 = Vm0(ipft) * 2.4 / 4.1 ! umol/m2/s
        !! This is only an estimate. 2.4 is Q10, converting to Vcmax_25, 4.1
@@ -4065,6 +4067,8 @@ subroutine init_pft_derived_params()
       , sla                  & ! intent(in)
       , Vm0                  & ! intent(in)
       , vm_q10               & ! intent(in)
+      , Rd0                  & ! intent(in)
+      , rd_q10               & ! intent(in)
       , dark_respiration_factor  & ! intent(in)
       , seed_rain            ! ! intent(out)
    use allometry            , only : h2dbh                & ! function
@@ -4111,11 +4115,12 @@ subroutine init_pft_derived_params()
        ! New Pan-tropical simulations
        ! from Panama data sets
        ! based on the newest analysis results
-       k_pp_sla(2:4) = - (0.214 * log(1./sla(2:4) * 2000.)          - 0.088) / 4.
-       k_pp_vm0(2:4) =   (0.783 * log(Vm0(2:4) * vm_q10(2:4))       - 1.948) / 4. !(0.0156 * (Vm0(2:4) * vm_q10(2:4)) + 0.3) / 4.
-       ! now k_pp_rd0 actually means k_pp_rd2vc
-       k_pp_rd0(2:4) =   (0.924 * log(dark_respiration_factor(2:4)) + 3.89 ) / 4.!(0.618 * log(dark_respiration_factor(2:4)) + 2.16) / 4.
-       k_pp_ll(2:4) =    (0.533 * log(Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 0.254)!(0.954 * (Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 1.17) / 4.
+       k_pp_sla(2:4) = - (0.214 * log(1./sla(2:4) * 2000.)          - 0.088) / 3.
+       k_pp_vm0(2:4) =   (0.783 * log(Vm0(2:4) * vm_q10(2:4))       - 1.948) / 3. !(0.0156 * (Vm0(2:4) * vm_q10(2:4)) + 0.3) / 4.
+       k_pp_rd0(2:4) =   (0.534 * log(Rd0(2:4) * rd_q10(2:4))       + 0.625) / 3.
+       !! now k_pp_rd0 actually means k_pp_rd2vc
+       !k_pp_rd0(2:4) =   (0.924 * log(dark_respiration_factor(2:4)) + 3.89 ) / 4.!(0.618 * log(dark_respiration_factor(2:4)) + 2.16) / 4.
+       k_pp_ll(2:4) =    (0.533 * log(Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 0.254) / 3.!(0.954 * (Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 1.17) / 4.
 
        print*,k_pp_sla(2:4)
        print*,k_pp_vm0(2:4)

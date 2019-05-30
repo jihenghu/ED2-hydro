@@ -484,9 +484,12 @@ subroutine structural_growth(cgrid, month)
                    ! Use CB to calculate a psuedo growth
                    ! Otherwise use the raw growth
                    
-                   if (cpatch%dbh(ico) - dbh_in < 1e-8 .and. &
-                       count(cpatch%ddbh_monthly(1:12,ico) .le. 0.) == 12 ) then
+                   if (cpatch%dbh(ico) - dbh_in <= 1e-10 .and. &
+                       count(cpatch%ddbh_monthly(1:12,ico) .le. 0.) == 12 .and. &
+                       cpatch%bstorage(ico) <= 1e-10) then
                        ! No growth in this month or the past year
+                       ! & There is no bstorage. This cohort is under severe stress
+
                        ! use CB to calculate a psuedo growth, which should usually be negative
                        !----- Get psuedo_dbh
                        if (cpatch%cb(prev_month,ico) > 0.) then
@@ -504,11 +507,19 @@ subroutine structural_growth(cgrid, month)
                        end if
 
                        ! convert psuedo growth to the annual DBH growth used for mortality
-                       cpatch%ddbh_monthly(prev_month,ico) = (psuedo_dbh - dbh_in) * 12. ! cm/yr
+                       ! This value should always be non-positive because no actual growth happens
+                       cpatch%ddbh_monthly(prev_month,ico) = min(0.,(psuedo_dbh - dbh_in) * 12.) ! cm/yr
                    else
                        ! Trees are growing
                        ! Use the real growth
                        cpatch%ddbh_monthly(prev_month,ico) = (cpatch%dbh(ico) - dbh_in) * 12. !cm/yr
+                       ! reset all the negative growth rates
+                       do imonth = 1,12
+                            if (cpatch%ddbh_monthly(imonth,ico) < 0.) then
+                                cpatch%ddbh_monthly(imonth,ico) = 0.
+                            endif
+                       end do
+  
                    endif
 
                endif
@@ -760,7 +771,7 @@ subroutine structural_growth_eq_0(cgrid, month)
                    ! reserve enough carbon for reflushing canopy and fine roots
                    bstorage_min = size2bl(cpatch%dbh(ico),cpatch%hite(ico)                 &
                                          ,cpatch%sla(ico),ipft)                            &
-                                * (1. + q(ipft))
+                                * (1. + q(ipft)) * 2.
                    bstorage_available = max(0., cpatch%bstorage(ico) - bstorage_min)
                end select
 
@@ -1569,10 +1580,10 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        case (3)
 
             ! the fractional change cannot go over max_frac
-!            frac_change = (Rd0(ipft) * exp(-k_pp_rd0(ipft) * max_cum_lai)) / cpatch%rd0(ico) - 1.
-            frac_change = (cpatch%vm0(ico) * vm_q10(ipft) / rd_q10(ipft)  & ! converting factor
-                           * dark_respiration_factor(ipft)                &
-                           * exp(-k_pp_rd0(ipft) * max_cum_lai)) / cpatch%rd0(ico) - 1.
+           frac_change = (Rd0(ipft) * exp(-k_pp_rd0(ipft) * max_cum_lai)) / cpatch%rd0(ico) - 1.
+!            frac_change = (cpatch%vm0(ico) * vm_q10(ipft) / rd_q10(ipft)  & ! converting factor
+!                           * dark_respiration_factor(ipft)                &
+!                           * exp(-k_pp_rd0(ipft) * max_cum_lai)) / cpatch%rd0(ico) - 1.
 
             frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
                                 max(frac_change,-max_frac_change),      & ! trait decrease
