@@ -37,6 +37,10 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,ntext_soil                  
    use physiology_coms, only : print_photo_debug  & ! intent(in)
                              , istomata_scheme    & ! intent(in)
                              , trait_plasticity_scheme & ! intent(in)
+                             , control_photosynthesis  & ! intent(in)
+                             , control_leaf_par        & ! intent(in)
+                             , control_leaf_tmp        & ! intent(in)
+                             , control_leaf_vpd        & ! intent(in)
                              , h2o_plant_lim      ! ! intent(in)
    use phenology_coms , only : llspan_inf         ! ! intent(in)
    use farq_leuning   , only : lphysiol_full      ! ! sub-routine
@@ -95,7 +99,6 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,ntext_soil                  
    real                                    :: can_ssh
    real                                    :: can_cp   
    integer, dimension(n_pft)               :: tuco_pft
-   logical, parameter                      :: idealized_flag = .false.
    !----- Locally saved variables. --------------------------------------------------------!
    real                          , save    :: dtlsm_o_frqsum
    logical                       , save    :: first_time = .true.
@@ -516,15 +519,19 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,ntext_soil                  
              , limit_flag                  & ! Photosynthesis limitation flag   [      ---]
              )
             case (1)
-                if (idealized_flag) then
+                if (control_photosynthesis .eq. 1) then
                     ! use idealized conditions
+                    if (leaf_par > 0.) then
+                        leaf_par = control_leaf_par
+                    endif
+
             call katul_lphys(              & !
                100000.         & ! Canopy air pressure              [       Pa]
              , 0.02          & ! Canopy air sp. humidity          [    kg/kg]
              , cmet%atm_co2          & ! Canopy air CO2 mixing ratio      [ �mol/mol]
              , ipft                        & ! Plant functional type            [      ---]
              , leaf_par                    & ! Absorbed photos. active rad.     [ W/m�leaf]
-             , 273.15 + 30.       & ! Leaf temperature                 [        K]
+             , 273.15 + control_leaf_tmp   & ! Leaf temperature                 [        K]
              , cpatch%lint_shv(ico)        & ! Leaf intercellular spec. hum.    [    kg/kg]
              , green_leaf_factor(ipft)     & ! Greenness rel. to on-allometry   [      ---]
              , leaf_aging_factor(ipft)     & ! Ageing parameter to scale VM     [      ---]

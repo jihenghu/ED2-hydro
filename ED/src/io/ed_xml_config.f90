@@ -1173,6 +1173,18 @@ recursive subroutine read_ed_xml_config(filename)
 
         call getConfigINT  ('trait_plasticity_scheme','physiology',i,ival,texist)
         if(texist) trait_plasticity_scheme = ival
+        
+        call getConfigINT  ('control_photosynthesis','physiology',i,ival,texist)
+        if(texist) control_photosynthesis = ival
+        
+        call getConfigREAL  ('control_leaf_par','physiology',i,rval,texist)
+        if(texist) control_leaf_par = rval
+        
+        call getConfigREAL  ('control_leaf_tmp','physiology',i,rval,texist)
+        if(texist) control_leaf_tmp = rval
+        
+        call getConfigREAL  ('control_leaf_vpd','physiology',i,rval,texist)
+        if(texist) control_leaf_vpd = rval
 
         call libxml2f90__ll_selecttag('UP','config',1) !move back up to top level
      enddo
@@ -1866,6 +1878,10 @@ subroutine write_ed_xml_config
      call putConfigINT("istruct_growth_scheme",istruct_growth_scheme)
      call putConfigINT("istem_respiration_scheme",istem_respiration_scheme)
      call putConfigINT("trait_plasticity_scheme",trait_plasticity_scheme)
+     call putConfigINT("control_photosynthesis",control_photosynthesis)
+     call putConfigREAL("control_leaf_par",control_leaf_par)
+     call putConfigREAL("control_leaf_tmp",control_leaf_tmp)
+     call putConfigREAL("control_leaf_vpd",control_leaf_vpd)
   call libxml2f90_ll_closetag("physiology")
 
   !************   INITIAL CONDITIONS  *****************

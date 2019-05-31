@@ -4437,6 +4437,10 @@ subroutine init_physiology_params()
    use ed_misc_coms, only    : ffilout
    use physiology_coms, only : iphysiol            & ! intent(in)
       , klowco2in           & ! intent(in)
+      , control_photosynthesis  & ! intent(out)
+      , control_leaf_par        & ! intent(out)
+      , control_leaf_vpd        & ! intent(out)
+      , control_leaf_tmp        & ! intent(out)
       , c34smin_lint_co2    & ! intent(out)
       , c34smax_lint_co2    & ! intent(out)
       , c34smax_gsw         & ! intent(out)
@@ -4513,6 +4517,12 @@ subroutine init_physiology_params()
    !---------------------------------------------------------------------------------------!
 
 
+   ! for conducting idealized photosynthesis simulations
+   ! default no control on photosynthesis
+   control_photosynthesis = 0
+   control_leaf_par = 40. ! umol/m2/s
+   control_leaf_tmp = 25. ! degC
+   control_leaf_vpd = 1.  ! kPa
 
    !---------------------------------------------------------------------------------------!
    !     Bounds for internal carbon and water stomatal conductance.                        !
