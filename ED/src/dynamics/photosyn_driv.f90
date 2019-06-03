@@ -522,7 +522,7 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,ntext_soil                  
                 if (control_photosynthesis .eq. 1) then
                     ! use idealized conditions
                     if (leaf_par > 0.) then
-                        leaf_par = control_leaf_par
+                        leaf_par = control_leaf_par / 4.6
                     endif
 
             call katul_lphys(              & !

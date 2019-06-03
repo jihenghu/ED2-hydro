@@ -3388,7 +3388,7 @@ subroutine init_pft_alloc_params()
          select case (iallom)
             case (0,1)
                init_density(1)     = 1.0
-               init_density(2:4)   = 0.5 !1.0
+               init_density(2:4)   = 0.1 !1.0
                init_density(5)     = 0.1
                init_density(6:8)   = 0.1
                init_density(9:11)  = 0.1
@@ -3398,7 +3398,7 @@ subroutine init_pft_alloc_params()
                init_density(17)    = 1.0
             case default
                init_density(1)     = 0.1
-               init_density(2:4)   = 1.0
+               init_density(2:4)   = 0.1
                init_density(5)     = 0.1
                init_density(6:8)   = 0.1
                init_density(9:11)  = 0.1
