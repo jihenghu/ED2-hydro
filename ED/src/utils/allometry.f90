@@ -29,9 +29,20 @@ contains
       !----- Size- and age-structure (typical ED model). ----------------------------------!
       if (is_tropical(ipft)) then
          select case (iallom)
-            case (0,1,3,4)
+            case (0,1)
                !----- Default ED-2.1 allometry. -------------------------------------------!
                h2dbh = exp((log(h)-b1Ht(ipft))/b2Ht(ipft))
+           case (3,4)
+               !--- Chave et al. 2014 quadratic relationship
+               ! solve the equation a * x2 + b * x + c = 0
+               ! where x = log(dbh)
+               ! a = hgt_ref(ipft)
+               ! b = b2Ht(ipft)
+               ! c = b1Ht(ipft) - log(h)
+               h2dbh = exp(                             &
+                   -0.5 / hgt_ref(ipft) *               &
+                   ( b2Ht(ipft) -                       &
+                     sqrt(b2Ht(ipft) ** 2 - 4 * hgt_ref(ipft) * (b1Ht(ipft) - log(h)))))
             case default
                !----- Poorter et al. (2006) allometry. ------------------------------------!
                h2dbh =  ( log(hgt_ref(ipft) / ( hgt_ref(ipft) - h ) ) / b1Ht(ipft) )       &
@@ -81,9 +92,13 @@ contains
             if (is_tropical(ipft)) then
                mdbh = min(dbh,dbh_crit(ipft))
                select case (iallom)
-                  case (0,1,3,4)
+                  case (0,1)
                      !----- Default ED-2.1 allometry. -------------------------------------!
                      dbh2h = exp (b1Ht(ipft) + b2Ht(ipft) * log(mdbh) )
+                 case (3,4)
+                     ! Chave et al. 2014 quadratic equation
+                     dbh2h = exp ( b1Ht(ipft) + b2Ht(ipft) * log(mdbh)  &
+                                 + hgt_ref(ipft) * log(mdbh) ** 2)
                   case default
                      !----- Poorter et al. (2006) allometry. ------------------------------!
                      dbh2h = hgt_ref(ipft) * (1. - exp(-b1Ht(ipft) * mdbh ** b2Ht(ipft)))

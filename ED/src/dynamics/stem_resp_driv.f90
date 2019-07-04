@@ -28,6 +28,7 @@ subroutine stem_respiration(csite,ipa)
    real                                    :: stem_area        ! m2
    real                                    :: mdbh             ! cm
    real                                    :: ddbh_avg         ! cm/yr
+   real                                    :: growth_factor    ! normalized relative growth
    !----- Locally saved variables. --------------------------------------------------------!
    real                          , save    :: dtlsm_o_frqsum
    logical                       , save    :: first_time = .true.
@@ -53,26 +54,39 @@ subroutine stem_respiration(csite,ipa)
 
         !----- Alias for PFT and root layer. ------------------------------------------!
         ipft  = cpatch%pft(ico)
-
-        if (cpatch%dbh(ico) < 1.) then
-        ! assume stem is a cylinder
-        ! the correcting factor 5 is to ensure a continuous transition at 1cm
-        stem_area = 5. * pi1 * cpatch%dbh(ico) / 100.            & ! meter
+        ! the correcting factor 2.2 is derived from Chambers et al. 2004
+        stem_area = min(2.5,max(0.5,0.2 * log(cpatch%dbh(ico)) + 1.5)) & ! correction factor to account for tree shape changes
+                  * pi1 * cpatch%dbh(ico) / 100.            & ! meter
                   * cpatch%hite(ico)                        & ! meter squared
                   * cpatch%nplant(ico)                      ! ! m2 stem/m2 ground
-        else
-        ! use the relationship from Chambers et al. 2004 [tropics only]
-        mdbh = max(1.,cpatch%dbh(ico)) ! cm
-        stem_area = cpatch%nplant(ico) * (10. ** (-0.105 - 0.686 * log10(mdbh) & ! /m2 ground
-                                                 + 2.208 * (log10(mdbh) ** 2) &
-                                                 - 0.627 * (log10(mdbh) ** 3)))  ! m2 stem area
-        endif
+
+!        if (cpatch%dbh(ico) < 1.) then
+!        ! assume stem is a cylinder
+!        ! this is a test allometry assuming the 1.3m cohort has a stem area of 2. * 0.1/100. * pi *
+!        ! 1.3 (twice the cylindral area of a 1.3m stem)
+!        stem_area = cpatch%nplant(ico) * (10. ** (1.983 * log10(cpatch%dbh(ico)) - 0.105)) ! m2 stem area
+!
+!
+!        else
+!        ! use the relationship from Chambers et al. 2004 [tropics only]
+!        mdbh = max(1.,cpatch%dbh(ico)) ! cm
+!        stem_area = cpatch%nplant(ico) * (10. ** (-0.105 - 0.686 * log10(mdbh) & ! /m2 ground
+!                                                 + 2.208 * (log10(mdbh) ** 2) &
+!                                                 - 0.627 * (log10(mdbh) ** 3)))  ! m2 stem area
+!        endif
 
 
-        ddbh_avg = max(0.,sum(cpatch%ddbh_monthly(1:12,ico)) / 12.) ! cm/yr
-
+        ddbh_avg = log(cpatch%dbh(ico) + max(0.,sum(cpatch%ddbh_monthly(1:12,ico)) / 12.)) &
+                 - log(cpatch%dbh(ico))     ! relative growth per year
         ! ddbh_avg is non-negative
-
+        if (ddbh_avg <= 0.) then
+            ! no growth
+            growth_factor = 0.
+        else
+            ! has growth
+            growth_factor = max(0.3,min(0.6,ddbh_avg / 0.1 * 0.3 + 0.3))
+            ! goes from 0.3 to 0.6, these are linearized results from Chambers et al. 2004
+        endif
 
         select case (istem_respiration_scheme)
         case (0)
@@ -88,7 +102,7 @@ subroutine stem_respiration(csite,ipa)
                                                 ipft,                   &
                                                 cpatch%dbh(ico),        &
                                                 cpatch%wood_temp(ico),  &
-                                                ddbh_avg) &
+                                                growth_factor) &
                                          * stem_area
                                          ! umol/m2 ground/s
         end select
@@ -116,7 +130,7 @@ end subroutine stem_respiration
 !==========================================================================================!
 !     This function determines the normalised stem respiration (umol/m2 stem surface/s)    !
 !------------------------------------------------------------------------------------------!
-real function stem_resp_norm(ipft,dbh,wood_temp,ddbh_avg)
+real function stem_resp_norm(ipft,dbh,wood_temp,growth_factor)
    use pft_coms       , only : stem_respiration_factor  & ! intent(in)
                              , stem_resp_size_factor    & ! intent(in)
                              , stem_resp_growth_factor    & ! intent(in)
@@ -137,7 +151,7 @@ real function stem_resp_norm(ipft,dbh,wood_temp,ddbh_avg)
    integer     , intent(in) :: ipft
    real(kind=4), intent(in) :: dbh
    real(kind=4), intent(in) :: wood_temp
-   real(kind=4), intent(in) :: ddbh_avg  ! an estimate of growth
+   real(kind=4), intent(in) :: growth_factor  ! an estimate of growth
    !----- Local variables. ----------------------------------------------------------------!
    real(kind=8)             :: wood_temp8
    real(kind=8)             :: srf08
@@ -163,7 +177,7 @@ real function stem_resp_norm(ipft,dbh,wood_temp,ddbh_avg)
                         dble(                                                       &
                          log10(stem_respiration_factor(ipft))                       & ! baseline
                         +stem_resp_size_factor(ipft) * dbh                          & ! DBH effect
-                        +stem_resp_growth_factor(ipft) * min(ddbh_avg,1.0)          & ! Growth effect
+                        +growth_factor                                              & ! Growth effect
                         ))
    rrf_low_temp8   = dble(rrf_low_temp           (ipft)) + t008
    rrf_high_temp8  = dble(rrf_high_temp          (ipft)) + t008

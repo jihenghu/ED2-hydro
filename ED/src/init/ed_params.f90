@@ -1982,10 +1982,16 @@ subroutine init_pft_resp_params()
    end select
    !---------------------------------------------------------------------------------------!
    ! Value from Chambers et al. 2004 Ecological Applications
-    root_respiration_factor(2:4) = 0.6 * 5.  ! current root_resp is too small..
-    stem_respiration_factor(1:17) = 10. ** (-0.672) / 2.  ! umol/m2 stem area / s  value for tropics
+    root_respiration_factor(2) = 3.0  
+    root_respiration_factor(3) = 2.3 
+    root_respiration_factor(4) = 1.9
+    stem_respiration_factor(1:17) = 10. ** (-0.672 - 0.2) / 2.  ! umol/m2 stem area / s  value for tropics
+    ! 0.15 is a correcting factor to make the total respiration more reasonable, which is also
+    ! within the seasonal variability reported in Chambers et al.
     stem_resp_size_factor(1:17) = 0.0041  ! cm-1  value for tropics
-    stem_resp_growth_factor(1:17) = 0.5 / 1. ! per (cm/yr) value for tropics
+    stem_resp_growth_factor(1:17) = 0.5   ! maximum relative increase of stem_resp due to growth for tropics
+    ! This is now not used
+
 
 
    !---------------------------------------------------------------------------------------!
@@ -2579,12 +2585,12 @@ subroutine init_pft_alloc_params()
    ! new tropical scheme from MLongo
    if ((iallom == 4) .or. (iallom == 3)) then
        ! SMA
-       !SLA(2:4) = 2000. / exp(1.51 * log(rho(2:4)) + 5.19) ! m2/kgC
-       !Vm0(2:4) = exp(-1.40 * log(rho(2:4)) + 2.78) / vm_q10(2:4) ! umol/m2/s @ 15degC
+       SLA(2:4) = 2000. / exp(1.51 * log(rho(2:4)) + 5.19) ! m2/kgC
+       Vm0(2:4) = exp(-1.40 * log(rho(2:4)) + 2.78) / vm_q10(2:4) ! umol/m2/s @ 15degC
 
        ! OLS
-       SLA(2:4) = 2000. / exp(0.234 * log(rho(2:4)) + 4.52 + 0.5 * 0.154) ! m2/kgC
-       Vm0(2:4) = exp(-0.53 * log(rho(2:4)) + 3.31 + 0.5 * 0.164) / vm_q10(2:4) ! umol/m2/s @ 15degC
+       !SLA(2:4) = 2000. / exp(0.234 * log(rho(2:4)) + 4.52 + 0.5 * 0.154) ! m2/kgC
+       !Vm0(2:4) = exp(-0.53 * log(rho(2:4)) + 3.31 + 0.5 * 0.164) / vm_q10(2:4) ! umol/m2/s @ 15degC
 
        dark_respiration_factor(2:4) = 0.016
        Rd0(2:4) = dark_respiration_factor(2:4) * Vm0(2:4) * Vm_q10(2:4) / Rd_q10(2:4)
@@ -2633,6 +2639,13 @@ subroutine init_pft_alloc_params()
    q(12:15) = 1.0
    q(16)    = 1.0
    q(17)    = 1.0
+
+   if (iallom == 3 .or. iallom == 4) then
+       ! based on Falster et al. 2018 root_mass to leaf area ratio
+       q(2) = 3.2
+       q(3) = 2.0
+       q(4) = 1.4
+   endif
 
    sapwood_ratio(1:17) = 3900.0
 
@@ -2757,18 +2770,29 @@ subroutine init_pft_alloc_params()
       case (3)
          !------------------------------------------------------------------------------------!
          !     Use the allometry proposed by:                                                 !
+         !     Chave et al. 2014 because it has several advantages:
+         !      (1) has a saturation behavior but not a hard cap on maximum height            !
+         !      (2) gives more reasonable values for small seedlings                          !
+         !      (3) can be analytically inverted                                              !
+         !      (4) can be easily changed to account for changes in allometry across moisture !
+         !          gradient
          !                                                                                    !
-         ! Feldpausch et al. 2011: Height-diameter allometry of tropical forest trees.        !
-         !    Biogeosciences, 8, 1081-1106                                                    !
          !                                                                                    !
          !------------------------------------------------------------------------------------!
           
          do ipft=1,n_pft
             if (is_tropical(ipft) .and. (.not. is_liana(ipft))) then
-               !----- Regular log-log fit, b1 is the intercept and b2 is the slope. ----------!
-               ! Using South America values from the reference
-               b1Ht   (ipft) = 1.3760
-               b2Ht   (ipft) = 0.4854
+               ! hgt_ref is used as the coeffient over the second order of ln(D)
+
+               ! assume the environmental factor is zero for moist tropical forests
+               b1Ht(ipft) = 0.893
+               b2Ht(ipft) = 0.76
+               hgt_ref(ipft) = -0.034
+
+
+               ! old Feldpausch
+!               b1Ht   (ipft) = 1.3760
+!               b2Ht   (ipft) = 0.4854
                !----- hgt_ref is not used. ---------------------------------------------------!
                ! hgt_ref(ipft) = 0.0
             end if
@@ -2787,9 +2811,14 @@ subroutine init_pft_alloc_params()
          do ipft=1,n_pft
             if (is_tropical(ipft) .and. (.not. is_liana(ipft))) then
                !----- Regular log-log fit, b1 is the intercept and b2 is the slope. ----------!
+
+               ! assume the environmental factor is zero for moist tropical forests
+               b1Ht(ipft) = 0.893
+               b2Ht(ipft) = 0.76
+               hgt_ref(ipft) = -0.034
                ! Using South America values from the reference
-               b1Ht   (ipft) = 1.519
-               b2Ht   (ipft) = 0.4597
+               !b1Ht   (ipft) = 1.519
+               !b2Ht   (ipft) = 0.4597
                !----- hgt_ref is not used. ---------------------------------------------------!
                ! hgt_ref(ipft) = 0.0
             end if
@@ -2842,11 +2871,11 @@ subroutine init_pft_alloc_params()
    hgt_min(17)    = 0.50
    !----- Maximum Height. -----------------------------------------------------------------!
    hgt_max( 1) = 1.50
-   hgt_max( 2) = 45.0
-   hgt_max( 3) = 45.0
-   hgt_max( 4) = 45.0
+   hgt_max( 2) = 50.0
+   hgt_max( 3) = 50.0
+   hgt_max( 4) = 50.0
    if (iallom == 4) then
-       hgt_max(2:4) = 60.
+       hgt_max(2:4) = 65.
    endif
 
    hgt_max( 5) = 0.95  * b1Ht( 5)
@@ -3002,9 +3031,12 @@ subroutine init_pft_alloc_params()
                !     Ecology 96:1445-1445                                                     !
                !   Note that here b1Bl, b2Bl, and b2Bl_hite yields leaf area estimate         !
                !------------------------------------------------------------------------------!
-               b1Bl_large (ipft) = exp(-1.3584 + 0.5 * 0.54539)
-               b2Bl_large (ipft) = 1.1979
-               b2Bl_hite  (ipft) = 0.5511
+               b1Bl_large(ipft) = exp(-1.363 + 0.53 * 0.59)
+               b2Bl_large(ipft) = 1.155
+               b2Bl_hite(ipft) = 0.588
+               !b1Bl_large (ipft) = exp(-1.3584 + 0.5 * 0.54539)
+               !b2Bl_large (ipft) = 1.1979
+               !b2Bl_hite  (ipft) = 0.5511
                b1Bl_small (ipft) = b1Bl_large(ipft)
                b2Bl_small (ipft) = b2Bl_large(ipft)
                
@@ -3732,7 +3764,7 @@ subroutine init_pft_hydro_params()
    ! Modified based on Lin et al. 2015
    ! using rho to determine stoma_lambda would generate unrealistically low gsw for hardwood species
    ! Try using an average value according to Lin et al. 2015
-   stoma_lambda(2:4)             = 8.
+   stoma_lambda(2:4)             = 7.
    stoma_beta(2:4)               = -1. * 0.8 / MPa2m
 
    stoma_psi_b(1:n_pft)          = leaf_psi_tlp(1:n_pft)   ! default

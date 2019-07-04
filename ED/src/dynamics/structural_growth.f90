@@ -485,7 +485,6 @@ subroutine structural_growth(cgrid, month)
                    ! Otherwise use the raw growth
                    
                    if (cpatch%dbh(ico) - dbh_in <= 1e-10 .and. &
-                       count(cpatch%ddbh_monthly(1:12,ico) .le. 0.) == 12 .and. &
                        cpatch%bstorage(ico) <= 1e-10) then
                        ! No growth in this month or the past year
                        ! & There is no bstorage. This cohort is under severe stress
@@ -1444,6 +1443,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
                             , k_pp_vm0            & ! intent(in)
                             , k_pp_rd0            & ! intent(in)
                             , k_pp_ll             & ! intent(in)
+                            , hgt_min             & ! intent(in)
                             , is_tropical         & ! intent(in)
                             , is_grass            ! ! intent(in)
    use allometry     , only : size2bl             ! ! function
@@ -1471,7 +1471,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
    real                        :: new_bleaf_max
    real                        :: transp_scaler
    real                        :: frac_change  ! fractional change of trait relative to current trait value
-   real, parameter             :: max_frac_change = 0.20 ! maximum fractional change of functional trait each time
+   real                        :: max_frac_change ! maximum fractional change of functional trait each time, determined by current leaf longevity
    !---------------------------------------------------------------------------------------!
 
 
@@ -1559,18 +1559,50 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
                           ! when trait_plasticity_scheme < 0
 
        ! 3. update traits
+
+       ! first determine how much the leaf trait can change each quarter
+       ! every quarter, 3/llspan fraction of leaves have been changed
+       ! so trait can only change 3/llspan * 100% from t_current to t_target
+       ! until the difference is smaller than 5%
+
+       ! special case if when hite == hgt_min. These are generally new seedlings, they should
+       ! already adapted to the light environment so change their traits instantly
+
+
+
        ! Vm0 should be defined at the top of canopy [sun-lit leaves]
        select case (trait_plasticity_scheme)
        case (-1,-2,1,2)
         cpatch%vm0(ico) = Vm0(ipft) * exp(-kvm0 * max_cum_lai)
        case (3)
+        ! use leaf longevity to determine how much trait can change because it takes a full leaf
+        ! life cycle to produce new leaves
+        ! It is also somewhat a cost for plasticity. Plants that have have fast turnover rate can be
+        ! more plastic
+
         ! the fractional change cannot go over max_frac
         frac_change = (Vm0(ipft) * exp(-k_pp_vm0(ipft) * max_cum_lai)) / cpatch%vm0(ico) - 1.
 
-        frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
-                            max(frac_change,-max_frac_change),      & ! trait decrease
-                            frac_change > 0)
-        cpatch%vm0(ico) = cpatch%vm0(ico) * (1. + frac_change)
+        
+        if (abs(frac_change) < 0.05 .or. cpatch%hite(ico) <= hgt_min(ipft)) then
+            ! first special case
+            ! The difference is smaller than 5% or hite is equal to hgt_min
+            ! Trait values can change to target values directly
+            cpatch%vm0(ico) = cpatch%vm0(ico) * (1. + frac_change)
+
+        else
+            ! normal case, we need to modify frac_change using llspan
+
+            frac_change = frac_change * min(1.,3. / cpatch%llspan(ico))
+            cpatch%vm0(ico) = cpatch%vm0(ico) * (1. + frac_change)
+
+        endif
+           
+            
+
+        !frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
+        !                    max(frac_change,-max_frac_change),      & ! trait decrease
+        !                    frac_change > 0)
        end select
 
 
@@ -1584,11 +1616,23 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
 !            frac_change = (cpatch%vm0(ico) * vm_q10(ipft) / rd_q10(ipft)  & ! converting factor
 !                           * dark_respiration_factor(ipft)                &
 !                           * exp(-k_pp_rd0(ipft) * max_cum_lai)) / cpatch%rd0(ico) - 1.
+           if (abs(frac_change) < 0.05 .or. cpatch%hite(ico) <= hgt_min(ipft)) then
+               ! first special case
+               ! The difference is smaller than 5% or hite is equal to hgt_min
+               ! Trait values can change to target values directly
+               cpatch%rd0(ico) = cpatch%rd0(ico) * (1. + frac_change)
+   
+           else
+               ! normal case, we need to modify frac_change using llspan
+   
+               frac_change = frac_change * min(1.,3. / cpatch%llspan(ico))
+               cpatch%rd0(ico) = cpatch%rd0(ico) * (1. + frac_change)
+   
+           endif
 
-            frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
-                                max(frac_change,-max_frac_change),      & ! trait decrease
-                                frac_change > 0)
-            cpatch%rd0(ico) = cpatch%rd0(ico) * (1. + frac_change)
+!            frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
+!                                max(frac_change,-max_frac_change),      & ! trait decrease
+!                                frac_change > 0)
 
 
 !           cpatch%rd0(ico) = Vm0(ipft) * dark_respiration_factor(ipft) * exp(-krd0 * max_cum_lai)
@@ -1610,10 +1654,24 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        case (3)
             frac_change = (SLA(ipft) * min(3.,exp(-k_pp_sla(ipft) * max_cum_lai))) / cpatch%sla(ico) - 1.
 
-            frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
-                                max(frac_change,-max_frac_change),      & ! trait decrease
-                                frac_change > 0)
-            cpatch%sla(ico) = cpatch%sla(ico) * (1. + frac_change)
+           if (abs(frac_change) < 0.05 .or. cpatch%hite(ico) <= hgt_min(ipft)) then
+               ! first special case
+               ! The difference is smaller than 5% or hite is equal to hgt_min
+               ! Trait values can change to target values directly
+               cpatch%sla(ico) = cpatch%sla(ico) * (1. + frac_change)
+   
+           else
+               ! normal case, we need to modify frac_change using llspan
+   
+               frac_change = frac_change * min(1.,3. / cpatch%llspan(ico))
+               cpatch%sla(ico) = cpatch%sla(ico) * (1. + frac_change)
+   
+           endif
+
+
+!            frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
+!                                max(frac_change,-max_frac_change),      & ! trait decrease
+!                                frac_change > 0)
 
        end select
 
@@ -1622,11 +1680,24 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        select case (trait_plasticity_scheme)
        case (3)
             frac_change = (12./leaf_turnover_rate(ipft) * exp(-k_pp_ll(ipft) * max_cum_lai)) / cpatch%llspan(ico) - 1.
+           if (abs(frac_change) < 0.05 .or. cpatch%hite(ico) <= hgt_min(ipft)) then
+               ! first special case
+               ! The difference is smaller than 5% or hite is equal to hgt_min
+               ! Trait values can change to target values directly
+               cpatch%llspan(ico) = min(240.,cpatch%llspan(ico) * (1. + frac_change)) ! should be smaller than 20 years
+   
+           else
+               ! normal case, we need to modify frac_change using llspan
+   
+               frac_change = frac_change * min(1.,3. / cpatch%llspan(ico))
+               cpatch%llspan(ico) = min(240.,cpatch%llspan(ico) * (1. + frac_change)) ! should be smaller than 20 years
+   
+           endif
 
-            frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
-                                max(frac_change,-max_frac_change),      & ! trait decrease
-                                frac_change > 0)
-            cpatch%llspan(ico) = min(240.,cpatch%llspan(ico) * (1. + frac_change)) ! should be smaller than 20 years
+
+  !          frac_change = merge(min(frac_change,max_frac_change),       & ! trait increase
+  !                              max(frac_change,-max_frac_change),      & ! trait decrease
+  !                              frac_change > 0)
        end select
 
 
