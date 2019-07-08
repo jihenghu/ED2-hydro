@@ -10,7 +10,8 @@ subroutine stem_respiration(csite,ipa)
    use ed_state_vars  , only : sitetype           & ! structure
                              , patchtype          ! ! structure
    use ed_max_dims    , only : n_pft              ! ! intent(in)
-   use pft_coms       , only : stem_respiration_factor  ! ! intent(in)
+   use pft_coms       , only : stem_respiration_factor  & ! intent(in)
+                             , agf_bs             ! ! intent(in)
    use consts_coms    , only : pi1                & ! intent(in)
                              , umols_2_kgCyr      & ! intent(in)
                              , yr_day             ! ! intent(in)
@@ -58,7 +59,8 @@ subroutine stem_respiration(csite,ipa)
         stem_area = min(2.5,max(0.5,0.2 * log(cpatch%dbh(ico)) + 1.5)) & ! correction factor to account for tree shape changes
                   * pi1 * cpatch%dbh(ico) / 100.            & ! meter
                   * cpatch%hite(ico)                        & ! meter squared
-                  * cpatch%nplant(ico)                      ! ! m2 stem/m2 ground
+                  * cpatch%nplant(ico)                      & ! m2 stem/m2 ground
+                  / agf_bs(ipft)                            ! ! account for stems in belowground
 
 !        if (cpatch%dbh(ico) < 1.) then
 !        ! assume stem is a cylinder
