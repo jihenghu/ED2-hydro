@@ -2640,7 +2640,7 @@ subroutine init_pft_alloc_params()
 
    if (iallom == 3 .or. iallom == 4) then
        ! based on Falster et al. 2018 root_mass to leaf area ratio
-       q(2:4) = = 0.07 / 2. * SLA(2:4)
+       q(2:4) = 0.07 / 2. * SLA(2:4)
        print*,'q',q(2:4)
    endif
 

@@ -1078,6 +1078,8 @@ module fuse_fiss_utils
       use plant_hydro        , only : rwc2psi                & ! subroutine
                                     , tw2rwc                 & ! subroutine 
                                     , psi2tw                 & ! subroutine
+                                    , psi2rwc                & ! subroutine
+                                    , rwc2tw                 & ! subroutine
                                     , tw2psi                 ! ! subroutine
       implicit none
       !----- Arguments --------------------------------------------------------------------!
@@ -1622,7 +1624,7 @@ module fuse_fiss_utils
           ! during ecosystem budget calculations
           cpatch%wood_psi(recc) = 0. ! fully saturated
           call psi2rwc(cpatch%leaf_psi(recc),cpatch%wood_psi(recc),cpatch%pft(recc) &
-                       cpatch%leaf_rwc(recc),cpatch%wood_rwc(recc))
+                      ,cpatch%leaf_rwc(recc),cpatch%wood_rwc(recc))
           call rwc2tw(cpatch%leaf_rwc(recc),cpatch%wood_rwc(recc)                           &
                      ,cpatch%bleaf(recc),cpatch%bdead(recc),cpatch%broot(recc)              &
                      ,dbh2sf(cpatch%dbh(recc),cpatch%pft(recc)),cpatch%pft(recc)            &
