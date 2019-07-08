@@ -1982,12 +1982,10 @@ subroutine init_pft_resp_params()
    end select
    !---------------------------------------------------------------------------------------!
    ! Value from Chambers et al. 2004 Ecological Applications
-    root_respiration_factor(2) = 3.0  
-    root_respiration_factor(3) = 2.3 
-    root_respiration_factor(4) = 1.9
+   !umol/kgC/s
+   !
+    root_respiration_factor(2:4) = 2.0
     stem_respiration_factor(1:17) = 10. ** (-0.672 - 0.2) / 2.  ! umol/m2 stem area / s  value for tropics
-    ! 0.15 is a correcting factor to make the total respiration more reasonable, which is also
-    ! within the seasonal variability reported in Chambers et al.
     stem_resp_size_factor(1:17) = 0.0041  ! cm-1  value for tropics
     stem_resp_growth_factor(1:17) = 0.5   ! maximum relative increase of stem_resp due to growth for tropics
     ! This is now not used
@@ -2642,9 +2640,8 @@ subroutine init_pft_alloc_params()
 
    if (iallom == 3 .or. iallom == 4) then
        ! based on Falster et al. 2018 root_mass to leaf area ratio
-       q(2) = 3.2
-       q(3) = 2.0
-       q(4) = 1.4
+       q(2:4) = = 0.07 / 2. * SLA(2:4)
+       print*,'q',q(2:4)
    endif
 
    sapwood_ratio(1:17) = 3900.0
