@@ -1613,6 +1613,21 @@ module fuse_fiss_utils
                  ,cpatch%leaf_rwc(recc),cpatch%wood_rwc(recc))
       call rwc2psi(cpatch%leaf_rwc(recc),cpatch%wood_rwc(recc),cpatch%pft(recc)            &
                   ,cpatch%leaf_psi(recc),cpatch%wood_psi(recc))
+      ! special case, since sapwood area is not conserved in the fusion
+      ! we need to check whether the resulting rwc is higher than 1.0, which can happen when both
+      ! cohorts are nearly saturated and sapwood area allometry is highly convex....
+      if (cpatch%wood_rwc(recc) > 0.) then
+          ! if this is the case, we can reset wood_psi to 0. m and recalculate wood_rwc and wood_tw
+          ! This can lead to small 'leak' of wood water but should be within the error tolerance
+          ! during ecosystem budget calculations
+          cpatch%wood_psi(recc) = 0. ! fully saturated
+          call psi2rwc(cpatch%leaf_psi(recc),cpatch%wood_psi(recc),cpatch%pft(recc) &
+                       cpatch%leaf_rwc(recc),cpatch%wood_rwc(recc))
+          call rwc2tw(cpatch%leaf_rwc(recc),cpatch%wood_rwc(recc)                           &
+                     ,cpatch%bleaf(recc),cpatch%bdead(recc),cpatch%broot(recc)              &
+                     ,dbh2sf(cpatch%dbh(recc),cpatch%pft(recc)),cpatch%pft(recc)            &
+                     ,cpatch%leaf_water_int(recc),cpatch%wood_water_int(recc))
+      endif
 
       !------------------------------------------------------------------------------------!
 
