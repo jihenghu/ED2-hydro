@@ -1472,6 +1472,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
    real                        :: transp_scaler
    real                        :: frac_change  ! fractional change of trait relative to current trait value
    real                        :: max_frac_change ! maximum fractional change of functional trait each time, determined by current leaf longevity
+   real                        :: hite_small
    !---------------------------------------------------------------------------------------!
 
 
@@ -1482,6 +1483,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
    !---------------------------------------------------------------------------------------!
 
    ipft    = cpatch%pft(ico)
+   hite_small = hgt_min(ipft) + 0.5 ! within 0.5 m of the smallest height
 
    if ((.not. is_grass(ipft)) .and. is_tropical(ipft)) then
 
@@ -1584,7 +1586,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
         frac_change = (Vm0(ipft) * exp(-k_pp_vm0(ipft) * max_cum_lai)) / cpatch%vm0(ico) - 1.
 
         
-        if (abs(frac_change) < 0.05 .or. cpatch%hite(ico) <= hgt_min(ipft)) then
+        if (abs(frac_change) < 0.05 .or. cpatch%hite(ico) <= hite_small) then
             ! first special case
             ! The difference is smaller than 5% or hite is equal to hgt_min
             ! Trait values can change to target values directly
@@ -1616,7 +1618,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
 !            frac_change = (cpatch%vm0(ico) * vm_q10(ipft) / rd_q10(ipft)  & ! converting factor
 !                           * dark_respiration_factor(ipft)                &
 !                           * exp(-k_pp_rd0(ipft) * max_cum_lai)) / cpatch%rd0(ico) - 1.
-           if (abs(frac_change) < 0.05 .or. cpatch%hite(ico) <= hgt_min(ipft)) then
+           if (abs(frac_change) < 0.05 .or. cpatch%hite(ico) <= hite_small) then
                ! first special case
                ! The difference is smaller than 5% or hite is equal to hgt_min
                ! Trait values can change to target values directly
@@ -1654,7 +1656,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        case (3)
             frac_change = (SLA(ipft) * min(3.,exp(-k_pp_sla(ipft) * max_cum_lai))) / cpatch%sla(ico) - 1.
 
-           if (abs(frac_change) < 0.05 .or. cpatch%hite(ico) <= hgt_min(ipft)) then
+           if (abs(frac_change) < 0.05 .or. cpatch%hite(ico) <= hite_small) then
                ! first special case
                ! The difference is smaller than 5% or hite is equal to hgt_min
                ! Trait values can change to target values directly
@@ -1680,7 +1682,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
        select case (trait_plasticity_scheme)
        case (3)
             frac_change = (12./leaf_turnover_rate(ipft) * exp(-k_pp_ll(ipft) * max_cum_lai)) / cpatch%llspan(ico) - 1.
-           if (abs(frac_change) < 0.05 .or. cpatch%hite(ico) <= hgt_min(ipft)) then
+           if (abs(frac_change) < 0.05 .or. cpatch%hite(ico) <= hite_small) then
                ! first special case
                ! The difference is smaller than 5% or hite is equal to hgt_min
                ! Trait values can change to target values directly

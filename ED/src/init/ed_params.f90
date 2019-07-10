@@ -1984,7 +1984,7 @@ subroutine init_pft_resp_params()
    ! Value from Chambers et al. 2004 Ecological Applications
    !umol/kgC/s
    !
-    root_respiration_factor(2:4) = 2.0
+    root_respiration_factor(2:4) = 2.5
     stem_respiration_factor(1:17) = 10. ** (-0.672 - 0.2) / 2.  ! umol/m2 stem area / s  value for tropics
     stem_resp_size_factor(1:17) = 0.0041  ! cm-1  value for tropics
     stem_resp_growth_factor(1:17) = 0.5   ! maximum relative increase of stem_resp due to growth for tropics
