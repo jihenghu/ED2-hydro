@@ -1297,7 +1297,6 @@ subroutine update_derived_cohort_props(cpatch,ico,lsl,month)
                             , yr1st_census        & ! intent(in)
                             , mon1st_census       & ! intent(in)
                             , min_recruit_dbh     ! ! intent(in)
-   use physiology_coms,only : trait_plasticity_scheme
    implicit none
    !----- Arguments -----------------------------------------------------------------------!
    type(patchtype), target     :: cpatch
@@ -1358,26 +1357,6 @@ subroutine update_derived_cohort_props(cpatch,ico,lsl,month)
    end if
    !---------------------------------------------------------------------------------------!
 
-   !----- Update SLA and Vm0 before calculating bleaf_max or LAI  -------------------------!
-   select case (trait_plasticity_scheme)
-   case (-1,1)
-       ! update trait every year
-       if (month == 1) then
-           call update_cohort_plastic_trait(cpatch,ico)
-       endif
-   case (-2,2)
-       ! update trait every month
-       call update_cohort_plastic_trait(cpatch,ico)
-   case (3)
-       ! update trait every quarter and restrict the amount of change every adjustment
-       ! so that the energy can be well resolved
-       if (month == 1 .or. month == 7 .or. month == 4 .or. month == 10) then
-           call update_cohort_plastic_trait(cpatch,ico)
-       endif
-     
-   end select
-   !---------------------------------------------------------------------------------------!
-
    !---------------------------------------------------------------------------------------!
    !     Because DBH may have increased, the maximum leaf biomass may be different, which  !
    ! will put plants off allometry even if they were on-allometry before.  Here we check   !
@@ -1411,6 +1390,110 @@ end subroutine update_derived_cohort_props
 !==========================================================================================!
 
 
+!==========================================================================================!
+!==========================================================================================!
+! SUBROUTINE TRAIT_PLASTICITY 
+!< \brief This subroutine deal with trait plasticity.
+!< \warning This subroutine is called in vegetation dynamics after reproduction
+!==========================================================================================!
+!------------------------------------------------------------------------------------------!
+subroutine trait_plasticity(cgrid,month)
+   use stable_cohorts
+   use ed_state_vars  , only : edtype                 & ! structure
+                             , polygontype            & ! structure
+                             , sitetype               & ! structure
+                             , patchtype              ! ! structure
+   use physiology_coms, only : trait_plasticity_scheme
+   use ed_misc_coms   , only : current_time           & ! intent(in)
+                             , simtime                ! ! structure
+   use ed_therm_lib   , only : calc_veg_hcap          & ! function
+                             , update_veg_energy_cweh ! ! function
+   use plant_hydro,     only : rwc2tw                 ! ! sub-routine
+   use allometry,       only : dbh2sf                 ! ! function
+   implicit none
+   !----- Arguments -----------------------------------------------------------------------!
+   type(edtype)     , target     :: cgrid
+   integer          , intent(in) :: month
+   !----- Local variables -----------------------------------------------------------------!
+   type(polygontype), pointer    :: cpoly
+   type(sitetype)   , pointer    :: csite
+   type(patchtype)  , pointer    :: cpatch
+   type(simtime)                 :: lastmonth
+   real                          :: ndaysi
+   integer                       :: ipy
+   integer                       :: isi
+   integer                       :: ipa
+   integer                       :: ico
+   integer                       :: ipft
+   integer                       :: prev_month
+   real                          :: old_leaf_hcap
+   real                          :: old_wood_hcap
+
+   polyloop: do ipy = 1,cgrid%npolygons
+      cpoly => cgrid%polygon(ipy)
+
+      siteloop: do isi = 1,cpoly%nsites
+         csite => cpoly%site(isi)
+
+         patchloop: do ipa=1,csite%npatches
+            cpatch => csite%patch(ipa)
+            cohortloop: do ico = 1,cpatch%ncohorts
+
+               !----- Assigning an alias for PFT type. ------------------------------------!
+               ipft    = cpatch%pft(ico)
+               !---------------------------------------------------------------------------!
+                !----- Update SLA and Vm0 before calculating bleaf_max or LAI  -------------------------!
+                select case (trait_plasticity_scheme)
+                case (-1,1)
+                    ! update trait every year
+                    if (month == 1) then
+                        call update_cohort_plastic_trait(cpatch,ico)
+                    endif
+                case (-2,2)
+                    ! update trait every month
+                    call update_cohort_plastic_trait(cpatch,ico)
+                case (3)
+                    ! update trait every quarter and restrict the amount of change every adjustment
+                    ! so that the energy can be well resolved
+                    if (month == 1 .or. month == 7 .or. month == 4 .or. month == 10) then
+                        call update_cohort_plastic_trait(cpatch,ico)
+                    endif
+                    
+                end select
+                !---------------------------------------------------------------------------------------!
+
+                ! we need to update water and energy balance
+                ! since leaf biomass might have changed
+               old_leaf_hcap = cpatch%leaf_hcap(ico)
+               old_wood_hcap = cpatch%wood_hcap(ico)
+               call calc_veg_hcap(cpatch%bleaf(ico),cpatch%bdead(ico),cpatch%bsapwooda(ico)&
+                                 ,cpatch%nplant(ico),cpatch%pft(ico)                       &
+                                 ,cpatch%broot(ico),cpatch%dbh(ico)                        &
+                                 ,cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)                &
+                                 ,cpatch%leaf_hcap(ico),cpatch%wood_hcap(ico) )
+               ! also need to update water_int from rwc
+               call rwc2tw(cpatch%leaf_rwc(ico),cpatch%wood_rwc(ico)                         &
+                          ,cpatch%bleaf(ico),cpatch%bdead(ico),cpatch%broot(ico)             &
+                          ,dbh2sf(cpatch%dbh(ico),cpatch%pft(ico)),cpatch%pft(ico)           &
+                          ,cpatch%leaf_water_int(ico),cpatch%wood_water_int(ico))
+               call update_veg_energy_cweh(csite,ipa,ico,old_leaf_hcap,old_wood_hcap)
+               call is_resolvable(csite,ipa,ico)
+               !---------------------------------------------------------------------------!
+
+
+            end do cohortloop
+            !------------------------------------------------------------------------------!
+
+         end do patchloop
+         !---------------------------------------------------------------------------------!
+      end do siteloop
+      !------------------------------------------------------------------------------------!
+   end do polyloop
+   !---------------------------------------------------------------------------------------!
+   return
+end subroutine trait_plasticity
+!==========================================================================================!
+!==========================================================================================!
 
 !==========================================================================================!
 !==========================================================================================!
@@ -1483,7 +1566,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
    !---------------------------------------------------------------------------------------!
 
    ipft    = cpatch%pft(ico)
-   hite_small = hgt_min(ipft) + 0.5 ! within 0.5 m of the smallest height
+   hite_small = hgt_min(ipft) + 0.1 ! within 0.1 m of the smallest height
 
    if ((.not. is_grass(ipft)) .and. is_tropical(ipft)) then
 

@@ -96,6 +96,9 @@ subroutine vegetation_dynamics(new_month,new_year)
          !----- Solve the reproduction rates. ---------------------------------------------!
          call reproduction(cgrid,current_time%month)
 
+         !----- Account for trait plasticity if necessary
+         call trait_plasticity(cgrid,current_time%month)
+
          !----- Update the fire disturbance rates. ----------------------------------------!
          call fire_frequency(cgrid)
 
