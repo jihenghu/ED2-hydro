@@ -1618,7 +1618,7 @@ module fuse_fiss_utils
       ! special case, since sapwood area is not conserved in the fusion
       ! we need to check whether the resulting rwc is higher than 1.0, which can happen when both
       ! cohorts are nearly saturated and sapwood area allometry is highly convex....
-      if (cpatch%wood_rwc(recc) > 0.) then
+      if (cpatch%wood_rwc(recc) > 1.) then
           ! if this is the case, we can reset wood_psi to 0. m and recalculate wood_rwc and wood_tw
           ! This can lead to small 'leak' of wood water but should be within the error tolerance
           ! during ecosystem budget calculations
