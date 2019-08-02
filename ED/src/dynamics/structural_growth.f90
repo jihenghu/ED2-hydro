@@ -1409,7 +1409,8 @@ subroutine trait_plasticity(cgrid,month)
    use ed_therm_lib   , only : calc_veg_hcap          & ! function
                              , update_veg_energy_cweh ! ! function
    use plant_hydro,     only : rwc2tw                 ! ! sub-routine
-   use allometry,       only : dbh2sf                 ! ! function
+   use allometry,       only : dbh2sf                 & ! function
+                             , area_indices           ! ! function
    implicit none
    !----- Arguments -----------------------------------------------------------------------!
    type(edtype)     , target     :: cgrid
@@ -1462,6 +1463,8 @@ subroutine trait_plasticity(cgrid,month)
                 end select
                 !---------------------------------------------------------------------------------------!
 
+                !----- Updating LAI, WAI, and CAI. --------------------------------------!
+                call area_indices(cpatch, ico)
                 ! we need to update water and energy balance
                 ! since leaf biomass might have changed
                old_leaf_hcap = cpatch%leaf_hcap(ico)
@@ -1536,6 +1539,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
                             , mod_collatz         & ! function
                             , harley_arrhenius    ! ! function
    use ed_misc_coms  , only : iallom              ! ! intent(in)
+   use rk4_coms        , only : tiny_offset          ! ! intent(in)
    implicit none
    !----- Arguments -----------------------------------------------------------------------!
    type(patchtype), target     :: cpatch
@@ -1552,10 +1556,14 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
    real                        :: old_sla
    real                        :: new_sla
    real                        :: new_bleaf_max
-   real                        :: transp_scaler
+   real(kind=8)                :: transp_scaler
    real                        :: frac_change  ! fractional change of trait relative to current trait value
    real                        :: max_frac_change ! maximum fractional change of functional trait each time, determined by current leaf longevity
    real                        :: hite_small
+   real, parameter             :: update_frq = 3.
+   !---------------------------------------------------------------------------------------!
+   !----- External functions. -------------------------------------------------------------!
+   real              , external    :: sngloff
    !---------------------------------------------------------------------------------------!
 
 
@@ -1645,9 +1653,9 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
 
        ! 3. update traits
 
-       ! first determine how much the leaf trait can change each quarter
-       ! every quarter, 3/llspan fraction of leaves have been changed
-       ! so trait can only change 3/llspan * 100% from t_current to t_target
+       ! first determine how much the leaf trait can change each update frequency
+       ! every quarter, update_frq/llspan fraction of leaves have been changed
+       ! so trait can only change update_frq/llspan * 100% from t_current to t_target
        ! until the difference is smaller than 5%
 
        ! special case if when hite == hgt_min. These are generally new seedlings, they should
@@ -1678,7 +1686,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
         else
             ! normal case, we need to modify frac_change using llspan
 
-            frac_change = frac_change * min(1.,3. / cpatch%llspan(ico))
+            frac_change = frac_change * min(1.,update_frq / cpatch%llspan(ico))
             cpatch%vm0(ico) = cpatch%vm0(ico) * (1. + frac_change)
 
         endif
@@ -1710,7 +1718,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
            else
                ! normal case, we need to modify frac_change using llspan
    
-               frac_change = frac_change * min(1.,3. / cpatch%llspan(ico))
+               frac_change = frac_change * min(1.,update_frq / cpatch%llspan(ico))
                cpatch%rd0(ico) = cpatch%rd0(ico) * (1. + frac_change)
    
            endif
@@ -1748,7 +1756,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
            else
                ! normal case, we need to modify frac_change using llspan
    
-               frac_change = frac_change * min(1.,3. / cpatch%llspan(ico))
+               frac_change = frac_change * min(1.,update_frq / cpatch%llspan(ico))
                cpatch%sla(ico) = cpatch%sla(ico) * (1. + frac_change)
    
            endif
@@ -1774,7 +1782,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
            else
                ! normal case, we need to modify frac_change using llspan
    
-               frac_change = frac_change * min(1.,3. / cpatch%llspan(ico))
+               frac_change = frac_change * min(1.,update_frq / cpatch%llspan(ico))
                cpatch%llspan(ico) = min(240.,cpatch%llspan(ico) * (1. + frac_change)) ! should be smaller than 20 years
    
            endif
@@ -1801,7 +1809,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
 
        new_sla = cpatch%sla(ico)
 
-       transp_scaler = old_sla / new_sla
+       transp_scaler = dble(old_sla) / dble(new_sla)
  
        ! Since SLA is changed, we might need to adjust leaf biomass if SLA is used
        ! in the leaf allometry (iallom == 3)
