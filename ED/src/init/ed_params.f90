@@ -2583,14 +2583,14 @@ subroutine init_pft_alloc_params()
    ! new tropical scheme from MLongo
    if ((iallom == 4) .or. (iallom == 3)) then
        ! SMA
-       SLA(2:4) = 2000. / exp(1.51 * log(rho(2:4)) + 5.19) ! m2/kgC
-       Vm0(2:4) = exp(-1.40 * log(rho(2:4)) + 2.78) / vm_q10(2:4) ! umol/m2/s @ 15degC
+       !SLA(2:4) = 2000. / exp(1.51 * log(rho(2:4)) + 5.19) ! m2/kgC
+       !Vm0(2:4) = exp(-1.40 * log(rho(2:4)) + 2.78) / vm_q10(2:4) ! umol/m2/s @ 15degC
 
        ! OLS
-       !SLA(2:4) = 2000. / exp(0.234 * log(rho(2:4)) + 4.52 + 0.5 * 0.154) ! m2/kgC
-       !Vm0(2:4) = exp(-0.53 * log(rho(2:4)) + 3.31 + 0.5 * 0.164) / vm_q10(2:4) ! umol/m2/s @ 15degC
+       SLA(2:4) = 2000. / exp(0.234 * log(rho(2:4)) + 4.52 + 0.5 * 0.154) ! m2/kgC
+       Vm0(2:4) = exp(-0.53 * log(rho(2:4)) + 3.31 + 0.5 * 0.164) / vm_q10(2:4) ! umol/m2/s @ 15degC
 
-       dark_respiration_factor(2:4) = 0.016
+       dark_respiration_factor(2:4) = 0.014
        Rd0(2:4) = dark_respiration_factor(2:4) * Vm0(2:4) * Vm_q10(2:4) / Rd_q10(2:4)
        leaf_turnover_rate(2:4) = 365. / exp(-0.673 * log(Vm0(2:4) * vm_q10(2:4) * SLA(2:4) / 2000.) + 5.13)
 
@@ -2782,14 +2782,14 @@ subroutine init_pft_alloc_params()
                ! hgt_ref is used as the coeffient over the second order of ln(D)
 
                ! assume the environmental factor is zero for moist tropical forests
-               b1Ht(ipft) = 0.893
-               b2Ht(ipft) = 0.76
-               hgt_ref(ipft) = -0.034
+!               b1Ht(ipft) = 0.893
+!               b2Ht(ipft) = 0.76
+!               hgt_ref(ipft) = -0.034
 
 
                ! old Feldpausch
-!               b1Ht   (ipft) = 1.3760
-!               b2Ht   (ipft) = 0.4854
+               b1Ht   (ipft) = 1.3760
+               b2Ht   (ipft) = 0.4854
                !----- hgt_ref is not used. ---------------------------------------------------!
                ! hgt_ref(ipft) = 0.0
             end if
@@ -2810,12 +2810,12 @@ subroutine init_pft_alloc_params()
                !----- Regular log-log fit, b1 is the intercept and b2 is the slope. ----------!
 
                ! assume the environmental factor is zero for moist tropical forests
-               b1Ht(ipft) = 0.893
-               b2Ht(ipft) = 0.76
-               hgt_ref(ipft) = -0.034
+!               b1Ht(ipft) = 0.893
+!               b2Ht(ipft) = 0.76
+!               hgt_ref(ipft) = -0.034
                ! Using South America values from the reference
-               !b1Ht   (ipft) = 1.519
-               !b2Ht   (ipft) = 0.4597
+               b1Ht   (ipft) = 1.519
+               b2Ht   (ipft) = 0.4597
                !----- hgt_ref is not used. ---------------------------------------------------!
                ! hgt_ref(ipft) = 0.0
             end if
@@ -2852,7 +2852,7 @@ subroutine init_pft_alloc_params()
    !---------------------------------------------------------------------------------------!
 
    hgt_min(1)     = 0.50
-   hgt_min(2:4)   = 1.30
+   hgt_min(2:4)   = 1.50
    hgt_min(5)     = 0.15
    hgt_min(6)     = 1.50
    hgt_min(7)     = 1.50
@@ -4145,8 +4145,8 @@ subroutine init_pft_derived_params()
        ! from Panama data sets
        ! based on the newest analysis results
        k_pp_sla(2:4) = - (0.214 * log(1./sla(2:4) * 2000.)          - 0.088) / 3.
-       k_pp_vm0(2:4) =   (0.783 * log(Vm0(2:4) * vm_q10(2:4))       - 1.948) / 3. !(0.0156 * (Vm0(2:4) * vm_q10(2:4)) + 0.3) / 4.
-       k_pp_rd0(2:4) =   (0.534 * log(Rd0(2:4) * rd_q10(2:4))       + 0.625) / 3.
+       k_pp_vm0(2:4) =   (0.808 * log(Vm0(2:4) * vm_q10(2:4))       - 2.22) / 3. !(0.0156 * (Vm0(2:4) * vm_q10(2:4)) + 0.3) / 4.
+       k_pp_rd0(2:4) =   (0.828 * log(Rd0(2:4) * rd_q10(2:4))       + 1.40) / 3.
        !! now k_pp_rd0 actually means k_pp_rd2vc
        !k_pp_rd0(2:4) =   (0.924 * log(dark_respiration_factor(2:4)) + 3.89 ) / 4.!(0.618 * log(dark_respiration_factor(2:4)) + 2.16) / 4.
        k_pp_ll(2:4) =    (0.533 * log(Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 0.254) / 3.!(0.954 * (Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 1.17) / 4.
