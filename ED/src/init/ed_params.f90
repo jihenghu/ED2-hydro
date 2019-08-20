@@ -3028,12 +3028,12 @@ subroutine init_pft_alloc_params()
                !     Ecology 96:1445-1445                                                     !
                !   Note that here b1Bl, b2Bl, and b2Bl_hite yields leaf area estimate         !
                !------------------------------------------------------------------------------!
-               b1Bl_large(ipft) = exp(-1.363 + 0.53 * 0.59)
-               b2Bl_large(ipft) = 1.155
-               b2Bl_hite(ipft) = 0.588
-               !b1Bl_large (ipft) = exp(-1.3584 + 0.5 * 0.54539)
-               !b2Bl_large (ipft) = 1.1979
-               !b2Bl_hite  (ipft) = 0.5511
+               b1Bl_large (ipft) = exp(-0.5662 + 0.6779 * log(rho(ipft)) + 0.5 * 0.3772)
+               b2Bl_large (ipft) = 1.338
+               b2Bl_hite  (ipft) = 0.4023
+!               b1Bl_large(ipft) = exp(-1.334 + 0.50 * 0.569)
+!               b2Bl_large(ipft) = 1.178
+!               b2Bl_hite(ipft) = 0.5513
                b1Bl_small (ipft) = b1Bl_large(ipft)
                b2Bl_small (ipft) = b2Bl_large(ipft)
                
