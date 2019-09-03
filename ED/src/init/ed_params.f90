@@ -1985,7 +1985,7 @@ subroutine init_pft_resp_params()
    !umol/kgC/s
    !
     root_respiration_factor(2:4) = 2.5
-    stem_respiration_factor(1:17) = 10. ** (-0.672 - 0.2) / 2.  ! umol/m2 stem area / s  value for tropics
+    stem_respiration_factor(1:17) = 10. ** (-0.672) / 2.  ! umol/m2 stem area / s  value for tropics
     stem_resp_size_factor(1:17) = 0.0041  ! cm-1  value for tropics
     stem_resp_growth_factor(1:17) = 0.5   ! maximum relative increase of stem_resp due to growth for tropics
     ! This is now not used
@@ -2291,7 +2291,13 @@ subroutine init_pft_mort_params()
    select case (ibigleaf)
       case (0)
          seedling_mortality(1)    = 0.95
-         seedling_mortality(2:4)  = 0.95
+         !seedling_mortality(2:4)  = 0.95
+         ! the recuitment rate seems too high
+         ! reduce survival rate to 1/5 of the current value
+         seedling_mortality(2) = 0.99
+         seedling_mortality(3) = 0.98
+         seedling_mortality(4) = 0.97
+
          seedling_mortality(5)    = 0.95
          seedling_mortality(6:15) = 0.95
          seedling_mortality(16)   = 0.95
@@ -2588,9 +2594,9 @@ subroutine init_pft_alloc_params()
 
        ! OLS
        SLA(2:4) = 2000. / exp(0.234 * log(rho(2:4)) + 4.52 + 0.5 * 0.154) ! m2/kgC
-       Vm0(2:4) = exp(-0.53 * log(rho(2:4)) + 3.31 + 0.5 * 0.164) / vm_q10(2:4) ! umol/m2/s @ 15degC
+       Vm0(2:4) = exp(-0.62 * log(rho(2:4)) + 3.31 + 0.5 * 0.18) / vm_q10(2:4) ! umol/m2/s @ 15degC
 
-       dark_respiration_factor(2:4) = 0.014
+       dark_respiration_factor(2:4) = 0.022
        Rd0(2:4) = dark_respiration_factor(2:4) * Vm0(2:4) * Vm_q10(2:4) / Rd_q10(2:4)
        leaf_turnover_rate(2:4) = 365. / exp(-0.673 * log(Vm0(2:4) * vm_q10(2:4) * SLA(2:4) / 2000.) + 5.13)
 
@@ -2640,8 +2646,10 @@ subroutine init_pft_alloc_params()
 
    if (iallom == 3 .or. iallom == 4) then
        ! based on Falster et al. 2018 root_mass to leaf area ratio
-       q(2:4) = 0.07 / 2. * SLA(2:4)
-       print*,'q',q(2:4)
+       !q(2:4) = 0.07 / 2. * SLA(2:4)
+
+       ! in order to match observed fine root biomass in BCI ~ 0.15kgC/m2
+       q(2:4) = 1.5
    endif
 
    sapwood_ratio(1:17) = 3900.0
@@ -3028,12 +3036,12 @@ subroutine init_pft_alloc_params()
                !     Ecology 96:1445-1445                                                     !
                !   Note that here b1Bl, b2Bl, and b2Bl_hite yields leaf area estimate         !
                !------------------------------------------------------------------------------!
-               b1Bl_large (ipft) = exp(-0.5662 + 0.6779 * log(rho(ipft)) + 0.5 * 0.3772)
-               b2Bl_large (ipft) = 1.338
-               b2Bl_hite  (ipft) = 0.4023
-!               b1Bl_large(ipft) = exp(-1.334 + 0.50 * 0.569)
-!               b2Bl_large(ipft) = 1.178
-!               b2Bl_hite(ipft) = 0.5513
+!               b1Bl_large (ipft) = exp(-0.5662 + 0.6779 * log(rho(ipft)) + 0.5 * 0.3772)
+!               b2Bl_large (ipft) = 1.338
+!               b2Bl_hite  (ipft) = 0.4023
+               b1Bl_large(ipft) = exp(-1.363 + 0.50 * 0.53)
+               b2Bl_large(ipft) = 1.155
+               b2Bl_hite(ipft) = 0.588
                b1Bl_small (ipft) = b1Bl_large(ipft)
                b2Bl_small (ipft) = b2Bl_large(ipft)
                
@@ -4145,11 +4153,11 @@ subroutine init_pft_derived_params()
        ! from Panama data sets
        ! based on the newest analysis results
        k_pp_sla(2:4) = - (0.214 * log(1./sla(2:4) * 2000.)          - 0.088) / 3.
-       k_pp_vm0(2:4) =   (0.808 * log(Vm0(2:4) * vm_q10(2:4))       - 2.22) / 3. !(0.0156 * (Vm0(2:4) * vm_q10(2:4)) + 0.3) / 4.
-       k_pp_rd0(2:4) =   (0.828 * log(Rd0(2:4) * rd_q10(2:4))       + 1.40) / 3.
+       k_pp_vm0(2:4) =   (0.811 * log(Vm0(2:4) * vm_q10(2:4))       - 2.22) / 3. !(0.0156 * (Vm0(2:4) * vm_q10(2:4)) + 0.3) / 4.
+       k_pp_rd0(2:4) =   (0.559 * log(Rd0(2:4) * rd_q10(2:4))       + 0.82) / 3.
        !! now k_pp_rd0 actually means k_pp_rd2vc
        !k_pp_rd0(2:4) =   (0.924 * log(dark_respiration_factor(2:4)) + 3.89 ) / 4.!(0.618 * log(dark_respiration_factor(2:4)) + 2.16) / 4.
-       k_pp_ll(2:4) =    (0.533 * log(Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 0.254) / 3.!(0.954 * (Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 1.17) / 4.
+       k_pp_ll(2:4) =    (0.504 * log(Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 0.401) / 3.!(0.954 * (Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 1.17) / 4.
 
        print*,k_pp_sla(2:4)
        print*,k_pp_vm0(2:4)

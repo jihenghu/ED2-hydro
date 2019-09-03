@@ -188,7 +188,8 @@ Contains
       real(kind=4)                :: greeness           ! Leaf "Greeness"           [   0 to 1]
       real(kind=4)                :: last_gJ_in
       real(kind=4)                :: last_gV_in
-      real           ,parameter   :: Jmax_vmhor_coef = 5./7.  ! fraction of Jmax  vmhor to Vcmax vmhor estimated from Kattge et al. 2007
+      real           ,parameter   :: Jmax_vmhor_coef = 0.7  ! fraction of Jmax  vmhor to Vcmax vmhor estimated from Kattge et al. 2007 and Slot et al. 2017
+      real           ,parameter   :: Jmax_q10_coef = 0.8  ! fraction of Jmax  vmhor to Vcmax Q10
       integer                     :: k
       logical                     :: is_resolvable
       logical, parameter          :: debug_flag = .false.
@@ -299,7 +300,7 @@ Contains
 
           Jmax15 = Jmax25 &
                  /  mod_collatz(298.15,                 &
-                        vm_q10(ipft),                   & ! assume Jmax has the same q10 as Vcmax
+                        vm_q10(ipft) * Jmax_q10_coef, & ! assume Jmax has the same q10 as Vcmax
                         vm_low_temp(ipft),              &
                         vm_high_temp(ipft),             &
                         vm_decay_e(ipft),               &
@@ -316,7 +317,7 @@ Contains
 
           Jmax = Jmax15                                &
                * mod_collatz(leaf_temp,                &
-                     vm_q10(ipft),                     &
+                     vm_q10(ipft) * Jmax_q10_coef,     &
                      vm_low_temp(ipft),                &
                      vm_high_temp(ipft),               &
                      vm_decay_e(ipft),                 &

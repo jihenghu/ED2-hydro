@@ -832,7 +832,9 @@ subroutine leaftw_derivs(mzg,initp,dinitp,csite,ipa,dt,is_hybrid)
             dinitp%veg_energy(ico)     = dinitp%veg_energy(ico)        + qloss
             initp%hflx_lrsti(ico)      = initp%hflx_lrsti(ico)         + qloss
 
-            dinitp%wood_energy(ico)    = dinitp%wood_energy(ico)       + qloss
+            if (initp%wood_resolvable(ico)) then
+                dinitp%wood_energy(ico)    = dinitp%wood_energy(ico)       + qloss
+            endif
 
             !Count the total loss from the layer
             wloss_tot = wloss_tot + wloss
@@ -1945,24 +1947,35 @@ subroutine canopy_derivs_two(mzg,initp,dinitp,csite,ipa,hflxsc,wflxsc,qwflxsc,hf
           dinitp%wood_water_int(ico) = -wflux_wl 
           ! soil water uptake will be accounted for later in leaftw_derivs
 
+          
           ! then deal with energy
           if (plant_hydro_scheme > 0) then
               ! track changes in energy and hcap
               qwflux_wl = wflux_wl * tl2uint8(initp%wood_temp(ico),1.d0)
-              dinitp%leaf_energy(ico) = dinitp%leaf_energy(ico) + qwflux_wl ! Energy in sapflow
-              dinitp%wood_energy(ico) = dinitp%wood_energy(ico) - qwflux_wl ! Energy in sapflow
+              
+              if (initp%leaf_resolvable(ico)) then
+                  dinitp%leaf_energy(ico) = dinitp%leaf_energy(ico) + qwflux_wl ! Energy in sapflow
+              endif
+              if (initp%wood_resolvable(ico)) then
+                  dinitp%wood_energy(ico) = dinitp%wood_energy(ico) - qwflux_wl ! Energy in sapflow
+              endif
           else if (plant_hydro_scheme <  0) then
               ! not track changes in hcap. We have to force wflux_wl to be the
               ! same as transp when calculating energy fluxes
               qwflux_wl = transp * tl2uint8(initp%wood_temp(ico),1.d0)
-              dinitp%leaf_energy(ico) = dinitp%leaf_energy(ico) + qwflux_wl ! Energy in sapflow
+
+              if (initp%leaf_resolvable(ico)) then
+                dinitp%leaf_energy(ico) = dinitp%leaf_energy(ico) + qwflux_wl ! Energy in sapflow
+              endif
 
               ! Similarly, we have to force wflux_wl to be the same as wflux_gw
               ! when calculating energy fluxes for wood
               qwflux_wl = dble(cpatch%wflux_gw(ico))                        &
                         * dble(cpatch%nplant(ico))                          &
                         * tl2uint8(initp%wood_temp(ico),1.d0)
-              dinitp%wood_energy(ico) = dinitp%wood_energy(ico) - qwflux_wl ! Energy in sapflow
+              if (initp%wood_resolvable(ico)) then
+                  dinitp%wood_energy(ico) = dinitp%wood_energy(ico) - qwflux_wl ! Energy in sapflow
+              endif
           endif
 
 
