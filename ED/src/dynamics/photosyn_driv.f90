@@ -562,6 +562,8 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,ntext_soil                  
              )
 
                 else
+
+
             call katul_lphys(              & !
                csite%can_prss(ipa)         & ! Canopy air pressure              [       Pa]
              , csite%can_shv(ipa)          & ! Canopy air sp. humidity          [    kg/kg]
@@ -651,8 +653,7 @@ subroutine canopy_photosynthesis(csite,cmet,mzg,ipa,ntext_soil                  
             case (4)
                ! down_regulate photosynthetic parameters using leaf water
                ! potential
-               ! set fsw as 1.
-               cpatch%fsw(ico) = 1.
+                cpatch%fsw(ico) = 1.
 
             end select
             !------------------------------------------------------------------------------!

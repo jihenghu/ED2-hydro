@@ -2208,7 +2208,7 @@ subroutine init_pft_mort_params()
    !---------------------------------------------------------------------------------------!
    !      Hydraulic failure mortality parameters                                           !
    !---------------------------------------------------------------------------------------!
-   mort_plc_max (1:17) = 12.0
+   mort_plc_max (1:17) = 1.0 ! die in one year
    mort_plc_th  (1:17) = 0.6 ! estimated from Adams et al.   
    
 
@@ -2290,12 +2290,13 @@ subroutine init_pft_mort_params()
    !---------------------------------------------------------------------------------------!
    select case (ibigleaf)
       case (0)
-         seedling_mortality(1)    = 0.95
+         !seedling_mortality(1)    = 0.95
          !seedling_mortality(2:4)  = 0.95
          ! the recuitment rate seems too high
          ! reduce survival rate to 1/5 of the current value
+         seedling_mortality(1) = 0.99
          seedling_mortality(2) = 0.99
-         seedling_mortality(3) = 0.98
+         seedling_mortality(3) = 0.97
          seedling_mortality(4) = 0.97
 
          seedling_mortality(5)    = 0.95
@@ -2541,9 +2542,9 @@ subroutine init_pft_alloc_params()
 !       rho(3) = 0.615
 !       rho(4) = 0.79
        ! Pan-tropical
-       rho(2) = 0.4
-       rho(3) = 0.6
-       rho(4) = 0.8
+       rho(2) = 0.45
+       rho(3) = 0.75
+       rho(4) = 0.85
    else if (iallom == 4) then
        ! HKK
        rho(2) = 0.5
@@ -2649,7 +2650,7 @@ subroutine init_pft_alloc_params()
        !q(2:4) = 0.07 / 2. * SLA(2:4)
 
        ! in order to match observed fine root biomass in BCI ~ 0.15kgC/m2
-       q(2:4) = 1.5
+       q(1:4) = 1.5
    endif
 
    sapwood_ratio(1:17) = 3900.0
@@ -2860,7 +2861,7 @@ subroutine init_pft_alloc_params()
    !---------------------------------------------------------------------------------------!
 
    hgt_min(1)     = 0.50
-   hgt_min(2:4)   = 1.50
+   hgt_min(2:4)   = 1.30 ! allow the tallest grass to shade seedlings
    hgt_min(5)     = 0.15
    hgt_min(6)     = 1.50
    hgt_min(7)     = 1.50
@@ -4012,7 +4013,7 @@ subroutine init_pft_repro_params()
    use ed_misc_coms, only : iallom    ! ! intent(in)
    implicit none
 
-   r_fract(1)              = 0.3
+   r_fract(1)              = 0.4 !0.3
    r_fract(2:4)            = 0.4 !0.3
    r_fract(5)              = 0.3
    r_fract(6:11)           = 0.3

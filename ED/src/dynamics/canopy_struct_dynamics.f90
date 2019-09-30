@@ -1007,7 +1007,6 @@ module canopy_struct_dynamics
          !---------------------------------------------------------------------------------!
 
 
-
          !---------------------------------------------------------------------------------!
          !      Get ustar for the ABL, assume it is a dynamic shear layer that generates a !
          ! logarithmic profile of velocity.                                                !
@@ -2219,6 +2218,7 @@ module canopy_struct_dynamics
                lyrhalf      = 5.d-1 * canstr(ibuff)%lad8(k) * canstr(ibuff)%cdrag8(k) /    &
                      canstr(ibuff)%pshelter8(k) * dzcan8(k)
                canstr(ibuff)%cumldrag8(k) = ldga_bk + lyrhalf
+
                ldga_bk      = ldga_bk + 2.d0 * lyrhalf
                !---------------------------------------------------------------------------!
             end do
@@ -2267,7 +2267,6 @@ module canopy_struct_dynamics
          initp%veg_displace = max( vh2dh8 * veg_height_min8, d0ohgt * initp%veg_height)
          initp%rough        = max( vh2vr8 * veg_height_min8, z0ohgt * initp%veg_height)
          !---------------------------------------------------------------------------------!
-
 
          !----- Calculate ustar, tstar, qstar, and cstar. ---------------------------------!
          call ed_stars8(rk4site%atm_theta,initp%atm_enthalpy,rk4site%atm_shv             &

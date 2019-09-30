@@ -24,6 +24,7 @@ module mortality
                                , mort_plc_max               & ! intent(in)
                                , mort_plc_th                & ! intent(in)
                                , plant_min_temp             & ! intent(in)
+                               , is_grass                   & ! intent(in)
                                , frost_mort                 ! ! intent(in)
       use disturb_coms  , only : treefall_disturbance_rate  & ! intent(in)
                                , treefall_hite_threshold    & ! intent(in)
@@ -149,6 +150,10 @@ module mortality
       cpatch%mort_rate(7,ico) = mort_alpha(ipft) * exp(expmort)
 
       end select
+
+      ! For grasses set mort_rate(6) to zero because they don't have woody stem
+      ! the hydraulic failure mortality should not apply to them.
+      if (is_grass(ipft)) cpatch%mort_rate(6,ico) = 0.
 
       return
    end subroutine mortality_rates
@@ -366,13 +371,13 @@ module mortality
       ! local variables
       real                                      :: slope, intercept
 
-      ! Here we assume the mort rate when plc is 100% (all conductance is lost) is 365 (die in one
-      ! day)
+      ! Here we assume the mort rate when plc is 100% (all conductance is lost) is 12 (die in one
+      ! month)
 
       ! the mort rate when plc == mort_plc_th is mort_plc_max (die in one year by default)
 
       ! we then extrapolate it linearly in log space
-      slope = (log(365.) - log(mort_plc_max(ipft))) / (log(1.) - log(mort_plc_th(ipft)))
+      slope = (log(12.) - log(mort_plc_max(ipft))) / (log(1.) - log(mort_plc_th(ipft)))
       intercept = log(mort_plc_max(ipft)) - slope * log(mort_plc_th(ipft))
 
       if (plc <= 0.) then

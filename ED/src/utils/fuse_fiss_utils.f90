@@ -2988,8 +2988,10 @@ module fuse_fiss_utils
       !----- Make sure that crown area is bounded. ----------------------------------------!
       cpatch%crown_area (recc) = min(1.,cpatch%crown_area(recc)  + cpatch%crown_area(donc))
       !------------------------------------------------------------------------------------!
-      ! update SLA using the new lai, bleaf, and nplant
-      if (cpatch%bleaf(recc) * cpatch%nplant(recc) > 0.) then
+
+      ! update SLA using the new lai, bleaf, and nplant so that they are consistent
+      if ((cpatch%lai(recc) > tiny_num) .and.                                              &
+          (cpatch%bleaf(recc) * cpatch%nplant(recc) > tiny_num)) then
           cpatch%sla         (recc) = cpatch%lai(recc)                                     &
                                     / (cpatch%bleaf(recc) * cpatch%nplant(recc))
       else

@@ -113,7 +113,7 @@ ifeq ($(KIND_COMP),C)
    USE_INTERF=1
    F_OPTS= -FR -O0 -recursive  -check all,noarg_temp_created -g -debug extended            \
            -debug-parameters all -fpe0 -no-ftz -traceback -ftrapuv -fp-stack-check         \
-           -implicitnone -assume byterecl -qopenmp -static
+           -implicitnone -assume byterecl -qopenmp -diag-error=all -static
    C_OPTS= -O0 -DLITTLE  -g -traceback -qopenmp -static
    LOADER_OPTS=-FR -O0 -recursive  -check all,noarg_temp_created -g -debug extended        \
                -debug-parameters all -fpe0 -no-ftz -traceback -ftrapuv -fp-stack-check     \

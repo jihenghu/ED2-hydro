@@ -374,7 +374,13 @@ Contains
           ko = exp(20.30-36380./(8.314* leaf_temp ))
 
       end select
+
+      ! for C4 pathway set cp and kc to zero
     
+      if (photosyn_pathway(ipft) == 4) then
+          cp = 0.
+          kc = 0.
+      endif
       !------------------------------------------------------------------------------------!
 
       ! calculate greeness
@@ -414,14 +420,10 @@ Contains
 
       ! initialize limit_flag as 0
       limit_flag      = 0
+
       ! Solve the quadratic function for light-limited photosynthesis
-      if (photosyn_pathway(ipft) == 3) then
-          Jrate = ((Jmax+0.385*par) -   &
-                  sqrt((Jmax+0.385*par)**2-4.*0.7*0.385*Jmax*par))/1.4
-      elseif (photosyn_pathway(ipft) == 4) then
-          ! this is still under test
-          Jrate = quantum_efficiency(ipft) * par  
-      endif
+      Jrate = ((Jmax+0.385*par) -   &
+              sqrt((Jmax+0.385*par)**2-4.*0.7*0.385*Jmax*par))/1.4
 
       ! calcualte aerodynamic resistance
       if (leaf_gbw > 0.) then
@@ -1076,6 +1078,7 @@ Contains
                            ci,fc,fe,dcidg,dfcdg,dfedg)
     use physiology_coms, only : gbw_2_gbc                & ! intent(in)
                               , gsw_2_gsc                ! ! intent(in)
+    use consts_coms,     only : tiny_num                 ! ! intent(in)
     implicit none
     real, intent(in) :: g,ra,ca,lambda,delta_vpr,k1,k2,k3,k4
     real, intent(out) :: ci,fc,fe,dcidg,dfcdg,dfedg
@@ -1096,8 +1099,19 @@ Contains
     ! calculate dcidg, dfcdg and dfedg
     
     rad = sqrt((k1/g+k2)**2-4.*(k3/g+k4))
-    dcidg = ca * (0.5*k1/g**2 +   &
-         0.25/rad*(-2.*k1**2/g**3-2.*k1*k2/g**2+4.*k3/g**2))
+
+    if ( abs(rad) .lt. tiny_num) then
+        ! rad is effectively zero
+        ! ignore rad when calculdating dcidg
+        dcidg = ca * 0.5 * k1 / (g ** 2)
+    else
+        dcidg = ca * 0.5 * ( k1 / (g ** 2) +   &
+                 (-1.* k1**2 / g**3 - 1.*k1*k2/g**2 + 2.*k3/g**2) / rad)
+    endif
+
+
+!    dcidg = ca * (0.5*k1/g**2 +   &
+!         0.25/rad*(-2.*k1**2/g**3-2.*k1*k2/g**2+4.*k3/g**2))
     dfcdg = ((1./g+ra)*(-dcidg) - (ca-ci)*(-1./g**2))/(1./g+ra)**2
     
     dfedg = lambda / gsw_2_gsc * delta_vpr / &
@@ -1112,6 +1126,7 @@ Contains
                            ci_V,fc_V,ci_J,fc_J,ci,fc,fe,dcidg,dfcdg,dfedg,limit_flag)
     use physiology_coms, only : gbw_2_gbc                & ! intent(in)
                               , gsw_2_gsc                ! ! intent(in)
+    use consts_coms,     only : tiny_num                 ! ! intent(in)
     implicit none
     real, intent(in) :: g,ra,ca,lambda,delta_vpr,k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J
     real, intent(out) :: ci_V,fc_V,ci_J,fc_J,ci,fc,fe,dcidg,dfcdg,dfedg
@@ -1174,8 +1189,15 @@ Contains
     fe = lambda / (1./g * 1./gsw_2_gsc + ra * 1./gbw_2_gbc) * delta_vpr
     
     rad = sqrt((k1/g+k2)**2-4.*(k3/g+k4))
-    dcidg = ca * (0.5*k1/g**2 +   &
-         0.25/rad*(-2.*k1**2/g**3-2.*k1*k2/g**2+4.*k3/g**2))
+    if ( abs(rad) .lt. tiny_num) then
+        ! rad is effectively zero
+        ! ignore rad when calculdating dcidg
+        dcidg = ca * 0.5 * k1 / (g ** 2)
+    else
+        dcidg = ca * 0.5 * ( k1 / (g ** 2) +   &
+                 (-1.* k1**2 / g**3 - 1.*k1*k2/g**2 + 2.*k3/g**2) / rad)
+    endif
+
     dfcdg = ((1./g+ra)*(-dcidg) - (ca-ci)*(-1./g**2))/(1./g+ra)**2
     
     dfedg = lambda / gsw_2_gsc * delta_vpr / &

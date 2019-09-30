@@ -1192,8 +1192,16 @@ module growth_balive
                ! to the current biomass of each the pools.                                 !
                !---------------------------------------------------------------------------!
                bloss_max   = cpatch%bleaf(ico) + cpatch%broot(ico)
-               f_bleaf     = cpatch%bleaf    (ico) / bloss_max
-               f_broot     = cpatch%broot    (ico) / bloss_max
+               if (abs(bloss_max) < tiny_num ) then
+                   ! bloss_max is zero
+                   ! just set f_bleaf and f_broot to 1.
+                   ! use all the carbon for carbon_debt
+                   f_bleaf = 1.
+                   f_broot = 1.
+               else
+                   f_bleaf     = cpatch%bleaf    (ico) / bloss_max
+                   f_broot     = cpatch%broot    (ico) / bloss_max
+               endif
 
                if (bloss_max > carbon_debt) then
                   !----- Remove biomass accordingly. --------------------------------------!
@@ -1222,8 +1230,17 @@ module growth_balive
             ! storage.                                                                     !
             !------------------------------------------------------------------------------!
             bloss_max   = cpatch%bleaf(ico) + cpatch%broot(ico)
-            f_bleaf     = cpatch%bleaf    (ico) / bloss_max
-            f_broot     = cpatch%broot    (ico) / bloss_max
+
+            if (abs(bloss_max) < tiny_num ) then
+                ! bloss_max is zero
+                ! just set f_bleaf and f_broot to 1.
+                ! use all the carbon for carbon_debt
+                f_bleaf = 1.
+                f_broot = 1.
+            else
+                f_bleaf     = cpatch%bleaf    (ico) / bloss_max
+                f_broot     = cpatch%broot    (ico) / bloss_max
+            endif
 
             if (bloss_max > carbon_debt) then
                !----- Remove biomass accordingly. -----------------------------------------!
