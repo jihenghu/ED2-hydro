@@ -243,9 +243,17 @@ Contains
                                   vm_decay_e(ipft),       &
                                   .true.)
 
-          Jmax25 = Vcmax25 * 1.97 ! Leuning 1997, Wullschlegger et al. 1991
-                                  ! Other values like 1.67 is also reported
-                                  ! based on the temperature dependence used
+          if (photosyn_pathway(ipft) == 4) then
+              ! C4
+              Jmax25 = 4 * Vcmax25
+          else
+              ! C3
+              Jmax25 = Vcmax25 * 1.97
+          endif
+
+!          Jmax25 = Vcmax25 * 1.97 ! Leuning 1997, Wullschlegger et al. 1991
+!                                  ! Other values like 1.67 is also reported
+!                                  ! based on the temperature dependence used
 
           Jmax15 = Jmax25 &
                  /  mod_arrhenius(298.15,                 &
@@ -294,9 +302,16 @@ Contains
                                 vm_decay_e(ipft),       &
                                 .true.)
 
-          Jmax25 = Vcmax25 * 1.97 ! Leuning 1997, Wullschlegger et al. 1991
-                                  ! Other values like 1.67 is also reported
-                                  ! based on the temperature dependence used
+          if (photosyn_pathway(ipft) == 4) then
+              ! C4
+              Jmax25 = 4 * Vcmax25
+          else
+              ! C3
+              Jmax25 = Vcmax25 * 1.97
+          endif
+!          Jmax25 = Vcmax25 * 1.97 ! Leuning 1997, Wullschlegger et al. 1991
+!                                  ! Other values like 1.67 is also reported
+!                                  ! based on the temperature dependence used
 
           Jmax15 = Jmax25 &
                  /  mod_collatz(298.15,                 &
@@ -345,7 +360,13 @@ Contains
                                      58.52,          & ! Hv
                                      0.710,          & ! Sv
                                      220.0)            ! Hd
-          Jmax25 = Vcmax25 * 1.97
+          if (photosyn_pathway(ipft) == 4) then
+              ! C4
+              Jmax25 = 4 * Vcmax25
+          else
+              ! C3
+              Jmax25 = Vcmax25 * 1.97
+          endif
 
           ! calculate the Vcmax Jmax and Rd at current T
           Vcmax = Vcmax25                                 &
