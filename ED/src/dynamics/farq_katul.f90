@@ -245,7 +245,7 @@ Contains
 
           if (photosyn_pathway(ipft) == 4) then
               ! C4
-              Jmax25 = 4 * Vcmax25
+              Jmax25 = 3. * Vcmax25
           else
               ! C3
               Jmax25 = Vcmax25 * 1.97
@@ -304,7 +304,7 @@ Contains
 
           if (photosyn_pathway(ipft) == 4) then
               ! C4
-              Jmax25 = 4 * Vcmax25
+              Jmax25 = 3. * Vcmax25
           else
               ! C3
               Jmax25 = Vcmax25 * 1.97
@@ -362,7 +362,7 @@ Contains
                                      220.0)            ! Hd
           if (photosyn_pathway(ipft) == 4) then
               ! C4
-              Jmax25 = 4 * Vcmax25
+              Jmax25 = 3. * Vcmax25
           else
               ! C3
               Jmax25 = Vcmax25 * 1.97
