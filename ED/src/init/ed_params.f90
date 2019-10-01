@@ -1516,7 +1516,8 @@ subroutine init_pft_photo_params()
    Vm_low_temp(16)           =  4.7137          ! subtropical C3 grass
    Vm_low_temp(17)           =  8.0             ! Liana
 
-   Vm_high_temp(1:17)        =  37.5 !45.0 # makes more sense based on Slot et al. 2017 paper
+   Vm_high_temp(1:17)        =  45.0 
+   Vm_high_temp(2:4)        =  37.5 !45.0 # makes more sense based on Slot et al. 2017 paper
    !---------------------------------------------------------------------------------------!
    !    Vm_decay_e is the correction term for high and low temperatures when running the   !
    ! original ED-2.1 correction as in Moorcroft et al. (2001).                             !
@@ -2209,7 +2210,7 @@ subroutine init_pft_mort_params()
    !      Hydraulic failure mortality parameters                                           !
    !---------------------------------------------------------------------------------------!
    mort_plc_max (1:17) = 1.0 ! die in one year
-   mort_plc_th  (1:17) = 0.6 ! estimated from Adams et al.   
+   mort_plc_th  (1:17) = 0.75 ! estimated from Adams et al.   
    
 
 
@@ -2296,7 +2297,7 @@ subroutine init_pft_mort_params()
          ! reduce survival rate to 1/5 of the current value
          seedling_mortality(1) = 0.99
          seedling_mortality(2) = 0.99
-         seedling_mortality(3) = 0.97
+         seedling_mortality(3) = 0.98
          seedling_mortality(4) = 0.97
 
          seedling_mortality(5)    = 0.95
@@ -2543,7 +2544,7 @@ subroutine init_pft_alloc_params()
 !       rho(4) = 0.79
        ! Pan-tropical
        rho(2) = 0.45
-       rho(3) = 0.75
+       rho(3) = 0.65
        rho(4) = 0.85
    else if (iallom == 4) then
        ! HKK
@@ -2877,12 +2878,12 @@ subroutine init_pft_alloc_params()
    hgt_min(17)    = 0.50
    !----- Maximum Height. -----------------------------------------------------------------!
    hgt_max( 1) = 1.50
-   hgt_max( 2) = 50.0
-   hgt_max( 3) = 50.0
-   hgt_max( 4) = 50.0
-   if (iallom == 4) then
-       hgt_max(2:4) = 65.
-   endif
+   hgt_max( 2) = 45.0
+   hgt_max( 3) = 45.0
+   hgt_max( 4) = 45.0
+!   if (iallom == 4) then
+!       hgt_max(2:4) = 65.
+!   endif
 
    hgt_max( 5) = 0.95  * b1Ht( 5)
    hgt_max( 6) = 0.999 * b1Ht( 6)
@@ -3040,9 +3041,9 @@ subroutine init_pft_alloc_params()
 !               b1Bl_large (ipft) = exp(-0.5662 + 0.6779 * log(rho(ipft)) + 0.5 * 0.3772)
 !               b2Bl_large (ipft) = 1.338
 !               b2Bl_hite  (ipft) = 0.4023
-               b1Bl_large(ipft) = exp(-1.363 + 0.50 * 0.53)
-               b2Bl_large(ipft) = 1.155
-               b2Bl_hite(ipft) = 0.588
+               b1Bl_large(ipft) = exp(-1.387 + 0.50 * 0.56)
+               b2Bl_large(ipft) = 1.262
+               b2Bl_hite(ipft) = 0.5097
                b1Bl_small (ipft) = b1Bl_large(ipft)
                b2Bl_small (ipft) = b2Bl_large(ipft)
                
@@ -3771,7 +3772,7 @@ subroutine init_pft_hydro_params()
    ! using rho to determine stoma_lambda would generate unrealistically low gsw for hardwood species
    ! Try using an average value according to Lin et al. 2015
    stoma_lambda(2:4)             = 7.
-   stoma_beta(2:4)               = -1. * 0.8 / MPa2m
+   stoma_beta(2:4)               = 0. ! lambda not changing
 
    stoma_psi_b(1:n_pft)          = leaf_psi_tlp(1:n_pft)   ! default
    stoma_psi_c(1:n_pft)          = 3.
@@ -4013,8 +4014,8 @@ subroutine init_pft_repro_params()
    use ed_misc_coms, only : iallom    ! ! intent(in)
    implicit none
 
-   r_fract(1)              = 0.4 !0.3
-   r_fract(2:4)            = 0.4 !0.3
+   r_fract(1)              = 0.5 !0.3
+   r_fract(2:4)            = 0.5 !0.3
    r_fract(5)              = 0.3
    r_fract(6:11)           = 0.3
    r_fract(12:15)          = 0.3
@@ -4048,7 +4049,7 @@ subroutine init_pft_repro_params()
    nonlocal_dispersal(17)  =  1.000 ! 0.600
 
    repro_min_h(1)          =  0.0
-   repro_min_h(2:4)        = 18.0
+   repro_min_h(2:4)        = 15.0
    repro_min_h(5)          =  0.0
    repro_min_h(6:11)       = 18.0
    repro_min_h(12:15)      =  0.0
