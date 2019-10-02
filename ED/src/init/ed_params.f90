@@ -1517,7 +1517,7 @@ subroutine init_pft_photo_params()
    Vm_low_temp(17)           =  8.0             ! Liana
 
    Vm_high_temp(1:17)        =  45.0 
-   Vm_high_temp(2:4)        =  37.5 !45.0 # makes more sense based on Slot et al. 2017 paper
+   Vm_high_temp(1:4)        =  37.5 !45.0 # makes more sense based on Slot et al. 2017 paper
    !---------------------------------------------------------------------------------------!
    !    Vm_decay_e is the correction term for high and low temperatures when running the   !
    ! original ED-2.1 correction as in Moorcroft et al. (2001).                             !
@@ -2210,7 +2210,7 @@ subroutine init_pft_mort_params()
    !      Hydraulic failure mortality parameters                                           !
    !---------------------------------------------------------------------------------------!
    mort_plc_max (1:17) = 1.0 ! die in one year
-   mort_plc_th  (1:17) = 0.75 ! estimated from Adams et al.   
+   mort_plc_th  (1:17) = 0.7 ! estimated from Adams et al.   
    
 
 
