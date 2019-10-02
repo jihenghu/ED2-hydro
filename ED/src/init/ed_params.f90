@@ -3773,7 +3773,7 @@ subroutine init_pft_hydro_params()
    ! Modified based on Lin et al. 2015
    ! using rho to determine stoma_lambda would generate unrealistically low gsw for hardwood species
    ! Try using an average value according to Lin et al. 2015
-   stoma_lambda(2:4)             = 7.
+   stoma_lambda(2:4)             = 8.
    stoma_beta(2:4)               = 0. ! lambda not changing
 
    stoma_psi_b(1:n_pft)          = leaf_psi_tlp(1:n_pft)   ! default
