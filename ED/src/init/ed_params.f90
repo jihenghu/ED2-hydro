@@ -2210,7 +2210,7 @@ subroutine init_pft_mort_params()
    !      Hydraulic failure mortality parameters                                           !
    !---------------------------------------------------------------------------------------!
    mort_plc_max (1:17) = 1.0 ! die in one year
-   mort_plc_th  (1:17) = 0.7 ! estimated from Adams et al.   
+   mort_plc_th  (1:17) = 0.75 ! estimated from Adams et al.   
    
 
 
@@ -3767,14 +3767,15 @@ subroutine init_pft_hydro_params()
    
    !stoma_lambda(1:n_pft)         = max(3.,(rho(1:n_pft) - 0.25) * 15. + 3.)
    stoma_lambda(1:n_pft)         = max(3.,(rho(1:n_pft) - 0.4) * 10. + 6.)
-   stoma_beta(1:n_pft)           = min(-0.1,(rho(1:n_pft) - 0.25) * 1.5 - 1.0) / MPa2m
    ! Estimated from Manzoni et al. 2011
    
    ! Modified based on Lin et al. 2015
    ! using rho to determine stoma_lambda would generate unrealistically low gsw for hardwood species
    ! Try using an average value according to Lin et al. 2015
    stoma_lambda(2:4)             = 7.
-   stoma_beta(2:4)               = -0.4 / MPa2m
+   !stoma_beta(2:4)               = -0.6 / MPa2m
+   
+   stoma_beta(1:n_pft)           = min(-0.1,(rho(1:n_pft) - 0.45) * 2.0 - 1.0) / MPa2m
 
    stoma_psi_b(1:n_pft)          = leaf_psi_tlp(1:n_pft)   ! default
    stoma_psi_c(1:n_pft)          = 3.
