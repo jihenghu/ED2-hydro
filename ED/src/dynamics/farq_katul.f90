@@ -245,7 +245,7 @@ Contains
 
           if (photosyn_pathway(ipft) == 4) then
               ! C4
-              Jmax25 = 3. * Vcmax25
+              Jmax25 = 1.97 * Vcmax25
           else
               ! C3
               Jmax25 = Vcmax25 * 1.97
@@ -304,7 +304,7 @@ Contains
 
           if (photosyn_pathway(ipft) == 4) then
               ! C4
-              Jmax25 = 3. * Vcmax25
+              Jmax25 = 1.97 * Vcmax25
           else
               ! C3
               Jmax25 = Vcmax25 * 1.97
@@ -362,7 +362,7 @@ Contains
                                      220.0)            ! Hd
           if (photosyn_pathway(ipft) == 4) then
               ! C4
-              Jmax25 = 3. * Vcmax25
+              Jmax25 = 1.97 * Vcmax25
           else
               ! C3
               Jmax25 = Vcmax25 * 1.97
@@ -424,6 +424,8 @@ Contains
           ! parameters are kind of arbitrary from Xu et al. 2016 New Phyt.
           down_factor = max(1e-6,min(1.0, &
                         1. / (1. + (leaf_psi / leaf_psi_tlp(ipft)) ** 6.0)))
+         ! TODO: should use dmax_leaf_psi here because lambda changes at longer time scales to
+         ! represent soil water stress
           lambda =  stoma_lambda(ipft) * can_co2 / 400. * exp(stoma_beta(ipft) * leaf_psi)
       end select
           

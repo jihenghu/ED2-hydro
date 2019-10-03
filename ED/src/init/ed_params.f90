@@ -2191,8 +2191,7 @@ subroutine init_pft_mort_params()
        ! use the new mortality scheme
        do ipft=1,n_pft
           if (is_tropical(ipft) .and.                   &
-              (.not. is_liana(ipft)) .and.              &
-              (.not. is_grass(ipft))) then
+              (.not. is_liana(ipft))) then
               ! the first term for mort3 and mort_alpha is delta_t
               ! multiply -1.2 to mort_beta to convert growth to CB_r
               mort3(ipft) = 0.8998337 * (0.0110928 * (rho(ipft) / 0.6) ** -2.234738)
@@ -2210,7 +2209,7 @@ subroutine init_pft_mort_params()
    !      Hydraulic failure mortality parameters                                           !
    !---------------------------------------------------------------------------------------!
    mort_plc_max (1:17) = 1.0 ! die in one year
-   mort_plc_th  (1:17) = 0.75 ! estimated from Adams et al.   
+   mort_plc_th  (1:17) = 0.6 ! estimated from Adams et al.   
    
 
 
@@ -2295,7 +2294,7 @@ subroutine init_pft_mort_params()
          !seedling_mortality(2:4)  = 0.95
          ! the recuitment rate seems too high
          ! reduce survival rate to 1/5 of the current value
-         seedling_mortality(1) = 0.99
+         seedling_mortality(1) = 0.95
          seedling_mortality(2) = 0.99
          seedling_mortality(3) = 0.98
          seedling_mortality(4) = 0.97
@@ -3767,15 +3766,16 @@ subroutine init_pft_hydro_params()
    
    !stoma_lambda(1:n_pft)         = max(3.,(rho(1:n_pft) - 0.25) * 15. + 3.)
    stoma_lambda(1:n_pft)         = max(3.,(rho(1:n_pft) - 0.4) * 10. + 6.)
+   stoma_beta(1:n_pft)           = min(-0.1,(rho(1:n_pft) - 0.45) * 2.0 - 1.0) / MPa2m
    ! Estimated from Manzoni et al. 2011
    
    ! Modified based on Lin et al. 2015
    ! using rho to determine stoma_lambda would generate unrealistically low gsw for hardwood species
    ! Try using an average value according to Lin et al. 2015
+   stoma_lambda(1)               = 21.
    stoma_lambda(2:4)             = 7.
-   !stoma_beta(2:4)               = -0.6 / MPa2m
+   stoma_beta(1:4)               = 0. / MPa2m
    
-   stoma_beta(1:n_pft)           = min(-0.1,(rho(1:n_pft) - 0.45) * 2.0 - 1.0) / MPa2m
 
    stoma_psi_b(1:n_pft)          = leaf_psi_tlp(1:n_pft)   ! default
    stoma_psi_c(1:n_pft)          = 3.

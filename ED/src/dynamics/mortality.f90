@@ -151,10 +151,6 @@ module mortality
 
       end select
 
-      ! For grasses set mort_rate(6) to zero because they don't have woody stem
-      ! the hydraulic failure mortality should not apply to them.
-      if (is_grass(ipft)) cpatch%mort_rate(6,ico) = 0.
-
       return
    end subroutine mortality_rates
    !=======================================================================================!
