@@ -133,6 +133,7 @@ Contains
       !----- External function. -----------------------------------------------------------!
       real(kind=4)    , external      :: sngloff     ! Safe double -> single precision
       !----- Local Variables    -----------------------------------------------------------!
+      real(kind=4)                :: delta_shv_mol      ! difference in specific humidity [mol/mol]
       real(kind=4)                :: blyr_cond_h2o      ! leaf boundary layer h2o conductance
       real(kind=4)                :: blyr_cond_co2      ! leaf boundary layer co2 conductance
       real(kind=4)                :: stom_cond_h2o      ! leaf stomata h2o conductance
@@ -151,7 +152,7 @@ Contains
       real(kind=4)                :: Rd15               ! current Rdark at 15 degC umol/m2/s
       real(kind=4)                :: Rdark              ! current dark respiration rate umol/m2/s
       real(kind=4)                :: cuticular_gsc      ! current cuticular_conductance for CO2 mol/m2/s
-      real(kind=4)                :: lambda             ! current lambda factor    numo/mol/kPa
+      real(kind=4)                :: lambda             ! current lambda factor    umol CO2 / mol H2O
       real(kind=4)                :: down_factor        ! photosynthetic down-regulation factor
       real(kind=4)                :: aero_resistance    ! aerodynamic resistance
       real(kind=4)                :: accepted_gsc       ! gsc solved from optimization scheme mol/m2/s
@@ -203,9 +204,11 @@ Contains
       !-------------------    Define some constants....
       leaf_o2           = o2_ref * 1000.                             ! convert to mmol/mol
       par               = leaf_par * 4.6                             ! convert to micromol/m2/s
+      ! no need to calculate vpr prss now, just use can_shv and lint_shv
       leaf_temp_degC    = leaf_temp - t00                            ! convert to degC
-      leaf_vpr_prss     = eslf(leaf_temp) * 0.001                    ! in kPa
-      can_vpr_prss      = can_shv * can_prss * 0.001                 ! in kPa
+      !leaf_vpr_prss     = eslf(leaf_temp) * 0.001                    ! in kPa
+      !can_vpr_prss      = can_shv * can_prss * 0.001                 ! in kPa
+      delta_shv_mol = (lint_shv - can_shv) * mmdry / mmh2o
 
       last_gJ_in        = last_gJ
       last_gV_in        = last_gV
@@ -482,13 +485,13 @@ Contains
     rfx_upper = gsc_max * 100. ! a very large value
 
     ! calculate marginal_gain or dfcdg - dfedg for rfx_lower
-    call marginal_gain_all(rfx_lower,aero_resistance,can_co2,lambda,leaf_vpr_prss - can_vpr_prss,  &
+    call marginal_gain_all(rfx_lower,aero_resistance,can_co2,lambda,delta_shv_mol,  &
                         k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,&
                         test_ciV,test_fcV,test_ciJ,test_fcJ,&
                         testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
     rfy_lower = dfcdg - dfedg
     ! do it again for rfx_upper
-    call marginal_gain_all(rfx_upper,aero_resistance,can_co2,lambda,leaf_vpr_prss - can_vpr_prss,  &
+    call marginal_gain_all(rfx_upper,aero_resistance,can_co2,lambda,delta_shv_mol,  &
                            k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,&
                            test_ciV,test_fcV,test_ciJ,test_fcJ,&
                            testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
@@ -518,7 +521,7 @@ Contains
 
             ! update rfx and rfy with Illinois Method
             rfx_new = (rfx_lower * rfy_upper - rfx_upper * rfy_lower) / (rfy_upper - rfy_lower)
-            call marginal_gain_all(rfx_new,aero_resistance,can_co2,lambda,leaf_vpr_prss - can_vpr_prss,  &
+            call marginal_gain_all(rfx_new,aero_resistance,can_co2,lambda,delta_shv_mol,  &
                                 k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,&
                                 test_ciV,test_fcV,test_ciJ,test_fcJ,&
                                 testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
@@ -560,380 +563,12 @@ Contains
 
     test_gsc = min(test_gsc,gsc_max)
 
-    call marginal_gain_all(test_gsc,aero_resistance,can_co2,lambda,leaf_vpr_prss - can_vpr_prss,  &
+    call marginal_gain_all(test_gsc,aero_resistance,can_co2,lambda,delta_shv_mol,  &
                         k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,&
                         test_ciV,test_fcV,test_ciJ,test_fcJ,&
                         testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
     
 
-
-
-!        ! 1. Rubisco-limited photosynthesis
-!        a1gk = Vcmax
-!        a2gk = kc * (1. + leaf_o2 / ko)
-!        k1ci = a1gk / can_co2 - Rdark / can_co2
-!        k2ci = a1gk * aero_resistance / can_co2 - Rdark * aero_resistance / can_co2 - 1. + a2gk / can_co2
-!        k3ci = -a1gk*cp/can_co2/can_co2-Rdark*a2gk/can_co2/can_co2
-!        k4ci = -a1gk*cp/can_co2*aero_resistance/can_co2-Rdark*a2gk/can_co2*aero_resistance/can_co2-a2gk/can_co2
-!       
-!
-!        if(leaf_vpr_prss > can_vpr_prss) then
-!            ! Use newton's method to find the zero point of 
-!            ! start with gsw from last time
-!            !if ((.not. isnan(last_gV)) .and. last_gV > 1e-10) then
-!            !   test_gsc = last_gV
-!            !else
-!               test_gsc = cuticular_gsc
-!            !endif
-!           
-!            do iter_V = 1, iter_max
-!                ! calculate dfcdg - dfedg
-!                call fluxsolver(test_gsc, aero_resistance, can_co2, k1ci, k2ci, k3ci, k4ci, testci, testfc)
-!                call deriv_fc(test_gsc, aero_resistance, k1ci, k2ci, k3ci, k4ci, can_co2, testci, dfcdg)
-!            
-!                dfedg = lambda / gsw_2_gsc * (leaf_vpr_prss - can_vpr_prss) / &
-!                       (1. + gbw_2_gbc/gsw_2_gsc * test_gsc * aero_resistance) ** 2
-!
-!                call deriv_dfcdg(test_gsc, aero_resistance, k1ci, k2ci, k3ci, k4ci,can_co2,testci,dfcdg,d2fcdg2)
-!                d2fedg2 = - 2. * gbw_2_gbc/gsw_2_gsc * aero_resistance / &
-!                          (gbw_2_gbc/gsw_2_gsc * test_gsc * aero_resistance + 1) * dfedg
-!
-!                ! calculate the derivative of dfcdg - dfedg
-!                if (d2fcdg2 - d2fedg2 == 0) then
-!                    delta_g = 0.
-!                else
-!                    delta_g = - (dfcdg - dfedg) / (d2fcdg2 - d2fedg2)
-!                endif
-!
-!                ! control exit
-!
-!                if (abs(dfcdg - dfedg) < 1e-4 .or.                              &  ! converge
-!                    (test_gsc < cuticular_gsc .and. dfcdg-dfedg < 0.) .or.      &  ! close stomatal
-!                    (test_gsc < cuticular_gsc .and. isnan(dfcdg-dfedg)) .or.    &  ! close stomatal
-!                    (test_gsc + delta_g <= 0.)                 .or.             &  ! unrealistic values
-!                    (isnan(delta_g))                           .or.             &  ! unrealistic values
-!                    (delta_g == 0.)                            .or.             &  ! trapped
-!                    (test_gsc > gsc_max .and. dfcdg-dfedg > 0.)                     &  ! fully open stomatal
-!                   ) then
-!                    exit
-!                endif
-!
-!                test_gsc = test_gsc + delta_g
-!
-!            enddo
-!
-!
-!
-!
-!
-!
-!
-!
-!            ! check the case that a negative or no optimal value is found
-!            if (test_gsc < cuticular_gsc .or. isnan(test_gsc)) then 
-!                test_gsc = cuticular_gsc
-!            endif
-!                
-!            ! Check the case that a large gsc value is found
-!            if (test_gsc > gsc_max) then
-!               if (par > 0. .and. dfcdg-dfedg > 0.) then ! light
-!                    test_gsc = gsc_max
-!               else ! dark
-!                    test_gsc = cuticular_gsc 
-!               endif
-!            endif
-!
-!            call fluxsolver(test_gsc, aero_resistance, can_co2, k1ci, k2ci, k3ci, k4ci, testci, testfc)
-!
-!            last_gV = test_gsc
-!            
-!            test_gV = test_gsc
-!            test_fcV = testfc
-!            test_ciV = testci
-!
-!            ! print test_gsc and iter_v from newton
-!            print*,'Vmax'
-!            print*,'org test_gsc',test_gsc, 'org iter', iter_V,'org test_fc',testfc
-!
-!            ! now use regular falsi
-!            ! the purpose is to find a root for dfcdg - lambda * dfedg = 0
-!            ! initial range gsc is cuticular_gsc and gsc_max
-!            rfx_lower = cuticular_gsc
-!            rfx_upper = gsc_max
-!
-!            ! calculate marginal_gain or dfcdg - dfedg for rfx_lower
-!            call marginal_gain(rfx_lower,aero_resistance,can_co2,lambda,leaf_vpr_prss - can_vpr_prss,  &
-!                               k1ci,k2ci,k3ci,k4ci,testci,testfc,testfe,dcidg,dfcdg,dfedg)
-!            rfy_lower = dfcdg - dfedg
-!            ! do it again for rfx_upper
-!            call marginal_gain(rfx_upper,aero_resistance,can_co2,lambda,leaf_vpr_prss - can_vpr_prss,  &
-!                               k1ci,k2ci,k3ci,k4ci,testci,testfc,testfe,dcidg,dfcdg,dfedg)
-!            rfy_upper = dfcdg - dfedg
-!
-!            print*,'init'
-!            print*,'rfx_lower',rfx_lower,'rfy_lower',rfy_lower
-!            print*,'rfx_upper',rfx_upper,'rfy_upper',rfy_upper
-!
-!            iter = 0
-!
-!            ! check whether the y values have the same sign
-!            if (rfy_lower * rfy_upper >= 0.) then
-!                ! In this case, there is no root within the given range
-!                ! if rfy_lower is positive, we take the value of rfx_upper
-!                ! else we take the value of rfx_lower
-!                if  (rfy_lower > 0.) then
-!                    test_gsc = rfx_upper
-!                else
-!                    test_gsc = rfx_lower
-!                endif
-!            else
-!                ! There is at least one root
-!                ! Run regula falsi
-!                rf_side = 0 !
-!                do iter = 1, iter_max
-!                    ! exit condition
-!                    if (abs(rfx_lower - rfx_upper) .le. dg_min) then
-!                        exit
-!                    endif
-!
-!                    ! update rfx and rfy with Illinois Method
-!                    rfx_new = (rfx_lower * rfy_upper - rfx_upper * rfy_lower) / (rfy_upper - rfy_lower)
-!                    call marginal_gain(rfx_new,aero_resistance,can_co2,lambda,leaf_vpr_prss - can_vpr_prss,  &
-!                                       k1ci,k2ci,k3ci,k4ci,testci,testfc,testfe,dcidg,dfcdg,dfedg)
-!                    rfy_new = dfcdg - dfedg
-!
-!                    if (rfy_new * rfy_lower > 0) then
-!                        ! the new point has the same sign as the lower
-!                        ! update the lower
-!                        rfx_lower = rfx_new
-!                        rfy_lower = rfy_new
-!
-!                        ! Illinois Method, improve efficiency
-!                        if (rf_side == -1) then
-!                            rfy_upper = rfy_upper / 2.
-!                        endif
-!
-!                        rf_side = -1
-!                    elseif (rfy_new * rfy_upper > 0) then
-!                        ! the new point has the same sign as the upper
-!                        ! update the lower
-!                        rfx_upper = rfx_new
-!                        rfy_upper = rfy_new
-!
-!                        ! Illinois Method, improve efficiency
-!                        if (rf_side == 1) then
-!                            rfy_lower = rfy_lower / 2.
-!                        endif
-!
-!                        rf_side = 1
-!
-!                    else
-!                        ! numerically they are the same
-!                        exit
-!                    endif
-!                enddo
-!
-!                test_gsc = (rfx_lower + rfx_upper) / 2.
-!            endif
-!
-!            call marginal_gain(test_gsc,aero_resistance,can_co2,lambda,leaf_vpr_prss - can_vpr_prss,  &
-!                               k1ci,k2ci,k3ci,k4ci,testci,testfc,testfe,dcidg,dfcdg,dfedg)
-!          
-!            ! print test_gsc and iter_v from rf
-!            print*,'rf test_gsc',test_gsc, 'rf iter', iter,'rf test_fc',testfc
-!        else
-!          ! canopy air is saturated...
-!            test_ciV = can_co2
-!            test_gV = 1000. / aero_resistance
-!            call fluxsolver(test_gV, aero_resistance, can_co2, k1ci, k2ci, k3ci, k4ci, testci,test_fcV)
-!        endif
-!
-!
-!        ! 2. Repeat calculation for light-limited case
-!        Jrate = Jrate * 0.25
-!        a1gk = Jrate
-!        a2gk = 2. * cp
-!        k1ci = a1gk / can_co2 - Rdark / can_co2
-!        k2ci = a1gk * aero_resistance / can_co2 - Rdark * aero_resistance / can_co2 - 1. + a2gk / can_co2
-!        k3ci = -a1gk*cp/can_co2/can_co2-Rdark*a2gk/can_co2/can_co2
-!        k4ci = -a1gk*cp/can_co2*aero_resistance/can_co2-Rdark*a2gk/can_co2*aero_resistance/can_co2-a2gk/can_co2
-!    
-!        if(leaf_vpr_prss > can_vpr_prss)then
-!        ! Use newton's method to find the zero point of 
-!        ! start with gsw from last time
-!            !if ((.not. isnan(last_gJ)) .and. last_gJ > 1e-10) then
-!            !   test_gsc = last_gJ
-!            !else
-!               test_gsc = cuticular_gsc 
-!            !endif
-!
-!            do iter_J = 1, iter_max
-!                ! calculate dfcdg - dfedg
-!                call fluxsolver(test_gsc, aero_resistance, can_co2, k1ci, k2ci, k3ci, k4ci, testci, testfc)
-!                call deriv_fc(test_gsc, aero_resistance, k1ci, k2ci, k3ci, k4ci, can_co2, testci, dfcdg)
-!            
-!                dfedg = lambda / gsw_2_gsc * (leaf_vpr_prss - can_vpr_prss) / &
-!                        (1. + gbw_2_gbc/gsw_2_gsc * test_gsc * aero_resistance) ** 2
-!                
-!
-!                call deriv_dfcdg(test_gsc, aero_resistance, k1ci, k2ci, k3ci, k4ci,can_co2,testci,dfcdg,d2fcdg2)
-!                d2fedg2 = -2. * gbw_2_gbc/gsw_2_gsc * aero_resistance / &
-!                          (gbw_2_gbc/gsw_2_gsc * test_gsc * aero_resistance + 1) * dfedg
-!    
-!                ! calculate the derivative of dfcdg - dfedg
-!                if (d2fcdg2 - d2fedg2 == 0.) then
-!                    delta_g = 0.
-!                else
-!                    delta_g = - (dfcdg - dfedg) / (d2fcdg2 - d2fedg2)
-!                endif
-!
-!                ! control exit
-!                if (abs(dfcdg - dfedg) < 1e-4 .or.                              &   ! converge
-!                    (test_gsc < cuticular_gsc .and. dfcdg-dfedg < 0.) .or.      &   ! close stomatal
-!                    (test_gsc < cuticular_gsc .and. isnan(dfcdg-dfedg)) .or.    &   ! close stomatal
-!                    (test_gsc + delta_g <= 0.)                 .or.             &   ! unrealistic values
-!                    (isnan(delta_g))                           .or.             &   ! unrealistic values
-!                    (delta_g == 0.)                 .or.                        &   ! trapped
-!                    (test_gsc > gsc_max .and. dfcdg-dfedg > 0.)                     &   ! fullyopen stomatal
-!                   ) then
-!                            exit
-!                endif
-!
-!                test_gsc = test_gsc + delta_g
-!
-!            enddo
-!
-!            if (test_gsc < cuticular_gsc .or. isnan(test_gsc)) then
-!                test_gsc = cuticular_gsc
-!            endif
-!            
-!            if (test_gsc > gsc_max) then 
-!                if (par > 0. .and. dfcdg-dfedg>0.) then ! light
-!                    test_gsc = gsc_max
-!                else ! dark
-!                    test_gsc = cuticular_gsc 
-!                endif
-!            endif
-!
-!            call fluxsolver(test_gsc, aero_resistance, can_co2, k1ci, k2ci, k3ci, k4ci, testci, testfc)
-!            last_gJ = test_gsc
-!            test_gJ = test_gsc
-!            test_fcJ = testfc
-!            test_ciJ = testci
-!            ! print test_gsc and iter_v from newton
-!            print*,'Jmax'
-!            print*,'org test_gsc',test_gsc, 'org iter', iter_V,'org test_fc',testfc
-!
-!            ! now use regular falsi
-!            ! the purpose is to find a root for dfcdg - lambda * dfedg = 0
-!            ! initial range gsc is cuticular_gsc and gsc_max
-!            rfx_lower = cuticular_gsc
-!            rfx_upper = gsc_max
-!
-!            ! calculate marginal_gain or dfcdg - dfedg for rfx_lower
-!            call marginal_gain(rfx_lower,aero_resistance,can_co2,lambda,leaf_vpr_prss - can_vpr_prss,  &
-!                               k1ci,k2ci,k3ci,k4ci,testci,testfc,testfe,dcidg,dfcdg,dfedg)
-!            rfy_lower = dfcdg - dfedg
-!            ! do it again for rfx_upper
-!            call marginal_gain(rfx_upper,aero_resistance,can_co2,lambda,leaf_vpr_prss - can_vpr_prss,  &
-!                               k1ci,k2ci,k3ci,k4ci,testci,testfc,testfe,dcidg,dfcdg,dfedg)
-!            rfy_upper = dfcdg - dfedg
-!
-!            print*,'init'
-!            print*,'rfx_lower',rfx_lower,'rfy_lower',rfy_lower
-!            print*,'rfx_upper',rfx_upper,'rfy_upper',rfy_upper
-!
-!            iter = 0
-!
-!            ! check whether the y values have the same sign
-!            if (rfy_lower * rfy_upper >= 0.) then
-!                ! In this case, there is no root within the given range
-!                ! if rfy_lower is positive, we take the value of rfx_upper
-!                ! else we take the value of rfx_lower
-!                if  (rfy_lower > 0.) then
-!                    test_gsc = rfx_upper
-!                else
-!                    test_gsc = rfx_lower
-!                endif
-!            else
-!                ! There is at least one root
-!                ! Run regula falsi
-!                rf_side = 0 !
-!                do iter = 1, iter_max
-!                    ! exit condition
-!                    if (abs(rfx_lower - rfx_upper) .le. dg_min) then
-!                        exit
-!                    endif
-!
-!                    ! update rfx and rfy with Illinois Method
-!                    rfx_new = (rfx_lower * rfy_upper - rfx_upper * rfy_lower) / (rfy_upper - rfy_lower)
-!                    call marginal_gain(rfx_new,aero_resistance,can_co2,lambda,leaf_vpr_prss - can_vpr_prss,  &
-!                                       k1ci,k2ci,k3ci,k4ci,testci,testfc,testfe,dcidg,dfcdg,dfedg)
-!                    rfy_new = dfcdg - dfedg
-!
-!                    if (rfy_new * rfy_lower > 0) then
-!                        ! the new point has the same sign as the lower
-!                        ! update the lower
-!                        rfx_lower = rfx_new
-!                        rfy_lower = rfy_new
-!
-!                        ! Illinois Method, improve efficiency
-!                        if (rf_side == -1) then
-!                            rfy_upper = rfy_upper / 2.
-!                        endif
-!
-!                        rf_side = -1
-!                    elseif (rfy_new * rfy_upper > 0) then
-!                        ! the new point has the same sign as the upper
-!                        ! update the lower
-!                        rfx_upper = rfx_new
-!                        rfy_upper = rfy_new
-!
-!                        ! Illinois Method, improve efficiency
-!                        if (rf_side == 1) then
-!                            rfy_lower = rfy_lower / 2.
-!                        endif
-!
-!                        rf_side = 1
-!
-!                    else
-!                        ! numerically they are the same
-!                        exit
-!                    endif
-!                enddo
-!
-!                test_gsc = (rfx_lower + rfx_upper) / 2.
-!            endif
-!
-!            call marginal_gain(test_gsc,aero_resistance,can_co2,lambda,leaf_vpr_prss - can_vpr_prss,  &
-!                               k1ci,k2ci,k3ci,k4ci,testci,testfc,testfe,dcidg,dfcdg,dfedg)
-!          
-!            ! print test_gsc and iter_v from rf
-!            print*,'rf test_gsc',test_gsc, 'rf iter', iter,'rf test_fc',testfc
-!
-!        else
-!            test_ciJ = can_co2
-!            test_gJ = 1000. / aero_resistance
-!            call fluxsolver(test_gJ, aero_resistance, can_co2, k1ci, k2ci, k3ci, k4ci, testci,test_fcJ)
-!        endif
-!
-!
-!        if(test_fcV < test_fcJ)then
-!            accepted_fc  = test_fcV
-!            accepted_gsc = test_gV
-!            accepted_ci  = test_ciV
-!            limit_flag = 2 ! limited by RuBisCo
-!        else
-!            accepted_fc   = test_fcJ
-!            accepted_gsc  = test_gJ
-!            accepted_ci   = test_ciJ
-!            limit_flag = 1 ! limited by light
-!        endif
-!
-!        ! record output
-!        A_rubp = test_fcV
-!        A_light = test_fcJ
-!        A_co2 = min(A_rubp,A_light)
 
         accepted_fc = testfc
         accepted_ci = testci
@@ -960,7 +595,6 @@ Contains
        write (unit=*,fmt='(a,1x,es12.4)')   ' + PSI_LEAF:            ',leaf_psi
        write (unit=*,fmt='(a,1x,es12.4)')   ' + PAR:                 ',par
        write (unit=*,fmt='(a,1x,es12.4)')   ' + TMP_degC:            ',leaf_temp_degC
-       write (unit=*,fmt='(a,1x,es12.4)')   ' + VPD_kPa:             ',leaf_vpr_prss - can_vpr_prss
        write (unit=*,fmt='(a,1x,es12.4)')   ' + Vcmax25:             ',Vcmax25
        write (unit=*,fmt='(a,1x,es12.4)')   ' + Vcmax:               ',Vcmax
        write (unit=*,fmt='(a,1x,es12.4)')   ' + Jmax25:              ',Jmax25
@@ -1096,14 +730,14 @@ Contains
   !> \brief Calculate the dfcdg - lambda * dfedg or the marginal carbon gain by changing
   !> stomatal conductance
   !---------------------------------------------------------------------------------------!
-  subroutine marginal_gain(g, ra, ca, lambda, delta_vpr,                                &
+  subroutine marginal_gain(g, ra, ca, lambda, delta_shv_mol,                                &
                            k1, k2, k3, k4,                                              &
                            ci,fc,fe,dcidg,dfcdg,dfedg)
     use physiology_coms, only : gbw_2_gbc                & ! intent(in)
                               , gsw_2_gsc                ! ! intent(in)
     use consts_coms,     only : tiny_num                 ! ! intent(in)
     implicit none
-    real, intent(in) :: g,ra,ca,lambda,delta_vpr,k1,k2,k3,k4
+    real, intent(in) :: g,ra,ca,lambda,delta_shv_mol,k1,k2,k3,k4
     real, intent(out) :: ci,fc,fe,dcidg,dfcdg,dfedg
     real :: cip, cim, rad
     
@@ -1117,7 +751,7 @@ Contains
     ci = cip
     
     fc = (ca - ci) / (1./g + ra)
-    fe = lambda / (1./g * 1./gsw_2_gsc + ra * 1./gbw_2_gbc) * delta_vpr
+    fe = lambda / (1./g * 1./gsw_2_gsc + ra * 1./gbw_2_gbc) * delta_shv_mol
 
     ! calculate dcidg, dfcdg and dfedg
     
@@ -1137,13 +771,13 @@ Contains
 !         0.25/rad*(-2.*k1**2/g**3-2.*k1*k2/g**2+4.*k3/g**2))
     dfcdg = ((1./g+ra)*(-dcidg) - (ca-ci)*(-1./g**2))/(1./g+ra)**2
     
-    dfedg = lambda / gsw_2_gsc * delta_vpr / &
+    dfedg = lambda / gsw_2_gsc * delta_shv_mol / &
             (1. + gbw_2_gbc/gsw_2_gsc * g * ra) ** 2
 
     return
   end subroutine marginal_gain
 
-  subroutine marginal_gain_all(g, ra, ca, lambda, delta_vpr,                                &
+  subroutine marginal_gain_all(g, ra, ca, lambda, delta_shv_mol,                                &
                            k1V, k2V, k3V, k4V,                                              &
                            k1J, k2J, k3J, k4J,                                              &
                            ci_V,fc_V,ci_J,fc_J,ci,fc,fe,dcidg,dfcdg,dfedg,limit_flag)
@@ -1151,7 +785,7 @@ Contains
                               , gsw_2_gsc                ! ! intent(in)
     use consts_coms,     only : tiny_num                 ! ! intent(in)
     implicit none
-    real, intent(in) :: g,ra,ca,lambda,delta_vpr,k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J
+    real, intent(in) :: g,ra,ca,lambda,delta_shv_mol,k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J
     real, intent(out) :: ci_V,fc_V,ci_J,fc_J,ci,fc,fe,dcidg,dfcdg,dfedg
     integer, intent(out) :: limit_flag
     real :: cip, cim, rad
@@ -1209,7 +843,7 @@ Contains
     endif
 
     ! calculate fe
-    fe = lambda / (1./g * 1./gsw_2_gsc + ra * 1./gbw_2_gbc) * delta_vpr
+    fe = lambda / (1./g * 1./gsw_2_gsc + ra * 1./gbw_2_gbc) * delta_shv_mol
     
     rad = sqrt((k1/g+k2)**2-4.*(k3/g+k4))
     if ( abs(rad) .lt. tiny_num) then
@@ -1223,7 +857,7 @@ Contains
 
     dfcdg = ((1./g+ra)*(-dcidg) - (ca-ci)*(-1./g**2))/(1./g+ra)**2
     
-    dfedg = lambda / gsw_2_gsc * delta_vpr / &
+    dfedg = lambda / gsw_2_gsc * delta_shv_mol / &
             (1. + gbw_2_gbc/gsw_2_gsc * g * ra) ** 2
 
     return

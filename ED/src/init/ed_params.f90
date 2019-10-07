@@ -1517,7 +1517,7 @@ subroutine init_pft_photo_params()
    Vm_low_temp(17)           =  8.0             ! Liana
 
    Vm_high_temp(1:17)        =  45.0 
-   Vm_high_temp(1:4)        =  37.5 !45.0 # makes more sense based on Slot et al. 2017 paper
+   Vm_high_temp(1:4)        =  45.0!37.5 !45.0 # makes more sense based on Slot et al. 2017 paper
    !---------------------------------------------------------------------------------------!
    !    Vm_decay_e is the correction term for high and low temperatures when running the   !
    ! original ED-2.1 correction as in Moorcroft et al. (2001).                             !
@@ -2598,10 +2598,14 @@ subroutine init_pft_alloc_params()
        !Vm0(2:4) = exp(-1.40 * log(rho(2:4)) + 2.78) / vm_q10(2:4) ! umol/m2/s @ 15degC
 
        ! OLS
-       SLA(2:4) = 2000. / exp(0.234 * log(rho(2:4)) + 4.52 + 0.5 * 0.154) ! m2/kgC
-       Vm0(2:4) = exp(-0.62 * log(rho(2:4)) + 3.31 + 0.5 * 0.18) / vm_q10(2:4) ! umol/m2/s @ 15degC
+       !SLA(2:4) = 2000. / exp(0.234 * log(rho(2:4)) + 4.52 + 0.5 * 0.154) ! m2/kgC
+       !Vm0(2:4) = exp(-0.62 * log(rho(2:4)) + 3.31 + 0.5 * 0.18) / vm_q10(2:4) ! umol/m2/s @ 15degC
 
-       dark_respiration_factor(2:4) = 0.022
+       !Qreg
+       SLA(2:4) = 2000. / exp(0.41 * log(rho(2:4)) + 5.158) ! m2/kgC
+       Vm0(2:4) = exp(-0.308 * log(rho(2:4)) + 4.178) / vm_q10(2:4) ! umol/m2/s @ 15degC
+       
+       dark_respiration_factor(2:4) = 0.014
        Rd0(2:4) = dark_respiration_factor(2:4) * Vm0(2:4) * Vm_q10(2:4) / Rd_q10(2:4)
        leaf_turnover_rate(2:4) = 365. / exp(-0.673 * log(Vm0(2:4) * vm_q10(2:4) * SLA(2:4) / 2000.) + 5.13)
 
@@ -3763,17 +3767,16 @@ subroutine init_pft_hydro_params()
    enddo
 
    ! Parameters related with stomata conductance
-   
-   !stoma_lambda(1:n_pft)         = max(3.,(rho(1:n_pft) - 0.25) * 15. + 3.)
-   stoma_lambda(1:n_pft)         = max(3.,(rho(1:n_pft) - 0.4) * 10. + 6.)
+   ! umol CO2/ mol H2O
+   stoma_lambda(1:n_pft)         = max(3.,(rho(1:n_pft) - 0.4) * 10. + 6.) * 100.
    stoma_beta(1:n_pft)           = min(-0.1,(rho(1:n_pft) - 0.45) * 2.0 - 1.0) / MPa2m
    ! Estimated from Manzoni et al. 2011
    
    ! Modified based on Lin et al. 2015
    ! using rho to determine stoma_lambda would generate unrealistically low gsw for hardwood species
    ! Try using an average value according to Lin et al. 2015
-   stoma_lambda(1)               = 21.
-   stoma_lambda(2:4)             = 7.
+   stoma_lambda(1)               = 300. * 8.
+   stoma_lambda(2:4)             = 1200. * 4.
    stoma_beta(1:4)               = 0. / MPa2m
    
 
