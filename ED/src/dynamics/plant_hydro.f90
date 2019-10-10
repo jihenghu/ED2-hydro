@@ -106,9 +106,9 @@ module plant_hydro
           
           !get relative soil moisture
 
-          wgpfrac = max(soil(nsoil)%soilcp,min(1.0,                                &
-                    csite%soil_water(k,ipa) * csite%soil_fracliq(k,ipa)           &
-                    / soil(nsoil)%slmsts))
+          wgpfrac = min(1.0,                                &
+                    max(soil(nsoil)%soilcp,csite%soil_water(k,ipa) * csite%soil_fracliq(k,ipa))  &
+                    / soil(nsoil)%slmsts)
 
           ! Clapp & Horn curves
           soil_psi(k)  = soil(nsoil)%slpots / wgpfrac ** soil(nsoil)%slbs ! m

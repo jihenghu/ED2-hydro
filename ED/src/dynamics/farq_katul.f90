@@ -80,6 +80,7 @@ Contains
                               , iphysiol                 & ! intent(in)
                               , h2o_plant_lim            & ! intent(in)
                               , o2_ref                   & ! intent(in)
+                              , klowco2                  & ! intent(in)
                               , kco2_refval              & ! intent(in)
                               , kco2_hor                 & ! intent(in)
                               , kco2_q10                 & ! intent(in)
@@ -149,6 +150,7 @@ Contains
       real(kind=4)                :: Jmax25             ! current Jmax at 25 degC umol/m2/s
       real(kind=4)                :: Jmax15             ! current Jmax at 15 degC umol/m2/s
       real(kind=4)                :: Jrate              ! current Jrate umol/m2/s
+      real(kind=4)                :: k_pep              ! Maximum PEP rate for c4 grass
       real(kind=4)                :: Rd15               ! current Rdark at 15 degC umol/m2/s
       real(kind=4)                :: Rdark              ! current dark respiration rate umol/m2/s
       real(kind=4)                :: cuticular_gsc      ! current cuticular_conductance for CO2 mol/m2/s
@@ -401,10 +403,6 @@ Contains
 
       ! for C4 pathway set cp and kc to zero
     
-      if (photosyn_pathway(ipft) == 4) then
-          cp = 0.
-          kc = 0.
-      endif
       !------------------------------------------------------------------------------------!
 
       ! calculate greeness
@@ -425,8 +423,13 @@ Contains
       case (4)
           ! down scale Vcmax, Jmax, lambda using leaf_psi
           ! parameters are kind of arbitrary from Xu et al. 2016 New Phyt.
+          !down_factor = max(1e-6,min(1.0, &
+          !              1. / (1. + (leaf_psi / leaf_psi_tlp(ipft)) ** 6.0)))
+          
+          ! it seems we might down-regulate too much
+          ! now we try to set the down_factor to be 90% when leaf_psi is equal to leaf_psi_tlp
           down_factor = max(1e-6,min(1.0, &
-                        1. / (1. + (leaf_psi / leaf_psi_tlp(ipft)) ** 6.0)))
+                        1. / (1. + 0.1 * (leaf_psi / leaf_psi_tlp(ipft)) ** 6.0)))
          ! TODO: should use dmax_leaf_psi here because lambda changes at longer time scales to
          ! represent soil water stress
           lambda =  stoma_lambda(ipft) * can_co2 / 400. * exp(stoma_beta(ipft) * leaf_psi)
@@ -435,6 +438,13 @@ Contains
 
       Jmax      = Jmax * down_factor * greeness
       Vcmax     = Vcmax * down_factor * greeness
+      k_pep     = 0.
+
+      if (photosyn_pathway(ipft) == 4) then
+          cp = 0.
+          kc = 0.
+          k_pep = klowco2 * Vcmax * 1e-6  ! convert to mol air /m2/s
+      endif
 
       !------------------------------------------------------------------------------------!
 
@@ -486,13 +496,13 @@ Contains
 
     ! calculate marginal_gain or dfcdg - dfedg for rfx_lower
     call marginal_gain_all(rfx_lower,aero_resistance,can_co2,lambda,delta_shv_mol,  &
-                        k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,&
+                        k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep,&
                         test_ciV,test_fcV,test_ciJ,test_fcJ,&
                         testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
     rfy_lower = dfcdg - dfedg
     ! do it again for rfx_upper
     call marginal_gain_all(rfx_upper,aero_resistance,can_co2,lambda,delta_shv_mol,  &
-                           k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,&
+                           k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep,&
                            test_ciV,test_fcV,test_ciJ,test_fcJ,&
                            testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
     rfy_upper = dfcdg - dfedg
@@ -522,7 +532,7 @@ Contains
             ! update rfx and rfy with Illinois Method
             rfx_new = (rfx_lower * rfy_upper - rfx_upper * rfy_lower) / (rfy_upper - rfy_lower)
             call marginal_gain_all(rfx_new,aero_resistance,can_co2,lambda,delta_shv_mol,  &
-                                k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,&
+                                k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep,&
                                 test_ciV,test_fcV,test_ciJ,test_fcJ,&
                                 testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
             rfy_new = dfcdg - dfedg
@@ -564,7 +574,7 @@ Contains
     test_gsc = min(test_gsc,gsc_max)
 
     call marginal_gain_all(test_gsc,aero_resistance,can_co2,lambda,delta_shv_mol,  &
-                        k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,&
+                        k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep,&
                         test_ciV,test_fcV,test_ciJ,test_fcJ,&
                         testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
     
@@ -724,72 +734,74 @@ Contains
   end subroutine deriv_dfcdg
   !======================================================
 
-  !=======================================================================================!
-  !=======================================================================================!
-  ! SUBROUTINE MARGINAL_GAIN
-  !> \brief Calculate the dfcdg - lambda * dfedg or the marginal carbon gain by changing
-  !> stomatal conductance
-  !---------------------------------------------------------------------------------------!
-  subroutine marginal_gain(g, ra, ca, lambda, delta_shv_mol,                                &
-                           k1, k2, k3, k4,                                              &
-                           ci,fc,fe,dcidg,dfcdg,dfedg)
-    use physiology_coms, only : gbw_2_gbc                & ! intent(in)
-                              , gsw_2_gsc                ! ! intent(in)
-    use consts_coms,     only : tiny_num                 ! ! intent(in)
-    implicit none
-    real, intent(in) :: g,ra,ca,lambda,delta_shv_mol,k1,k2,k3,k4
-    real, intent(out) :: ci,fc,fe,dcidg,dfcdg,dfedg
-    real :: cip, cim, rad
-    
-    ! calculate ci, fc and fe
-    
-    rad = sqrt((k1/g+k2)**2 - 4. * (k3/g + k4))
-    
-    cip = ca * (-(k1/g+k2) + rad)/2.
-    cim = ca * (-(k1/g+k2) - rad)/2.
-    
-    ci = cip
-    
-    fc = (ca - ci) / (1./g + ra)
-    fe = lambda / (1./g * 1./gsw_2_gsc + ra * 1./gbw_2_gbc) * delta_shv_mol
-
-    ! calculate dcidg, dfcdg and dfedg
-    
-    rad = sqrt((k1/g+k2)**2-4.*(k3/g+k4))
-
-    if ( abs(rad) .lt. tiny_num) then
-        ! rad is effectively zero
-        ! ignore rad when calculdating dcidg
-        dcidg = ca * 0.5 * k1 / (g ** 2)
-    else
-        dcidg = ca * 0.5 * ( k1 / (g ** 2) +   &
-                 (-1.* k1**2 / g**3 - 1.*k1*k2/g**2 + 2.*k3/g**2) / rad)
-    endif
-
-
-!    dcidg = ca * (0.5*k1/g**2 +   &
-!         0.25/rad*(-2.*k1**2/g**3-2.*k1*k2/g**2+4.*k3/g**2))
-    dfcdg = ((1./g+ra)*(-dcidg) - (ca-ci)*(-1./g**2))/(1./g+ra)**2
-    
-    dfedg = lambda / gsw_2_gsc * delta_shv_mol / &
-            (1. + gbw_2_gbc/gsw_2_gsc * g * ra) ** 2
-
-    return
-  end subroutine marginal_gain
+!  !=======================================================================================!
+!  !=======================================================================================!
+!  ! SUBROUTINE MARGINAL_GAIN
+!  !> \brief Calculate the dfcdg - lambda * dfedg or the marginal carbon gain by changing
+!  !> stomatal conductance
+!  !---------------------------------------------------------------------------------------!
+!  subroutine marginal_gain(g, ra, ca, lambda, delta_shv_mol,                                &
+!                           k1, k2, k3, k4,                                              &
+!                           ci,fc,fe,dcidg,dfcdg,dfedg)
+!    use physiology_coms, only : gbw_2_gbc                & ! intent(in)
+!                              , gsw_2_gsc                ! ! intent(in)
+!    use consts_coms,     only : tiny_num                 ! ! intent(in)
+!    implicit none
+!    real, intent(in) :: g,ra,ca,lambda,delta_shv_mol,k1,k2,k3,k4
+!    real, intent(out) :: ci,fc,fe,dcidg,dfcdg,dfedg
+!    real :: cip, cim, rad
+!    
+!    ! calculate ci, fc and fe
+!    
+!    rad = sqrt((k1/g+k2)**2 - 4. * (k3/g + k4))
+!    
+!    cip = ca * (-(k1/g+k2) + rad)/2.
+!    cim = ca * (-(k1/g+k2) - rad)/2.
+!    
+!    ci = cip
+!    
+!    fc = (ca - ci) / (1./g + ra)
+!    fe = lambda / (1./g * 1./gsw_2_gsc + ra * 1./gbw_2_gbc) * delta_shv_mol
+!
+!    ! calculate dcidg, dfcdg and dfedg
+!    
+!    rad = sqrt((k1/g+k2)**2-4.*(k3/g+k4))
+!
+!    if ( abs(rad) .lt. tiny_num) then
+!        ! rad is effectively zero
+!        ! ignore rad when calculdating dcidg
+!        dcidg = ca * 0.5 * k1 / (g ** 2)
+!    else
+!        dcidg = ca * 0.5 * ( k1 / (g ** 2) +   &
+!                 (-1.* k1**2 / g**3 - 1.*k1*k2/g**2 + 2.*k3/g**2) / rad)
+!    endif
+!
+!
+!!    dcidg = ca * (0.5*k1/g**2 +   &
+!!         0.25/rad*(-2.*k1**2/g**3-2.*k1*k2/g**2+4.*k3/g**2))
+!    dfcdg = ((1./g+ra)*(-dcidg) - (ca-ci)*(-1./g**2))/(1./g+ra)**2
+!    
+!    dfedg = lambda / gsw_2_gsc * delta_shv_mol / &
+!            (1. + gbw_2_gbc/gsw_2_gsc * g * ra) ** 2
+!
+!    return
+!  end subroutine marginal_gain
 
   subroutine marginal_gain_all(g, ra, ca, lambda, delta_shv_mol,                                &
                            k1V, k2V, k3V, k4V,                                              &
                            k1J, k2J, k3J, k4J,                                              &
+                           k_pep,                                                           &
                            ci_V,fc_V,ci_J,fc_J,ci,fc,fe,dcidg,dfcdg,dfedg,limit_flag)
     use physiology_coms, only : gbw_2_gbc                & ! intent(in)
                               , gsw_2_gsc                ! ! intent(in)
     use consts_coms,     only : tiny_num                 ! ! intent(in)
     implicit none
-    real, intent(in) :: g,ra,ca,lambda,delta_shv_mol,k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J
+    real, intent(in) :: g,ra,ca,lambda,delta_shv_mol,k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep
     real, intent(out) :: ci_V,fc_V,ci_J,fc_J,ci,fc,fe,dcidg,dfcdg,dfedg
     integer, intent(out) :: limit_flag
     real :: cip, cim, rad
     real :: k1,k2,k3,k4
+    real :: fc_pep, ci_pep
     
     ! calculate ci, fc for Vmax
     k1 = k1V
@@ -841,6 +853,19 @@ Contains
         k4 = k4J
         limit_flag = 1
     endif
+
+    ! for C4 also calculate PEP rate
+    if (k_pep > 0.) then
+        ci_pep = ca / (1. + k_pep * (1./g + ra))
+        fc_pep = (ca - ci_pep) / (1./g + ra)
+
+        if (fc_pep < fc) then
+            ci = ci_pep
+            fc = fc_pep
+            limit_flag = 0
+        endif
+    endif
+        
 
     ! calculate fe
     fe = lambda / (1./g * 1./gsw_2_gsc + ra * 1./gbw_2_gbc) * delta_shv_mol

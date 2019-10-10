@@ -2598,16 +2598,22 @@ subroutine init_pft_alloc_params()
        !Vm0(2:4) = exp(-1.40 * log(rho(2:4)) + 2.78) / vm_q10(2:4) ! umol/m2/s @ 15degC
 
        ! OLS
-       !SLA(2:4) = 2000. / exp(0.234 * log(rho(2:4)) + 4.52 + 0.5 * 0.154) ! m2/kgC
-       !Vm0(2:4) = exp(-0.62 * log(rho(2:4)) + 3.31 + 0.5 * 0.18) / vm_q10(2:4) ! umol/m2/s @ 15degC
+       SLA(2:4) = 2000. / exp(0.234 * log(rho(2:4)) + 4.52 + 0.5 * 0.154) ! m2/kgC
+       Vm0(2:4) = exp(-0.62 * log(rho(2:4)) + 3.31 + 0.5 * 0.18) / vm_q10(2:4) ! umol/m2/s @ 15degC
 
        !Qreg
-       SLA(2:4) = 2000. / exp(0.41 * log(rho(2:4)) + 5.158) ! m2/kgC
-       Vm0(2:4) = exp(-0.308 * log(rho(2:4)) + 4.178) / vm_q10(2:4) ! umol/m2/s @ 15degC
+       !SLA(2:4) = 2000. / exp(0.41 * log(rho(2:4)) + 5.158) ! m2/kgC
+       !Vm0(2:4) = exp(-0.308 * log(rho(2:4)) + 4.178) / vm_q10(2:4) ! umol/m2/s @ 15degC
        
-       dark_respiration_factor(2:4) = 0.014
+       dark_respiration_factor(2:4) = 0.02
        Rd0(2:4) = dark_respiration_factor(2:4) * Vm0(2:4) * Vm_q10(2:4) / Rd_q10(2:4)
        leaf_turnover_rate(2:4) = 365. / exp(-0.673 * log(Vm0(2:4) * vm_q10(2:4) * SLA(2:4) / 2000.) + 5.13)
+
+
+       ! C4 grasses
+       Vm0(1) = 12.5 ! this is apparent Vm0, use this value to get reasonable A_net and LINT_CO2
+       dark_respiration_factor(1) = 0.04 ! again this is to generate reasonable dark respiration
+       RD0(1) = Vm0(1) * dark_respiration_factor(1)
 
        print*,'SLA',SLA(2:4)
        print*,'Vm0',Vm0(2:4)
@@ -3392,23 +3398,16 @@ subroutine init_pft_alloc_params()
          b2Rd(17)    = 0.277
       case (3,4)
          ! XXT new height based allometry
-         ! Based on C. Smith unpublished data from root excavation at Panama
+         ! Based on C. Smith et al. 2019 New Phyt. evergreen species from root excavation at Panama
          ! The relationship is close to Kenzo et al. 2009.
-
-         ! Accordingly, 
-         ! a 0.5m tall plant would have 0.38m rooting depth
-         ! a 1.5m tall plant would have 0.62m rooting depth
-         ! a 10m tall plant would have 1.49m rooting depth
-         ! a 45m tall plant would have 2.97m rooting depth (Neotropics)
-         ! a 60m tall plant would have 3.40m rooting depth (Old tropics)
 
          ! Note that these new values should be working best together with the new plant
          ! hydraulic framework, which assumes the maximum depth consists of
          ! 1-root_beta (~99%) of total roots. I did some quick calculations and
          ! it seems to be consistent with Jackson et al. 1996 for both grasses
          ! and trees
-         b1Rd(1:17) = -0.516144
-         b2Rd(1:17) = 0.46053
+         b1Rd(1:17) = -0.609
+         b2Rd(1:17) = 0.580
 
       case default
          !------------------------------------------------------------------------------------!
@@ -3775,8 +3774,9 @@ subroutine init_pft_hydro_params()
    ! Modified based on Lin et al. 2015
    ! using rho to determine stoma_lambda would generate unrealistically low gsw for hardwood species
    ! Try using an average value according to Lin et al. 2015
-   stoma_lambda(1)               = 300. * 8.
-   stoma_lambda(2:4)             = 1200. * 4.
+   stoma_lambda(1)               = 1200. * 0.5
+   stoma_lambda(2:4)             = 1200. * 2.
+
    stoma_beta(1:4)               = 0. / MPa2m
    
 

@@ -367,13 +367,13 @@ module mortality
       ! local variables
       real                                      :: slope, intercept
 
-      ! Here we assume the mort rate when plc is 100% (all conductance is lost) is 12 (die in one
-      ! month)
+      ! Here we assume the mort rate when plc is 100% (all conductance is lost) is 48 (die in one
+      ! week)
 
       ! the mort rate when plc == mort_plc_th is mort_plc_max (die in one year by default)
 
       ! we then extrapolate it linearly in log space
-      slope = (log(12.) - log(mort_plc_max(ipft))) / (log(1.) - log(mort_plc_th(ipft)))
+      slope = (log(48.) - log(mort_plc_max(ipft))) / (log(1.) - log(mort_plc_th(ipft)))
       intercept = log(mort_plc_max(ipft)) - slope * log(mort_plc_th(ipft))
 
       if (plc <= 0.) then
