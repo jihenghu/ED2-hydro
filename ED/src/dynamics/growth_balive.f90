@@ -825,9 +825,10 @@ module growth_balive
       integer                       :: ipft
       !------------------------------------------------------------------------------------!
       ipft = cpatch%pft(ico)
-      ! use the average of minimum leaf psi and minimum wood psi to calculate maximum plc
+      ! the branches are most vulnerable, which have similar water potential as the leaves
+      ! so use dmin_leaf_psi to calculate hydraulic failure mortality
       plc_today  =  max(0., 1. - 1. /                                         &
-                        (1. + ((cpatch%dmin_leaf_psi(ico) + cpatch%dmin_wood_psi(ico)) * 0.5 &
+                        (1. + (cpatch%dmin_leaf_psi(ico)                      &
                         / wood_psi50(ipft)) ** wood_Kexp(ipft)))
       cpatch%plc_monthly   (13,ico) = cpatch%plc_monthly   (13,ico) + plc_today
 

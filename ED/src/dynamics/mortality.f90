@@ -24,7 +24,6 @@ module mortality
                                , mort_plc_max               & ! intent(in)
                                , mort_plc_th                & ! intent(in)
                                , plant_min_temp             & ! intent(in)
-                               , is_grass                   & ! intent(in)
                                , frost_mort                 ! ! intent(in)
       use disturb_coms  , only : treefall_disturbance_rate  & ! intent(in)
                                , treefall_hite_threshold    & ! intent(in)
@@ -357,7 +356,8 @@ module mortality
    !---------------------------------------------------------------------------------------!
    real function hydro_mort_rate(plc,ipft)
        use pft_coms      , only : mort_plc_max               & ! intent(in)
-                               , mort_plc_th                 ! ! intent(in)
+                               , mort_plc_th                 & ! intent(in)
+                               , is_grass                    ! ! intent(in)
      
       implicit none
       !----- Arguments. -------------------------------------------------------------------!
@@ -371,6 +371,15 @@ module mortality
       ! week)
 
       ! the mort rate when plc == mort_plc_th is mort_plc_max (die in one year by default)
+
+      if (is_grass(ipft)) then
+          ! is grass
+          ! no need to calculate hydraulic failure moratlity since they have no stems
+          hydro_mort_rate = 0.
+          return
+      endif
+
+      ! TODO: need to move slope/intercept calculations into ed_params.f90
 
       ! we then extrapolate it linearly in log space
       slope = (log(48.) - log(mort_plc_max(ipft))) / (log(1.) - log(mort_plc_th(ipft)))

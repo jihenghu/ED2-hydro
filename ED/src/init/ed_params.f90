@@ -2612,7 +2612,7 @@ subroutine init_pft_alloc_params()
 
        ! C4 grasses
        Vm0(1) = 12.5 ! this is apparent Vm0, use this value to get reasonable A_net and LINT_CO2
-       dark_respiration_factor(1) = 0.04 ! again this is to generate reasonable dark respiration
+       dark_respiration_factor(1) = 0.0375 ! again this is to generate reasonable dark respiration
        RD0(1) = Vm0(1) * dark_respiration_factor(1)
 
        print*,'SLA',SLA(2:4)

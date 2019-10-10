@@ -97,6 +97,7 @@ subroutine copy_nl(copy_type)
                                    , istruct_growth_scheme     & ! intent(out)
                                    , istem_respiration_scheme  & ! intent(out)
                                    , trait_plasticity_scheme   & ! intent(out)
+                                   , hydraulic_redistribution   & ! intent(out)
                                    , iddmort_scheme            & ! intent(out)
                                    , imort_scheme              & ! intent(out)
                                    , cbr_scheme                & ! intent(out)
@@ -381,6 +382,7 @@ subroutine copy_nl(copy_type)
       istruct_growth_scheme     = nl%istruct_growth_scheme
       istem_respiration_scheme  = nl%istem_respiration_scheme
       trait_plasticity_scheme   = nl%trait_plasticity_scheme
+      hydraulic_redistribution   = nl%hydraulic_redistribution
       rk4_tolerance             = nl%rk4_tolerance
       ibranch_thermo            = nl%ibranch_thermo
       iphysiol                  = nl%iphysiol

@@ -155,6 +155,11 @@ module physiology_coms
    !<                           -2. Same as 2 but use height to adjust SLA\n
    !---------------------------------------------------------------------------------------!
 
+   integer               :: hydraulic_redistribution
+   !---------------------------------------------------------------------------------------!
+   !< HYDRAULIC_REDISTRIBUTION -- Whether to enable hydraulic redistribution.
+   !                              Has to run with plant hydraulics \n
+
    integer               :: control_photosynthesis ! if it is 1, use controlled photosynthesis
    real(kind=4)          :: control_leaf_par       ! value of par of photosynthesis umo/m2/s
    real(kind=4)          :: control_leaf_tmp       ! value of leaf temperature of photosynthesis degC

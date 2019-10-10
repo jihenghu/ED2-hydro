@@ -1174,6 +1174,9 @@ recursive subroutine read_ed_xml_config(filename)
         call getConfigINT  ('trait_plasticity_scheme','physiology',i,ival,texist)
         if(texist) trait_plasticity_scheme = ival
         
+        call getConfigINT  ('hydraulic_redistribution','physiology',i,ival,texist)
+        if(texist) hydraulic_redistribution = ival
+
         call getConfigINT  ('control_photosynthesis','physiology',i,ival,texist)
         if(texist) control_photosynthesis = ival
         
@@ -1878,6 +1881,7 @@ subroutine write_ed_xml_config
      call putConfigINT("istruct_growth_scheme",istruct_growth_scheme)
      call putConfigINT("istem_respiration_scheme",istem_respiration_scheme)
      call putConfigINT("trait_plasticity_scheme",trait_plasticity_scheme)
+     call putConfigINT("hydraulic_redistribution",hydraulic_redistribution)
      call putConfigINT("control_photosynthesis",control_photosynthesis)
      call putConfigREAL("control_leaf_par",control_leaf_par)
      call putConfigREAL("control_leaf_tmp",control_leaf_tmp)

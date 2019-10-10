@@ -351,6 +351,7 @@ module plant_hydro
       use consts_coms     , only : pi18                 & ! intent(in)
                                  , lnexp_min8           ! ! intent(in)
       use rk4_coms        , only : tiny_offset          ! ! intent(in)
+      use physiology_coms , only : hydraulic_redistribution ! intent(in)
       use pft_coms        , only : leaf_water_cap       & ! intent(in) 
                                  , wood_water_cap       & ! intent(in)
                                  , leaf_psi_min         & ! intent(in)
@@ -642,12 +643,9 @@ module plant_hydro
             gw_cond = soil_cond_d(k) * sqrt(RAI) / (pi18 * dslz8(k))  & ! kg H2O / m3 / s
                     * (4.d0 * crown_area_d)           ! ! conducting area  m2
             
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ! disable hydraulic redistribution
-            ! assume roots will shut down if they are going to lose water to
-            ! soil
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            if (soil_psi_d(k) <= wood_psi_d) then
+            ! turn off hydraulic redistribution depending on the physiology setup
+            if ((hydraulic_redistribution .eq. 0) .and. &
+                (soil_psi_d(k) <= wood_psi_d) ) then
                 gw_cond = 0.d0
             endif
             

@@ -1189,6 +1189,7 @@ subroutine ed_opspec_misc
                                     , istruct_growth_scheme        & ! intent(in)
                                     , istem_respiration_scheme     & ! intent(in)
                                     , trait_plasticity_scheme      & ! intent(in)
+                                    , hydraulic_redistribution      & ! intent(in)
                                     , iddmort_scheme               & ! intent(in)
                                     , imort_scheme                 & ! intent(in)
                                     , cbr_scheme                   & ! intent(in)
@@ -1694,6 +1695,15 @@ end do
       call opspec_fatal(reason,'opspec_misc')
       ifaterr = ifaterr +1
    end if
+
+   if (hydraulic_redistribution < 0 .or. hydraulic_redistribution > 1) then
+      write (reason,fmt='(a,1x,i4,a)')                                                     &
+                    'Invalid HYDRAULIC_REDISTRIBUTION, it must be between 0 and 1. Yours is set to'   &
+                    ,hydraulic_redistribution,'...'
+      call opspec_fatal(reason,'opspec_misc')
+      ifaterr = ifaterr +1
+   end if
+
 
    if (iphysiol < 0 .or. iphysiol > 4) then
       write (reason,fmt='(a,1x,i4,a)')                                                     &

@@ -144,6 +144,7 @@ module ename_coms
       integer                                           :: istruct_growth_scheme
       integer                                           :: istem_respiration_scheme
       integer                                           :: trait_plasticity_scheme
+      integer                                           :: hydraulic_redistribution
       integer                                           :: growth_resp_scheme
       integer                                           :: storage_resp_scheme
       real                                              :: rk4_tolerance
@@ -418,6 +419,7 @@ module ename_coms
       enl%istruct_growth_scheme     = undef_integer
       enl%istem_respiration_scheme  = undef_integer
       enl%trait_plasticity_scheme   = undef_integer
+      enl%hydraulic_redistribution  = undef_integer
       enl%growth_resp_scheme        = undef_integer
       enl%storage_resp_scheme       = undef_integer
       enl%rk4_tolerance             = undef_real
