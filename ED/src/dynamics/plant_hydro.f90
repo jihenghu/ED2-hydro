@@ -424,6 +424,7 @@ module plant_hydro
       real(kind=8)                          :: current_layer_depth
       real(kind=8)                          :: total_water_supply
       real(kind=8)      , dimension(nzg)    :: layer_water_supply
+      real(kind=8)      , dimension(nzg)    :: layer_gw_cond
       character(len=13) , parameter         :: efmt       = '(a,1x,es12.5)'
       character(len=9)  , parameter         :: ifmt       = '(a,1x,i5)'
       character(len=9)  , parameter         :: lfmt       = '(a,1x,l1)'
@@ -435,6 +436,7 @@ module plant_hydro
       logical                               :: small_tree_flag
       logical                               :: zero_flow_flag
       logical                               :: error_flag
+      logical                               :: hr_flag
       !----- External function ------------------------------------------------------------!
       real(kind=4), external                :: sngloff           ! Safe dble 2 single precision
       !------------------------------------------------------------------------------------!
@@ -604,8 +606,9 @@ module plant_hydro
         weighted_gw_cond = 0.d0
         layer_water_supply = 0.d0
         total_water_supply = 0.d0
+        layer_gw_cond = 0.d0
 
-        ! loop over all soil layers to get the aggregated water conductance
+        ! loop over all soil layers to get the water conductance
         do k = krdepth,nzg
             current_layer_depth = -slz8(k)
             if (k+1 .le. nzg) then
@@ -642,20 +645,68 @@ module plant_hydro
             !  Based on Katul et al. 2003 PCE
             gw_cond = soil_cond_d(k) * sqrt(RAI) / (pi18 * dslz8(k))  & ! kg H2O / m3 / s
                     * (4.d0 * crown_area_d)           ! ! conducting area  m2
-            
-            ! turn off hydraulic redistribution depending on the physiology setup
-            if ((hydraulic_redistribution .eq. 0) .and. &
-                (soil_psi_d(k) <= wood_psi_d) ) then
-                gw_cond = 0.d0
-            endif
-            
-            ! Calculate weighted conductance, weighted psi, and
-            ! water_supply_layer_frac
-            weighted_gw_cond   = weighted_gw_cond + gw_cond ! kg H2O /m /s
-            weighted_soil_psi  = weighted_soil_psi + gw_cond * soil_psi_d(k) ! kgH2O/s
 
-            layer_water_supply(k) = gw_cond * (soil_psi_d(k) - wood_psi_d)!kgH2O s-1 
+            ! save gw_cond
+            layer_gw_cond(k) = gw_cond
+            
         enddo
+
+        ! deal with hydraulic redistribution
+
+        select case (hydraulic_redistribution)
+        case (0)
+            ! no hydraulic redistribution
+            ! assume plants can fully shut off root-soil conductance when soil is drier than wood
+            
+            do k = krdepth,nzg
+                if (soil_psi_d(k) <= wood_psi_d) then
+                    layer_gw_cond(k) = 0.d0
+                endif
+            enddo
+
+        case (1)
+            ! with hydraulic redistribution
+            ! set gw_cond to be 0 when soil is only slilghtly drier than wood
+            ! to avoid numerical instability
+            
+            ! if soil_psi is significantly drier than wood (here I use -0.5 MPa as a test) and
+            ! plant water potential is high enough (here I use wood_psi),
+            ! we allow non-zero gw_cond.
+            do k = krdepth,nzg
+                hr_flag = (                                                 &
+                            ((soil_psi_d(k) - wood_psi_d) < -0.5 * 102. )    &
+                    .and.  (wood_psi_d > wood_psi50(ipft))                  &
+                            )
+                if ( soil_psi_d(k) <= wood_psi_d) then
+                    ! negative water gradient
+
+                    if (.not. hr_flag) then
+                        ! turnoff conductance if hr is not enabled
+                        layer_gw_cond(k) = 0.d0
+                    endif
+                endif
+            enddo
+
+            ! In addition, we assume plants will turn off HR if they are losing water integrated
+            ! vertically. This can also reduce chances for numerical instability
+            if (sum(layer_gw_cond * (soil_psi_d - wood_psi_d)) < 0.) then
+                do k = krdepth,nzg
+                    if (soil_psi_d(k) <= wood_psi_d) then
+                        layer_gw_cond(k) = 0.d0
+                    endif
+                enddo
+            endif
+        end select
+        
+        ! Calculate weighted conductance, weighted psi, and
+        ! water_supply_layer_frac
+        weighted_gw_cond   = sum(layer_gw_cond) ! kg H2O /m /s
+        weighted_soil_psi  = sum(layer_gw_cond * soil_psi_d) ! kgH2O/s
+
+        do k = krdepth,nzg
+            layer_water_supply(k) = layer_gw_cond(k) * (soil_psi_d(k) - wood_psi_d)!kgH2O s-1 
+        enddo
+
 
         ! Now we can calculate ground->wood water flow
         ! First we handle special cases
