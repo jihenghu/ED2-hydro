@@ -40,7 +40,7 @@ Contains
 
   subroutine katul_lphys(can_prss,can_shv,can_co2,ipft,leaf_par,leaf_temp                 &
                         ,lint_shv,green_leaf_factor,leaf_aging_factor,llspan,vm0in,rd0in  &
-                        ,leaf_gbw,leaf_psi,last_gV,last_gJ,A_open,A_closed,A_light        &
+                        ,leaf_gbw,leaf_psi,dmax_leaf_psi,last_gV,last_gJ,A_open,A_closed,A_light        &
                         ,A_rubp,A_co2,gsw_open,gsw_closed,lsfc_shv_open,lsfc_shv_closed   &
                         ,lsfc_co2_open,lsfc_co2_closed,lint_co2_open,lint_co2_closed      &
                         ,leaf_resp,vmout,comppout,limit_flag)
@@ -71,6 +71,7 @@ Contains
                               , mmh2o                    & ! intent(in)
                               , mmdry                    & ! intent(in)
                               , mmdryi                   & ! intent(in)
+                              , tiny_num                 & ! intent(in)
                               , epi                      & ! intent(in)
                               , ep                       ! ! intent(in)
     use therm_lib      , only : eslf                     ! ! function
@@ -112,6 +113,7 @@ Contains
       real(kind=4), intent(in)    :: rd0in             ! Input Rd0              [µmol/m²/s]
       real(kind=4), intent(in)    :: leaf_gbw          ! B.lyr. cnd. of H2O     [  kg/m²/s]
       real(kind=4), intent(in)    :: leaf_psi          ! leaf water potential   [        m]
+      real(kind=4), intent(in)    :: dmax_leaf_psi     ! daily maximum leaf psi [        m]
       real(kind=4), intent(inout) :: last_gV           ! gs for last timestep   [  kg/m²/s]
       real(kind=4), intent(inout) :: last_gJ           ! gs for last timestep   [  kg/m²/s]
       real(kind=4), intent(out)   :: A_open            ! Photosyn. rate (op.)   [µmol/m²/s]
@@ -195,7 +197,7 @@ Contains
       real           ,parameter   :: Jmax_q10_coef = 0.8  ! fraction of Jmax  vmhor to Vcmax Q10
       integer                     :: k
       logical                     :: is_resolvable
-      logical, parameter          :: debug_flag = .false.
+      logical, parameter          :: debug_flag = .False.
       real, parameter             :: gsc_max = 1.0
       real, parameter             :: dg_min = 1e-4
       integer, parameter          :: iter_max = 600
@@ -215,7 +217,6 @@ Contains
       last_gJ_in        = last_gJ
       last_gV_in        = last_gV
   
-    
       !------------------------------------------------------------------------------------!
       ! correcting for light-phenology
       !------------------------------------------------------------------------------------!
@@ -432,7 +433,7 @@ Contains
                         1. / (1. + 0.1 * (leaf_psi / leaf_psi_tlp(ipft)) ** 6.0)))
          ! TODO: should use dmax_leaf_psi here because lambda changes at longer time scales to
          ! represent soil water stress
-          lambda =  stoma_lambda(ipft) * can_co2 / 400. * exp(stoma_beta(ipft) * leaf_psi)
+          lambda =  stoma_lambda(ipft) * can_co2 / 400. * exp(stoma_beta(ipft) * dmax_leaf_psi)
       end select
           
 
@@ -488,104 +489,113 @@ Contains
         k3J = -a1gk*cp/can_co2/can_co2-Rdark*a2gk/can_co2/can_co2
         k4J = -a1gk*cp/can_co2*aero_resistance/can_co2-Rdark*a2gk/can_co2*aero_resistance/can_co2-a2gk/can_co2
 
-    ! now use regular falsi
-    ! the purpose is to find a root for dfcdg - lambda * dfedg = 0
-    ! initial range gsc is cuticular_gsc and gsc_max
-    rfx_lower = cuticular_gsc
-    rfx_upper = gsc_max * 100. ! a very large value
+        ! now use regular falsi
+        ! the purpose is to find a root for dfcdg - lambda * dfedg = 0
+        ! initial range gsc is cuticular_gsc and gsc_max
+        rfx_lower = cuticular_gsc / 2. ! a very small value
+        rfx_upper = gsc_max * 20. ! a very large value
 
-    ! calculate marginal_gain or dfcdg - dfedg for rfx_lower
-    call marginal_gain_all(rfx_lower,aero_resistance,can_co2,lambda,delta_shv_mol,  &
-                        k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep,&
-                        test_ciV,test_fcV,test_ciJ,test_fcJ,&
-                        testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
-    rfy_lower = dfcdg - dfedg
-    ! do it again for rfx_upper
-    call marginal_gain_all(rfx_upper,aero_resistance,can_co2,lambda,delta_shv_mol,  &
-                           k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep,&
-                           test_ciV,test_fcV,test_ciJ,test_fcJ,&
-                           testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
-    rfy_upper = dfcdg - dfedg
+        ! calculate marginal_gain or dfcdg - dfedg for rfx_lower
+        call marginal_gain_all(rfx_lower,aero_resistance,can_co2,lambda,delta_shv_mol,  &
+                            k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep,&
+                            test_ciV,test_fcV,test_ciJ,test_fcJ,&
+                            testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
+        rfy_lower = dfcdg - dfedg
+        ! do it again for rfx_upper
+        call marginal_gain_all(rfx_upper,aero_resistance,can_co2,lambda,delta_shv_mol,  &
+                            k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep,&
+                            test_ciV,test_fcV,test_ciJ,test_fcJ,&
+                            testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
+        rfy_upper = dfcdg - dfedg
 
-    iter = 0
+        iter = 0
 
-    ! check whether the y values have the same sign
-    if (rfy_lower * rfy_upper >= 0.) then
-        ! In this case, there is no root within the given range
-        ! if rfy_lower is positive, we take the value of rfx_upper
-        ! else we take the value of rfx_lower
-        if  (rfy_lower > 0.) then
-            test_gsc = rfx_upper
-        else
-            test_gsc = rfx_lower
-        endif
-    else
-        ! There is at least one root
-        ! Run regula falsi
-        rf_side = 0 !
-        do iter = 1, iter_max
-            ! exit condition
-            if (abs(rfx_lower - rfx_upper) .le. dg_min) then
-                exit
-            endif
-
-            ! update rfx and rfy with Illinois Method
-            rfx_new = (rfx_lower * rfy_upper - rfx_upper * rfy_lower) / (rfy_upper - rfy_lower)
-            call marginal_gain_all(rfx_new,aero_resistance,can_co2,lambda,delta_shv_mol,  &
-                                k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep,&
-                                test_ciV,test_fcV,test_ciJ,test_fcJ,&
-                                testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
-            rfy_new = dfcdg - dfedg
-
-            if (rfy_new * rfy_lower > 0) then
-                ! the new point has the same sign as the lower
-                ! update the lower
-                rfx_lower = rfx_new
-                rfy_lower = rfy_new
-
-                ! Illinois Method, improve efficiency
-                if (rf_side == -1) then
-                    rfy_upper = rfy_upper / 2.
-                endif
-
-                rf_side = -1
-            elseif (rfy_new * rfy_upper > 0) then
-                ! the new point has the same sign as the upper
-                ! update the lower
-                rfx_upper = rfx_new
-                rfy_upper = rfy_new
-
-                ! Illinois Method, improve efficiency
-                if (rf_side == 1) then
-                    rfy_lower = rfy_lower / 2.
-                endif
-
-                rf_side = 1
-
+        ! check whether the y values have the same sign
+        if (rfy_lower * rfy_upper >= 0.) then
+            ! In this case, there is no root within the given range
+            ! if rfy_lower is positive, we take the value of rfx_upper
+            ! else we take the value of rfx_lower
+            if  (rfy_lower > 0.) then
+                test_gsc = rfx_upper
             else
-                ! numerically they are the same
-                exit
+                test_gsc = rfx_lower
             endif
-        enddo
+        else
+            ! There is at least one root
+            ! Run regula falsi
+            rf_side = 0 !
+            do iter = 1, iter_max
+                ! exit condition
+                if (abs(rfx_lower - rfx_upper) .le. dg_min) then
+                    exit
+                endif
 
-        test_gsc = (rfx_lower + rfx_upper) / 2.
-    endif
+                ! update rfx and rfy with Illinois Method
+                rfx_new = (rfx_lower * rfy_upper - rfx_upper * rfy_lower) / (rfy_upper - rfy_lower)
+                call marginal_gain_all(rfx_new,aero_resistance,can_co2,lambda,delta_shv_mol,  &
+                                    k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep,&
+                                    test_ciV,test_fcV,test_ciJ,test_fcJ,&
+                                    testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
+                rfy_new = dfcdg - dfedg
 
-    test_gsc = min(test_gsc,gsc_max)
+                if (rfy_new * rfy_lower > 0) then
+                    ! the new point has the same sign as the lower
+                    ! update the lower
+                    rfx_lower = rfx_new
+                    rfy_lower = rfy_new
 
-    call marginal_gain_all(test_gsc,aero_resistance,can_co2,lambda,delta_shv_mol,  &
-                        k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep,&
-                        test_ciV,test_fcV,test_ciJ,test_fcJ,&
-                        testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
-    
+                    ! Illinois Method, improve efficiency
+                    if (rf_side == -1) then
+                        rfy_upper = rfy_upper / 2.
+                    endif
+
+                    rf_side = -1
+                elseif (rfy_new * rfy_upper > 0) then
+                    ! the new point has the same sign as the upper
+                    ! update the lower
+                    rfx_upper = rfx_new
+                    rfy_upper = rfy_new
+
+                    ! Illinois Method, improve efficiency
+                    if (rf_side == 1) then
+                        rfy_lower = rfy_lower / 2.
+                    endif
+
+                    rf_side = 1
+
+                else
+                    ! numerically they are the same
+                    exit
+                endif
+            enddo
+
+            test_gsc = (rfx_lower + rfx_upper) / 2.
+        endif
+
+        test_gsc = max(cuticular_gsc,min(test_gsc,gsc_max))
+
+        ! special case
+        ! night time gsc becomes very large due to a negative delta_shv_mol which is possible if
+        ! there is substantial dew formation
+        ! For now we set test_gsc to be 2 * cuticular_gsc (~0.02 mol/m2/s for gsw) to avoid
+        ! extra-large gsw values in the model
+        if ((par < tiny_num) .and. (test_gsc .ge. gsc_max)) then
+            test_gsc = 2 * cuticular_gsc
+        endif
+
+        call marginal_gain_all(test_gsc,aero_resistance,can_co2,lambda,delta_shv_mol,  &
+                            k1V,k2V,k3V,k4V,k1J,k2J,k3J,k4J,k_pep,&
+                            test_ciV,test_fcV,test_ciJ,test_fcJ,&
+                            testci,testfc,testfe,dcidg,dfcdg,dfedg,limit_flag)
+        
 
 
-        accepted_fc = testfc
-        accepted_ci = testci
-        accepted_gsc = test_gsc
-        A_rubp = test_fcV
-        A_light = test_fcJ
-        A_co2 = accepted_fc
+            accepted_fc = testfc
+            accepted_ci = testci
+            accepted_gsc = test_gsc
+            A_rubp = test_fcV
+            A_light = test_fcJ
+            A_co2 = accepted_fc
     else  ! not resolvable
         accepted_gsc     = cuticular_gsc
         accepted_fc      = -Rdark
@@ -612,12 +622,16 @@ Contains
        write (unit=*,fmt='(a,1x,es12.4)')   ' + Jrate:               ',Jrate
        write (unit=*,fmt='(a,1x,es12.4)')   ' + lambda:              ',lambda
        write (unit=*,fmt='(a,1x,i9)')       ' + LIMIT_FLAG:          ',limit_flag
+       write (unit=*,fmt='(a,1x,i9)')       ' + iter:                ',iter
+       write (unit=*,fmt='(a,1x,es12.4)')   ' + rfy_lower:       ',rfy_lower
+       write (unit=*,fmt='(a,1x,es12.4)')   ' + rfy_upper:       ',rfy_upper
        !write (unit=*,fmt='(a,1x,i9)')       ' + iter_V:              ',iter_V
        !write (unit=*,fmt='(a,1x,i9)')       ' + iter_J:              ',iter_J
        !write (unit=*,fmt='(a,1x,es12.4)')   ' + last_gV:             ',last_gV_in
        !write (unit=*,fmt='(a,1x,es12.4)')   ' + last_gJ:             ',last_gJ_in
        !write (unit=*,fmt='(a,1x,es12.4)')   ' + test_gV:             ',test_gV
        !write (unit=*,fmt='(a,1x,es12.4)')   ' + test_gJ:             ',test_gJ
+       write (unit=*,fmt='(a,1x,es12.4)')   ' + delta_shv_mol:       ',delta_shv_mol
        write (unit=*,fmt='(a,1x,es12.4)')   ' + accepted_gsc:        ',accepted_gsc
        write (unit=*,fmt='(a,1x,es12.4)')   ' + test_fcV:            ',test_fcV
        write (unit=*,fmt='(a,1x,es12.4)')   ' + test_fcJ:            ',test_fcJ

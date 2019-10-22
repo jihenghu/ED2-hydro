@@ -382,7 +382,7 @@ module mortality
       ! TODO: need to move slope/intercept calculations into ed_params.f90
 
       ! we then extrapolate it linearly in log space
-      slope = (log(48.) - log(mort_plc_max(ipft))) / (log(1.) - log(mort_plc_th(ipft)))
+      slope = (log(24.) - log(mort_plc_max(ipft))) / (log(1.) - log(mort_plc_th(ipft)))
       intercept = log(mort_plc_max(ipft)) - slope * log(mort_plc_th(ipft))
 
       if (plc <= 0.) then

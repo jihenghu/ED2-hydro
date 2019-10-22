@@ -239,6 +239,7 @@ module plant_hydro
                         dtlsm                                         &!input
                        ,sap_area,crown_area,cpatch%krdepth(ico)       &!input
                        ,cpatch%bleaf(ico),bsap,cpatch%broot(ico)      &!input
+                       ,cpatch%nplant(ico)                            &!input
                        ,cpatch%hite(ico),cpatch%pft(ico),transp       &!input
                        ,cpatch%leaf_psi(ico),cpatch%wood_psi(ico)     &!input
                        ,soil_psi,soil_cond,ipa,ico                    &!input
@@ -340,8 +341,8 @@ module plant_hydro
    !> \author Xiangtao Xu, 29 Jan. 2018
    !---------------------------------------------------------------------------------------!
    subroutine calc_plant_water_flux(dt                                  & !timestep
-               ,sap_area,crown_area,krdepth,bleaf,bsap,broot,hite,ipft  & !plant input
-               ,transp,leaf_psi,wood_psi                                & !plant input
+               ,sap_area,crown_area,krdepth,bleaf,bsap,broot,nplant     & !plant input
+               ,hite,ipft,transp,leaf_psi,wood_psi                      & !plant input
                ,soil_psi,soil_cond                                      & !soil  input
                ,ipa,ico                                                 & !for debugging
                ,wflux_wl,wflux_gw,wflux_gw_layer)                       ! !flux  output
@@ -373,6 +374,7 @@ module plant_hydro
       real   ,                 intent(in)  :: bleaf           !leaf biomass [kgC]
       real   ,                 intent(in)  :: bsap            !sapwood biomass [kgC]
       real   ,                 intent(in)  :: broot           !fine root biomass [kgC]
+      real   ,                 intent(in)  :: nplant          !plant density [pl / m2]
       real   ,                 intent(in)  :: hite            !plant height [m]       
       integer,                 intent(in)  :: ipft            !plant functional type
       real   ,                 intent(in)  :: transp          !transpiration [kg/s]
@@ -630,8 +632,10 @@ module plant_hydro
             if (crown_area_d == 0.d0) then
                 RAI = 0.d0
             else
-                RAI = broot_d * dble(SRA(ipft)) * root_frac     & !m2
-                    / (4.d0 * crown_area_d)                         !m2
+!                RAI = broot_d * dble(SRA(ipft)) * root_frac     & !m2
+!                    / (4.d0 * crown_area_d)                         !m2
+                RAI = broot_d * dble(SRA(ipft)) * root_frac & ! m2/pl
+                    * dble(nplant)                            ! pl/m2
             endif
             
             ! include a minimum total RAI value which is 1e-6 m2/m2 (per 1 m2 soil has only 0.01 cm2 root
@@ -643,8 +647,12 @@ module plant_hydro
 
             !  Calculate soil-root water conductance kg H2O / m / s
             !  Based on Katul et al. 2003 PCE
+!            gw_cond = soil_cond_d(k) * sqrt(RAI) / (pi18 * dslz8(k))  & ! kg H2O / m3 / s
+!                    * (4.d0 * crown_area_d)           ! ! conducting area  m2
+
             gw_cond = soil_cond_d(k) * sqrt(RAI) / (pi18 * dslz8(k))  & ! kg H2O / m3 / s
-                    * (4.d0 * crown_area_d)           ! ! conducting area  m2
+                    / dble(nplant)           ! ! converting to per individual  m2 / pl
+            ! --> gw_cond is kgH2O/m/pl/s
 
             ! save gw_cond
             layer_gw_cond(k) = gw_cond
@@ -666,15 +674,11 @@ module plant_hydro
 
         case (1)
             ! with hydraulic redistribution
-            ! set gw_cond to be 0 when soil is only slilghtly drier than wood
-            ! to avoid numerical instability
-            
-            ! if soil_psi is significantly drier than wood (here I use -0.5 MPa as a test) and
-            ! plant water potential is high enough (here I use wood_psi),
-            ! we allow non-zero gw_cond.
+            ! we allow gw_cond to be non-zero
+
             do k = krdepth,nzg
                 hr_flag = (                                                 &
-                            ((soil_psi_d(k) - wood_psi_d) < -0.5 * 102. )    &
+                            ((soil_psi_d(k) - wood_psi_d) < -0.25 * 102. )    &
                     .and.  (wood_psi_d > wood_psi50(ipft))                  &
                             )
                 if ( soil_psi_d(k) <= wood_psi_d) then
@@ -687,8 +691,9 @@ module plant_hydro
                 endif
             enddo
 
-            ! In addition, we assume plants will turn off HR if they are losing water integrated
-            ! vertically. This can also reduce chances for numerical instability
+            ! In addition, we assume plants will turn off HR if there is too much negative
+            ! conductance (abs negative conductance is more than 50% of positive conductance)
+            ! This is to reduce chances for numerical instability
             if (sum(layer_gw_cond * (soil_psi_d - wood_psi_d)) < 0.) then
                 do k = krdepth,nzg
                     if (soil_psi_d(k) <= wood_psi_d) then
