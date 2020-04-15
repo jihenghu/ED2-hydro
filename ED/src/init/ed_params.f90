@@ -1605,7 +1605,8 @@ subroutine init_pft_photo_params()
    Rd_high_temp(1:17) = 60. !Vm_high_temp(1:17) # give it a very high value because Rd seems not to have a high temperature limitation
    Rd_decay_e  (1:17) = Vm_decay_e  (1:17)
    Rd_hor      (1:17) = Vm_hor      (1:17)
-   Rd_q10      (1:17) = 2.0 !Vm_q10      (1:17) # from Heskel et al. PNAS
+   Rd_q10      (1:17) = Vm_q10      (1:17) 
+   Rd_q10      (1:4)  = 2.2 !# from Heskel et al. PNAS and Atkins et al. 2003 Fig. 2
 
    !---------------------------------------------------------------------------------------!
    !    Respiration terms.  Here we must check whether this will run Foley-based or        !
@@ -2290,14 +2291,8 @@ subroutine init_pft_mort_params()
    !---------------------------------------------------------------------------------------!
    select case (ibigleaf)
       case (0)
-         !seedling_mortality(1)    = 0.95
-         !seedling_mortality(2:4)  = 0.95
-         ! the recuitment rate seems too high
-         ! reduce survival rate to 1/5 of the current value
-         seedling_mortality(1) = 0.95
-         seedling_mortality(2) = 0.99
-         seedling_mortality(3) = 0.98
-         seedling_mortality(4) = 0.97
+         seedling_mortality(1)    = 0.95
+         seedling_mortality(2:4)  = 0.95
 
          seedling_mortality(5)    = 0.95
          seedling_mortality(6:15) = 0.95
@@ -2612,7 +2607,7 @@ subroutine init_pft_alloc_params()
 
        ! C4 grasses
        Vm0(1) = 12.5 ! this is apparent Vm0, use this value to get reasonable A_net and LINT_CO2
-       dark_respiration_factor(1) = 0.0375 ! again this is to generate reasonable dark respiration
+       dark_respiration_factor(1) = 0.030 ! again this is to generate reasonable dark respiration
        RD0(1) = Vm0(1) * dark_respiration_factor(1)
 
        print*,'SLA',SLA(2:4)
@@ -2809,10 +2804,13 @@ subroutine init_pft_alloc_params()
 !               b2Ht(ipft) = 0.76
 !               hgt_ref(ipft) = -0.034
 
+               ! South American data from Chave et a. 2014
+               b1Ht(ipft) = 1.2616
+               b2Ht(ipft) = 0.571 + 0.715 * log(rho(ipft))
 
                ! old Feldpausch
-               b1Ht   (ipft) = 1.3760
-               b2Ht   (ipft) = 0.4854
+               !b1Ht   (ipft) = 1.3760
+               !b2Ht   (ipft) = 0.4854
                !----- hgt_ref is not used. ---------------------------------------------------!
                ! hgt_ref(ipft) = 0.0
             end if
@@ -2832,11 +2830,7 @@ subroutine init_pft_alloc_params()
             if (is_tropical(ipft) .and. (.not. is_liana(ipft))) then
                !----- Regular log-log fit, b1 is the intercept and b2 is the slope. ----------!
 
-               ! assume the environmental factor is zero for moist tropical forests
-!               b1Ht(ipft) = 0.893
-!               b2Ht(ipft) = 0.76
-!               hgt_ref(ipft) = -0.034
-               ! Using South America values from the reference
+               ! Using values from observations by Pieter Zuidema
                b1Ht   (ipft) = 1.519
                b2Ht   (ipft) = 0.4597
                !----- hgt_ref is not used. ---------------------------------------------------!
@@ -3054,11 +3048,18 @@ subroutine init_pft_alloc_params()
 !               b1Bl_large (ipft) = exp(-0.5662 + 0.6779 * log(rho(ipft)) + 0.5 * 0.3772)
 !               b2Bl_large (ipft) = 1.338
 !               b2Bl_hite  (ipft) = 0.4023
-               b1Bl_large(ipft) = exp(-1.387 + 0.50 * 0.56)
-               b2Bl_large(ipft) = 1.262
-               b2Bl_hite(ipft) = 0.5097
-               b1Bl_small (ipft) = b1Bl_large(ipft)
-               b2Bl_small (ipft) = b2Bl_large(ipft)
+
+! Area-based
+!               b1Bl_large(ipft) = exp(-1.387 + 0.50 * 0.56)
+!               b2Bl_large(ipft) = 1.262
+!               b2Bl_hite(ipft) = 0.5097
+!               b1Bl_small (ipft) = b1Bl_large(ipft)
+!               b2Bl_small (ipft) = b2Bl_large(ipft)
+
+! Mass-based
+               b1Bl_large(ipft) = exp(-4.83 + 0.5 * 0.77)
+               b2Bl_large(ipft) = 1.35
+               b2Bl_hite(ipft) = 0.556
                
                bleaf_adult(ipft) = size2bl(                                                 &
                                    dbh_adult(ipft),                                         &
@@ -3406,8 +3407,16 @@ subroutine init_pft_alloc_params()
          ! 1-root_beta (~99%) of total roots. I did some quick calculations and
          ! it seems to be consistent with Jackson et al. 1996 for both grasses
          ! and trees
+
          b1Rd(1:17) = -0.609
          b2Rd(1:17) = 0.580
+
+         ! we introduce a gradient from early-successional to late-successional PFTs
+         b1Rd(2) = -0.609 
+         b1Rd(3) = -0.609  * 1.5
+         b1Rd(4) = -0.609  * 2.0
+         ! so that  the big trees (40m up) can read a rooting depth of 10m for late-successional
+         ! PFTs [e.g. from Rafael Olivera's data]
 
       case default
          !------------------------------------------------------------------------------------!
@@ -3653,9 +3662,10 @@ subroutine init_pft_hydro_params()
 
         ! Sapwood minimum relative water content, or residual fraction
         rwc_tlp_wood = 1. - (1. - 0.75 * rho(ipft)) / (2.74 + 2.01 * rho(ipft))
-        wood_rwc_min(ipft) = wood_elastic_mod(ipft) * (1. - rwc_tlp_wood) &
-                           / (wood_psi_osmotic(ipft) / MPa2M) + 1.  
-        ! note that we set fcap to 0. in the original equation
+        wood_rwc_min(ipft) = max(leaf_rwc_min(ipft)+0.1,                                    &
+                                wood_elastic_mod(ipft) * (1. - rwc_tlp_wood - 0.07)         &
+                               / (wood_psi_osmotic(ipft) / MPa2M * (1 - 0.07)) + 1. - 0.07)
+        ! note there is a typo in the original equaiton, the last epsilon_x before fcap is extra
 
         ! Wood water content at saturation (rwc = 1.) [kg H2O / kg biomass]
         wood_water_sat(ipft) = (1. - rho(ipft) / 1.53)                      &
@@ -3679,10 +3689,10 @@ subroutine init_pft_hydro_params()
        ! from Bartlett et al. (2012) Ecology Letters
        ! Assume water retention curve is linear from 0. to 4 * turgor loss point
        ! [kg H2O / kg biomass / m]
-       leaf_water_cap(ipft) = (1. - leaf_psi_osmotic(ipft) / (4. * leaf_psi_tlp(ipft))) &
+       leaf_water_cap(ipft) = (1. - leaf_rwc_min(ipft)) * (1. - leaf_psi_osmotic(ipft) / (4. * leaf_psi_tlp(ipft))) &
                             * leaf_water_sat(ipft) / (4. * abs(leaf_psi_tlp(ipft)))
 
-       wood_water_cap(ipft) = (1. - wood_psi_osmotic(ipft) / (4. * wood_psi_tlp(ipft))) &
+       wood_water_cap(ipft) = (1. - wood_rwc_min(ipft)) * (1. - wood_psi_osmotic(ipft) / (4. * wood_psi_tlp(ipft))) &
                             * wood_water_sat(ipft) / (4. * abs(wood_psi_tlp(ipft)))
 
        ! Wood P50 [m]

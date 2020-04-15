@@ -367,8 +367,8 @@ module mortality
       ! local variables
       real                                      :: slope, intercept
 
-      ! Here we assume the mort rate when plc is 100% (all conductance is lost) is 48 (die in one
-      ! week)
+      ! Here we assume the mort rate when plc is 100% (all conductance is lost) is 24 (die in half
+      ! month)
 
       ! the mort rate when plc == mort_plc_th is mort_plc_max (die in one year by default)
 

@@ -1820,7 +1820,7 @@ subroutine update_cohort_plastic_trait(cpatch,ico)
                                     cpatch%sla(ico),       &
                                     cpatch%pft(ico))       
 
-            if (cpatch%bleaf(ico) >= new_bleaf_max) then
+            if (cpatch%bleaf(ico) > new_bleaf_max) then
                 ! if new_bleaf_max is smaller than current bleaf, we need to dump
                 ! the extra carbon into bstorage and change phenology_status
 
