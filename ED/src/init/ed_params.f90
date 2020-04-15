@@ -2806,7 +2806,7 @@ subroutine init_pft_alloc_params()
 
                ! South American data from Chave et a. 2014
                b1Ht(ipft) = 1.2616
-               b2Ht(ipft) = 0.571 + 0.715 * log(rho(ipft))
+               b2Ht(ipft) = 0.571 + 0.0715 * log(rho(ipft))
 
                ! old Feldpausch
                !b1Ht   (ipft) = 1.3760
