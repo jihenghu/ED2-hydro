@@ -3785,7 +3785,7 @@ subroutine init_pft_hydro_params()
    ! using rho to determine stoma_lambda would generate unrealistically low gsw for hardwood species
    ! Try using an average value according to Lin et al. 2015
    stoma_lambda(1)               = 1200. * 0.5
-   stoma_lambda(2:4)             = 1200. 
+   stoma_lambda(2:4)             = 3000. !1200. 
 
    stoma_beta(1:4)               = -0.13 / MPa2m
    

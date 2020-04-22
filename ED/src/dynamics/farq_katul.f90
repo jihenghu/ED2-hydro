@@ -39,7 +39,7 @@ Contains
    !---------------------------------------------------------------------------------------!
 
   subroutine katul_lphys(can_prss,can_shv,can_co2,ipft,leaf_par,leaf_temp                 &
-                        ,lint_shv,green_leaf_factor,leaf_aging_factor,llspan,vm0in,rd0in  &
+                        ,lint_shv,green_leaf_factor,leaf_aging_factor,llspan,slain,vm0in,rd0in  &
                         ,leaf_gbw,leaf_psi,dmax_leaf_psi,last_gV,last_gJ,A_open,A_closed,A_light        &
                         ,A_rubp,A_co2,gsw_open,gsw_closed,lsfc_shv_open,lsfc_shv_closed   &
                         ,lsfc_co2_open,lsfc_co2_closed,lint_co2_open,lint_co2_closed      &
@@ -62,6 +62,9 @@ Contains
                               , cuticular_cond           & ! intent(in)
                               , dark_respiration_factor  & ! intent(in)
                               , quantum_efficiency       & ! intent(in)
+                              , is_tropical                & ! intent(out)
+                              , is_liana                   & ! intent(out)
+                              , is_grass                   & ! intent(out)
                               , leaf_psi_tlp             & ! intent(in)
                               , stoma_lambda             & ! intent(in)
                               , stoma_beta               ! ! intent(in)
@@ -109,6 +112,7 @@ Contains
       real(kind=4), intent(in)    :: green_leaf_factor ! Frac. of on-allom. gr. [      ---]
       real(kind=4), intent(in)    :: leaf_aging_factor ! Ageing parameter       [      ---]
       real(kind=4), intent(in)    :: llspan            ! Leaf life span         [     mnth]
+      real(kind=4), intent(in)    :: slain             ! Input SLA              [   m2/kgC]
       real(kind=4), intent(in)    :: vm0in             ! Input Vm0              [µmol/m²/s]
       real(kind=4), intent(in)    :: rd0in             ! Input Rd0              [µmol/m²/s]
       real(kind=4), intent(in)    :: leaf_gbw          ! B.lyr. cnd. of H2O     [  kg/m²/s]
@@ -193,6 +197,7 @@ Contains
       real(kind=4)                :: greeness           ! Leaf "Greeness"           [   0 to 1]
       real(kind=4)                :: last_gJ_in
       real(kind=4)                :: last_gV_in
+      real(kind=4)                :: target_g1
       real           ,parameter   :: Jmax_vmhor_coef = 0.7  ! fraction of Jmax  vmhor to Vcmax vmhor estimated from Kattge et al. 2007 and Slot et al. 2017
       real           ,parameter   :: Jmax_q10_coef = 0.8  ! fraction of Jmax  vmhor to Vcmax Q10
       integer                     :: k
@@ -416,11 +421,30 @@ Contains
       !------------------------------------------------------------------------------------!
       ! correcting for water stress impact on realized Vcmax
       !------------------------------------------------------------------------------------!
+
+      ! calculate lambda
+      if ((is_tropical(ipft) == .true.) .and. (is_grass(ipft) == .false.)) then
+        ! lambda largely determines stomata sensitivity slope (g1 in Medlyn model)
+        ! Wu et al. 2019 GCB suggests g1 is highly dependent on LMA for tropical species
+        ! therefore we calculate lambda from cohort-specific sla. This also allows g1 to change
+        ! within the canopy due to SLA plasiticity to light environment
+        target_g1 = -0.0224 * (1. / slain * 1000. * 2.) + 4.8278 ! equation from Wu et al. 2019 GCB Fig. 5b
+        ! now calculate lambda
+        ! from experiment, lambda of 3000 refer to g1 of ~3., and g1 is proportional to 1/sqrt(lambda)
+        lambda = 3000. / (target_g1 / 3.) ** 2
+      else
+          lambda = stoma_lambda(ipft)
+      endif
+
+      ! correct for co2 and water stress
+
+
+
       select case (h2o_plant_lim)
       case (0,1,2,3)
           ! use fsw to account for water stress outside of this module
           down_factor = 1.
-          lambda =  stoma_lambda(ipft) * can_co2 / 400.
+          lambda =  lambda * can_co2 / 400.
       case (4)
           ! down scale Vcmax, Jmax, lambda using leaf_psi
           ! parameters are kind of arbitrary from Xu et al. 2016 New Phyt.
@@ -431,9 +455,8 @@ Contains
           ! now we try to set the down_factor to be 90% when leaf_psi is equal to leaf_psi_tlp
           down_factor = max(1e-6,min(1.0, &
                         1. / (1. + 0.1 * (leaf_psi / leaf_psi_tlp(ipft)) ** 6.0)))
-         ! TODO: should use dmax_leaf_psi here because lambda changes at longer time scales to
          ! represent soil water stress
-          lambda =  stoma_lambda(ipft) * can_co2 / 400. * exp(stoma_beta(ipft) * dmax_leaf_psi)
+          lambda =  lambda * can_co2 / 400. * exp(stoma_beta(ipft) * dmax_leaf_psi)
       end select
           
 
