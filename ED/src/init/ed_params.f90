@@ -2829,10 +2829,10 @@ subroutine init_pft_alloc_params()
          do ipft=1,n_pft
             if (is_tropical(ipft) .and. (.not. is_liana(ipft))) then
                !----- Regular log-log fit, b1 is the intercept and b2 is the slope. ----------!
-
                ! Using values from observations by Pieter Zuidema
-               b1Ht   (ipft) = 1.519
-               b2Ht   (ipft) = 0.4597
+               ! High wood density plants are stouter
+               b1Ht   (ipft) = 1.4946 - 0.1445 * log(rho(ipft))
+               b2Ht   (ipft) = 0.4214 - 0.0611 * log(rho(ipft))
                !----- hgt_ref is not used. ---------------------------------------------------!
                ! hgt_ref(ipft) = 0.0
             end if
@@ -3057,7 +3057,11 @@ subroutine init_pft_alloc_params()
 !               b2Bl_small (ipft) = b2Bl_large(ipft)
 
 ! Mass-based
-               b1Bl_large(ipft) = exp(-4.83 + 0.5 * 0.77)
+               b1Bl_large(ipft) = exp(-4.83)  * C2B
+               ! do not include the MSE term because it would significantly overestimate bleaf per
+               ! basal area and thus underestimate basal area
+               !exp(-4.83 + 0.5 * 0.77) * C2B
+
                b2Bl_large(ipft) = 1.35
                b2Bl_hite(ipft) = 0.556
                

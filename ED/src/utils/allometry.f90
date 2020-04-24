@@ -343,10 +343,9 @@ contains
       ! height, whereas the old allometry uses dbh only.                                   !
       !------------------------------------------------------------------------------------!
       if ((iallom == 3 .or. iallom == 4) .and. is_tropical(ipft) .and. (.not. is_liana(ipft))) then
-         size2bl = b1Bl_large(ipft)                                                        &
+         size2bl = b1Bl_large(ipft) / C2B                                                  &
                  * (mdbh ** b2Bl_large(ipft))                                              &
                  * (hite ** b2Bl_hite(ipft))
-         ! no need to devide C2B because sla itself is in m2/kgC
       else
          if (dbh < dbh_adult(ipft)) then
             size2bl = b1Bl_small(ipft) / C2B * mdbh ** b2Bl_small(ipft)
@@ -399,11 +398,11 @@ contains
 
 
       if ( (iallom == 3 .or. iallom == 4) .and. is_tropical(ipft) .and. (.not. is_liana(ipft)) ) then
-         if (bleaf * sla_in < bleaf_crit(ipft) * SLA(ipft)) then
+         if (bleaf  < bleaf_crit(ipft) ) then
              ! Before the saturation point of bleaf-dbh relationship
              ! Need to incorporate height allometry
              bl2dbh =  exp( ( log(bleaf * C2B)                                             &
-                            - log(b1Bl_small(ipft) / sla_in) - b2Bl_hite(ipft) * b1Ht(ipft))  &
+                            - log(b1Bl_small(ipft)) - b2Bl_hite(ipft) * b1Ht(ipft))  &
                           / (b2Bl_small(ipft) + b2Bl_hite(ipft) * b2Ht(ipft)))
          else
              ! After the saturation point of bleaf-dbh relationship
