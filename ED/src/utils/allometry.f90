@@ -299,7 +299,7 @@ contains
    ! may use DBH (old style) or height (new style).  This replaces dbh2bl and h2bl with a  !
    ! single generic function that should be used by all plants.                            !
    !---------------------------------------------------------------------------------------!
-   real function size2bl(dbh,hite,sla,ipft)
+   real function size2bl(dbh,hite,sla_in,ipft)
       use pft_coms     , only : dbh_crit       & ! intent(in)
                               , dbh_adult      & ! intent(in)
                               , C2B            & ! intent(in)
@@ -319,7 +319,7 @@ contains
       !----- Arguments --------------------------------------------------------------------!
       real          , intent(in) :: dbh
       real          , intent(in) :: hite
-      real          , intent(in) :: sla
+      real          , intent(in) :: sla_in
       integer       , intent(in) :: ipft
       !----- Local variables --------------------------------------------------------------!
       real                       :: mdbh
@@ -343,7 +343,9 @@ contains
       ! height, whereas the old allometry uses dbh only.                                   !
       !------------------------------------------------------------------------------------!
       if ((iallom == 3 .or. iallom == 4) .and. is_tropical(ipft) .and. (.not. is_liana(ipft))) then
-         size2bl = b1Bl_large(ipft) / C2B                                                  &
+          ! in this case, b1Bl_large yields leaf area (m2), need to convert to kgC by dividing SLA
+          ! (m2/kgC)
+         size2bl = b1Bl_large(ipft) / sla_in                                               &
                  * (mdbh ** b2Bl_large(ipft))                                              &
                  * (hite ** b2Bl_hite(ipft))
       else
@@ -401,7 +403,7 @@ contains
          if (bleaf  < bleaf_crit(ipft) ) then
              ! Before the saturation point of bleaf-dbh relationship
              ! Need to incorporate height allometry
-             bl2dbh =  exp( ( log(bleaf * C2B)                                             &
+             bl2dbh =  exp( ( log(bleaf * sla_in)                                             &
                             - log(b1Bl_small(ipft)) - b2Bl_hite(ipft) * b1Ht(ipft))  &
                           / (b2Bl_small(ipft) + b2Bl_hite(ipft) * b2Ht(ipft)))
          else

@@ -1987,7 +1987,7 @@ subroutine init_pft_resp_params()
    !umol/kgC/s
    !
     root_respiration_factor(2:4) = 2.5
-    stem_respiration_factor(1:17) = 10. ** (-0.672) / 2.  ! umol/m2 stem area / s  value for tropics
+    stem_respiration_factor(1:17) = 10. ** (-0.672) / rd_q10(1:17)  ! umol/m2 stem area / s  value for tropics
     stem_resp_size_factor(1:17) = 0.0041  ! cm-1  value for tropics
     stem_resp_growth_factor(1:17) = 0.5   ! maximum relative increase of stem_resp due to growth for tropics
     ! This is now not used
@@ -2210,7 +2210,7 @@ subroutine init_pft_mort_params()
    !      Hydraulic failure mortality parameters                                           !
    !---------------------------------------------------------------------------------------!
    mort_plc_max (1:17) = 1.0 ! die in one year
-   mort_plc_th  (1:17) = 0.6 ! estimated from Adams et al.   
+   mort_plc_th  (1:17) = 0.6 ! estimated from Adams et al.  and Hammond et al 2019
    
 
 
@@ -2804,9 +2804,10 @@ subroutine init_pft_alloc_params()
 !               b2Ht(ipft) = 0.76
 !               hgt_ref(ipft) = -0.034
 
-               ! South American data from Chave et a. 2014
-               b1Ht(ipft) = 1.2616
-               b2Ht(ipft) = 0.571 + 0.0715 * log(rho(ipft))
+               ! From BAAD and Chave et al. 2014
+               ! hardwood species tends to be stouter
+               b1Ht(ipft) = 0.5709 - 0.1007 * log(rho(ipft))
+               b2Ht(ipft) = 0.6734
 
                ! old Feldpausch
                !b1Ht   (ipft) = 1.3760
@@ -2831,8 +2832,8 @@ subroutine init_pft_alloc_params()
                !----- Regular log-log fit, b1 is the intercept and b2 is the slope. ----------!
                ! Using values from observations by Pieter Zuidema
                ! High wood density plants are stouter
-               b1Ht   (ipft) = 1.4946 - 0.1445 * log(rho(ipft))
-               b2Ht   (ipft) = 0.4214 - 0.0611 * log(rho(ipft))
+               b1Ht   (ipft) = 1.5497
+               b2Ht   (ipft) = 0.4067 - 0.0993 * log(rho(ipft))
                !----- hgt_ref is not used. ---------------------------------------------------!
                ! hgt_ref(ipft) = 0.0
             end if
@@ -3050,20 +3051,35 @@ subroutine init_pft_alloc_params()
 !               b2Bl_hite  (ipft) = 0.4023
 
 ! Area-based
-!               b1Bl_large(ipft) = exp(-1.387 + 0.50 * 0.56)
-!               b2Bl_large(ipft) = 1.262
-!               b2Bl_hite(ipft) = 0.5097
-!               b1Bl_small (ipft) = b1Bl_large(ipft)
-!               b2Bl_small (ipft) = b2Bl_large(ipft)
+               !b1Bl_large(ipft) = exp(-0.8509 + 0.50 * 0.527 + 0.5679 * log(rho(ipft)))
+               !! hardwood species can support more leaf area under a given size.
+
+               !b2Bl_large(ipft) = 0.5476 * 2.
+               !b2Bl_hite(ipft) = 0.5476
+               !b1Bl_small (ipft) = b1Bl_large(ipft)
+               !b2Bl_small (ipft) = b2Bl_large(ipft)
+
+               ! convert mass to area
+               ! assuming mass-based allometry coming from sunlit individuals
+                b1Bl_large(ipft) = exp(0.5 * 0.78 -4.2371 + 0.8768 * log(rho(ipft))) * SLA(ipft)
+                b2Bl_large(ipft) = 0.6148 * 2
+                b2Bl_hite(ipft) = 0.6148
 
 ! Mass-based
-               b1Bl_large(ipft) = exp(-4.83)  * C2B
-               ! do not include the MSE term because it would significantly overestimate bleaf per
-               ! basal area and thus underestimate basal area
-               !exp(-4.83 + 0.5 * 0.77) * C2B
+! rho-based
+!                b1Bl_large(ipft) = exp(0.5 * 0.78 -4.2371 + 0.8768 * log(rho(ipft))) * C2B
+!                b2Bl_large(ipft) = 0.6148 * 2
+!                b2Bl_hite(ipft) = 0.6148
 
-               b2Bl_large(ipft) = 1.35
-               b2Bl_hite(ipft) = 0.556
+
+! no rho info
+!               b1Bl_large(ipft) = exp(-4.83)  * C2B
+!               ! do not include the MSE term because it would significantly overestimate bleaf per
+!               ! basal area and thus underestimate basal area
+!               !exp(-4.83 + 0.5 * 0.77) * C2B
+!
+!               b2Bl_large(ipft) = 1.35
+!               b2Bl_hite(ipft) = 0.556
                
                bleaf_adult(ipft) = size2bl(                                                 &
                                    dbh_adult(ipft),                                         &
@@ -3146,12 +3162,19 @@ subroutine init_pft_alloc_params()
 
             case (3,4)
                 !---- Based on Chave et al. 2014
-                b1Bs_small(ipft) = 0.0673 * exp(0.5 * (0.357 ** 2)) &
-                                 * (rho(ipft) ** 0.976) / agf_bs(ipft)
-                b2Bs_small(ipft) = 2. * 0.976
+                ! use values recalculated by MLO using type 2 regression
+                b1Bs_small(ipft) = 0.0608 &
+                                 * (rho(ipft) ** 1.00448) / agf_bs(ipft)
+                b2Bs_small(ipft) = 2. * 1.00448
+                b2Bs_hite(ipft)  = 1.00448
+
+               ! b1Bs_small(ipft) = 0.0673 * &
+               !                  * (rho(ipft) ** 0.976) / agf_bs(ipft)
+               ! b2Bs_small(ipft) = 2. * 0.976
+               ! b2Bs_hite(ipft)  = 0.976
+
                 b1Bs_large(ipft) = b1Bs_small(ipft)
                 b2Bs_large(ipft) = b2Bs_small(ipft)
-                b2Bs_hite(ipft)  = 0.976
 
             case default
                !---- Based an alternative modification of Chave et al. (2001) allometry. -----!
