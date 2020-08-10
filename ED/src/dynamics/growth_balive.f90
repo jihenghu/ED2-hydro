@@ -1206,7 +1206,11 @@ module growth_balive
                    f_broot     = cpatch%broot    (ico) / bloss_max
                endif
 
-               if (bloss_max > carbon_debt) then
+               if ((bloss_max > carbon_debt) .and. (abs(carbon_debt) >= tiny_num)) then
+                  ! XX added the second condition due to rare cases when both bloss_max and
+                  ! carbon_debt are smaller than tiny_num. In this case, f_bleaf and f_broot are all
+                  ! 1, which will lead to negative bleaf/broot
+
                   !----- Remove biomass accordingly. --------------------------------------!
                   tr_bleaf = f_bleaf * (-1.0) * carbon_debt
                   tr_broot = f_broot * (-1.0) * carbon_debt

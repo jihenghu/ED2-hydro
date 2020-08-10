@@ -423,18 +423,18 @@ Contains
       !------------------------------------------------------------------------------------!
 
       ! calculate lambda
-      if ((is_tropical(ipft) == .true.) .and. (is_grass(ipft) == .false.)) then
-        ! lambda largely determines stomata sensitivity slope (g1 in Medlyn model)
-        ! Wu et al. 2019 GCB suggests g1 is highly dependent on LMA for tropical species
-        ! therefore we calculate lambda from cohort-specific sla. This also allows g1 to change
-        ! within the canopy due to SLA plasiticity to light environment
-        target_g1 = -0.0224 * (1. / slain * 1000. * 2.) + 4.8278 ! equation from Wu et al. 2019 GCB Fig. 5b
-        ! now calculate lambda
-        ! from experiment, lambda of 3000 refer to g1 of ~3., and g1 is proportional to 1/sqrt(lambda)
-        lambda = 3000. / (target_g1 / 3.) ** 2
-      else
-          lambda = stoma_lambda(ipft)
-      endif
+!      if ((is_tropical(ipft) == .true.) .and. (is_grass(ipft) == .false.)) then
+!        ! lambda largely determines stomata sensitivity slope (g1 in Medlyn model)
+!        ! Wu et al. 2019 GCB suggests g1 is highly dependent on LMA for tropical species
+!        ! therefore we calculate lambda from cohort-specific sla. This also allows g1 to change
+!        ! within the canopy due to SLA plasiticity to light environment
+!        target_g1 = -0.0224 * (1. / slain * 1000. * 2.) + 4.8278 ! equation from Wu et al. 2019 GCB Fig. 5b
+!        ! now calculate lambda
+!        ! from experiment, lambda of 3000 refer to g1 of ~3., and g1 is proportional to 1/sqrt(lambda)
+!        lambda = 3000. / (target_g1 / 3.) ** 2
+!      else
+      lambda = stoma_lambda(ipft)
+!      endif
 
       ! correct for co2 and water stress
 

@@ -350,7 +350,8 @@ module plant_hydro
                                  , dslz8                ! ! intent(in)
       use grid_coms       , only : nzg                  ! ! intent(in)
       use consts_coms     , only : pi18                 & ! intent(in)
-                                 , lnexp_min8           ! ! intent(in)
+                                 , lnexp_min8           & ! intent(in)
+                                 , lnexp_max8           ! ! intent(in)
       use rk4_coms        , only : tiny_offset          ! ! intent(in)
       use physiology_coms , only : hydraulic_redistribution ! intent(in)
       use pft_coms        , only : leaf_water_cap       & ! intent(in) 
@@ -629,21 +630,21 @@ module plant_hydro
             !  Assume root can extent to an area 4 times of crown area (twice as
             !  much as crown radius)
 
-            if (crown_area_d == 0.d0) then
-                RAI = 0.d0
-            else
+          !  if (crown_area_d == 0.d0) then
+          !      RAI = 0.d0
+          !  else
 !                RAI = broot_d * dble(SRA(ipft)) * root_frac     & !m2
 !                    / (4.d0 * crown_area_d)                         !m2
                 RAI = broot_d * dble(SRA(ipft)) * root_frac & ! m2/pl
                     * dble(nplant)                            ! pl/m2
-            endif
+           ! endif
             
             ! include a minimum total RAI value which is 1e-6 m2/m2 (per 1 m2 soil has only 0.01 cm2 root
             ! surface area). This will be roughly equal to 0.1% of total ground to root conductance
 
             ! This is used to (1) account for any water conductance that is not through fine root;
             ! (2) allow for plant to gain water when there is no broot
-            RAI = max(RAI,1e-6 * root_frac)
+            !RAI = max(RAI,1e-6 * root_frac)
 
             !  Calculate soil-root water conductance kg H2O / m / s
             !  Based on Katul et al. 2003 PCE

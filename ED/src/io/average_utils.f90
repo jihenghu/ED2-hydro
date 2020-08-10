@@ -6685,6 +6685,9 @@ module average_utils
                   cpatch%qmean_a_co2         (t,ico) = cpatch%qmean_a_co2         (t,ico)  &
                                                      + cpatch%fmean_a_co2           (ico)  &
                                                      * ndaysi
+                  cpatch%qmean_a_light       (t,ico) = cpatch%qmean_a_light       (t,ico)  &
+                                                     + cpatch%fmean_a_light         (ico)  &
+                                                     * ndaysi
                   cpatch%qmean_psi_open      (t,ico) = cpatch%qmean_psi_open      (t,ico)  &
                                                      + cpatch%fmean_psi_open        (ico)  &
                                                      * ndaysi

@@ -167,9 +167,11 @@ subroutine update_phenology(doy, cpoly, isi, lat)
                              , sitetype                 & ! structure
                              , patchtype                ! ! structure
    use grid_coms      , only : nzg                      ! ! intent(in)
+   use soil_coms      , only : slz                      ! ! intent(in)
    use pft_coms       , only : phenology                & ! intent(in)
                              , c2n_leaf                 & ! intent(in)
                              , q                        & ! intent(in)
+                             , root_beta                & ! intent(in)
                              , qsw                      & ! intent(in)
                              , leaf_psi_tlp             & ! intent(in)
                              , high_psi_threshold       & ! intent(in)
@@ -211,6 +213,7 @@ subroutine update_phenology(doy, cpoly, isi, lat)
    integer                               :: ico
    integer                               :: isoil_lev
    integer                               :: kroot
+   integer                               :: k
    integer                               :: ipft
    logical                               :: leaf_out_cold
    logical                               :: drop_cold
@@ -225,6 +228,13 @@ subroutine update_phenology(doy, cpoly, isi, lat)
    real                                  :: salloci
    real                                  :: elongf_try
    real                                  :: elongf_grow
+   real                                  :: avg_leaf_psi
+   real                                  :: current_layer_depth
+   real                                  :: above_layer_depth
+   real                                  :: root_frac
+   real                                  :: total_root_frac
+   real                      ,parameter  :: high_psi_scaler = 1.0
+   real                      ,parameter  :: low_psi_scaler = 1.0
    !----- Variables used only for debugging purposes. -------------------------------------!
    logical                  , parameter  :: printphen=.false.
    logical, dimension(n_pft), save       :: first_time=.true.
@@ -608,7 +618,40 @@ subroutine update_phenology(doy, cpoly, isi, lat)
             !    have crossed some threshold                                               !
             !------------------------------------------------------------------------------!
             !----- Update consecutive wet/dry days ----------!
-            if (cpatch%dmax_leaf_psi(ico) < leaf_psi_tlp(ipft)) then
+            ! test, use the average of dmax and min leaf psi
+            ! this will increase the deciduousness of plants
+
+            ! we need also to consider the extreme case of broot == 0 while there is still bstorage
+            ! plant should be able to reflush roots based on root zone water potential
+            avg_leaf_psi = cpatch%dmax_leaf_psi(ico)
+            if (cpatch%broot(ico) == 0. .and. cpatch%elongf(ico) < 1.) then
+                ! extreme case when all fine roots are gone due to respirational cost
+                ! we then use the average soil water potential within the root zone, weighted by
+                ! root fraction of each layer
+                avg_leaf_psi = 0. ! initialize as zero
+                total_root_frac = 0.
+                do k = kroot,nzg
+                    current_layer_depth = -slz(k)
+                    if (k+1 .le. nzg) then
+                        above_layer_depth = -slz(k+1)
+                    else
+                        above_layer_depth = 0.0
+                    endif
+
+                    ! calcualte the root fraction of this layer
+                    root_frac = &
+                        (root_beta(ipft) ** (above_layer_depth   / (-slz(kroot)))  &
+                        -root_beta(ipft) ** (current_layer_depth / (-slz(kroot)))  &
+                        )
+                    avg_leaf_psi = avg_leaf_psi + csite%soil_mstpot(k,ipa) * root_frac
+                    total_root_frac = total_root_frac + root_frac
+        
+                enddo
+                avg_leaf_psi = avg_leaf_psi / total_root_frac
+
+            endif
+
+            if (avg_leaf_psi < low_psi_scaler * leaf_psi_tlp(ipft)) then
                 cpatch%low_leaf_psi_days(ico) = cpatch%low_leaf_psi_days(ico) + 1
             else
                 ! reset the number of dry days
@@ -616,7 +659,7 @@ subroutine update_phenology(doy, cpoly, isi, lat)
             endif
 
 
-            if (cpatch%dmax_leaf_psi(ico) >= 0.5 * leaf_psi_tlp(ipft)) then
+            if (avg_leaf_psi >= high_psi_scaler * leaf_psi_tlp(ipft)) then
                 cpatch%high_leaf_psi_days(ico) = cpatch%high_leaf_psi_days(ico) + 1
             else
                 ! reset the number of wet days
@@ -658,7 +701,10 @@ subroutine update_phenology(doy, cpoly, isi, lat)
             ! plants in the dry season but reducing it to zero would diable
             ! water uptake when rain comes. The current fraction 50% is kind of
             ! arbitrary, need updates in the future.
-            br_max = bl_full * q(ipft) * elongf_try !(elongf_try + 1.0) / 2.0
+            br_max = bl_full * q(ipft) * (0.9 * elongf_try + 0.1) !(elongf_try + 1.0) / 2.0
+            ! keep all the roots, otherwise, it will create a run-away situation where
+            ! some mild water stress leads to deliberate loss of fine root, which reduces
+            ! water uptake and furthers the drought
             !------------------------------------------------------------------------------!
 
 

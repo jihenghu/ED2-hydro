@@ -1517,7 +1517,7 @@ subroutine init_pft_photo_params()
    Vm_low_temp(17)           =  8.0             ! Liana
 
    Vm_high_temp(1:17)        =  45.0 
-   Vm_high_temp(1:4)        =  45.0!37.5 !45.0 # makes more sense based on Slot et al. 2017 paper
+   Vm_high_temp(1:4)        =  40.0!37.5 !45.0 # makes more sense based on Slot et al. 2017 paper
    !---------------------------------------------------------------------------------------!
    !    Vm_decay_e is the correction term for high and low temperatures when running the   !
    ! original ED-2.1 correction as in Moorcroft et al. (2001).                             !
@@ -1986,8 +1986,8 @@ subroutine init_pft_resp_params()
    ! Value from Chambers et al. 2004 Ecological Applications
    !umol/kgC/s
    !
-    root_respiration_factor(2:4) = 2.5
-    stem_respiration_factor(1:17) = 10. ** (-0.672) / rd_q10(1:17)  ! umol/m2 stem area / s  value for tropics
+    root_respiration_factor(2:4) = 1. !2.5
+    stem_respiration_factor(1:17) = 10. ** (-0.672 - 0.19) / rd_q10(1:17)  ! umol/m2 stem area / s  value for tropics
     stem_resp_size_factor(1:17) = 0.0041  ! cm-1  value for tropics
     stem_resp_growth_factor(1:17) = 0.5   ! maximum relative increase of stem_resp due to growth for tropics
     ! This is now not used
@@ -2503,6 +2503,13 @@ subroutine init_pft_alloc_params()
    ! put agf_bs in the beginning because we need this value for b1Bs
    !----- Fraction of structural stem that is assumed to be above ground. -----------------!
    agf_bs(1:17)   = 0.7
+   if (iallom == 4) then
+       ! for thailand
+       ! use 0.8, equivalent to a root:shoot of 0.25
+       ! Based on Kenzo et al. 2020 FEM for teak plantations and meta-analysis
+       ! This will increase growth to become closer to observations.
+       agf_bs(2:4) = 0.8
+   endif
    !---------------------------------------------------------------------------------------!
 
 
@@ -3051,19 +3058,19 @@ subroutine init_pft_alloc_params()
 !               b2Bl_hite  (ipft) = 0.4023
 
 ! Area-based
-               !b1Bl_large(ipft) = exp(-0.8509 + 0.50 * 0.527 + 0.5679 * log(rho(ipft)))
+               b1Bl_large(ipft) = exp(-0.8509 + 0.50 * 0.527 + 0.5679 * log(rho(ipft)))
                !! hardwood species can support more leaf area under a given size.
 
-               !b2Bl_large(ipft) = 0.5476 * 2.
-               !b2Bl_hite(ipft) = 0.5476
-               !b1Bl_small (ipft) = b1Bl_large(ipft)
-               !b2Bl_small (ipft) = b2Bl_large(ipft)
+               b2Bl_large(ipft) = 0.5476 * 2.
+               b2Bl_hite(ipft) = 0.5476
+               b1Bl_small (ipft) = b1Bl_large(ipft)
+               b2Bl_small (ipft) = b2Bl_large(ipft)
 
                ! convert mass to area
                ! assuming mass-based allometry coming from sunlit individuals
-                b1Bl_large(ipft) = exp(0.5 * 0.78 -4.2371 + 0.8768 * log(rho(ipft))) * SLA(ipft)
-                b2Bl_large(ipft) = 0.6148 * 2
-                b2Bl_hite(ipft) = 0.6148
+               ! b1Bl_large(ipft) = exp(0.5 * 0.78 -4.2371 + 0.8768 * log(rho(ipft))) * SLA(ipft)
+               ! b2Bl_large(ipft) = 0.6148 * 2
+               ! b2Bl_hite(ipft) = 0.6148
 
 ! Mass-based
 ! rho-based
@@ -3363,15 +3370,17 @@ subroutine init_pft_alloc_params()
 
 
    !---------------------------------------------------------------------------------------!
-   !  Overwrite tropical angiosperms with observations from Barro Colorado Island          !  
+   !  Overwrite tropical angiosperms with observations from tropical data                  !
+   !      BAAD data base + Christofferson et al. GMD
+   
    !      F. C. Meinzer, G. Goldstein, J. L. Andrade; Regulation of water flux through     ! 
    !         tropical forest canopy trees: Do universal rules apply?, Tree Physiology,     !
    !         Volume 21, Issue 1, 1 January 2001, Pages 19–26,                              !
    !---------------------------------------------------------------------------------------!
    do ipft=1,n_pft
       if (is_tropical(ipft) .and. (.not. is_grass(ipft))) then
-          b1SA(ipft)    = 1.582
-          b2SA(ipft)    = 1.764
+          b1SA(ipft)    = 0.6572 !1.582
+          b2SA(ipft)    = 1.8530 !1.764
       end if
    end do
 
@@ -3671,11 +3680,18 @@ subroutine init_pft_hydro_params()
         ! Ecology 82: 453–469
         ! The calculated leaf_water_sat is comparable to measurements from
         ! Kursar et al., 2009: Functional Ecology, 23, 93-102.
-        leaf_density = max(0.1 * 1.e3,                                      &
-                           (leaf_elastic_mod(ipft) - 2.03) / 25.4 * 1.e3)
-        leaf_water_sat(ipft) = (-2.32e4 / LMA + 782.)                       &
-                             * (1. / (-0.21 * log(1.e4 / LMA) + 1.43) - 1.) &
-                             / leaf_density
+        !leaf_density = max(0.1 * 1.e3,                                      &
+        !                   (leaf_elastic_mod(ipft) - 2.03) / 25.4 * 1.e3)
+        !leaf_water_sat(ipft) = (-2.32e4 / LMA + 782.)                       &
+        !                     * (1. / (-0.21 * log(1.e4 / LMA) + 1.43) - 1.) &
+        !                     / leaf_density
+        
+        ! The previous two equations will yield large values for leaf_water_sat per leaf area (>0.2
+        ! kg/m2 while the observed is ~ 0.12), probably due to large uncertainties in both equations
+
+        ! Now we use data from Powers and Tiffin 2009 to calculate leaf_water_sat from wood density
+        ! This will generate much reasonable values for leaf_water_sat
+        leaf_water_sat(ipft) = 2.57 * exp(-0.94 * rho(ipft)) ! R2 = 0.24
 
         !----------------
         ! Sapwood traits
@@ -3689,8 +3705,7 @@ subroutine init_pft_hydro_params()
 
         ! Sapwood minimum relative water content, or residual fraction
         rwc_tlp_wood = 1. - (1. - 0.75 * rho(ipft)) / (2.74 + 2.01 * rho(ipft))
-        wood_rwc_min(ipft) = max(leaf_rwc_min(ipft)+0.1,                                    &
-                                wood_elastic_mod(ipft) * (1. - rwc_tlp_wood - 0.07)         &
+        wood_rwc_min(ipft) = (wood_elastic_mod(ipft) * (1. - rwc_tlp_wood - 0.07)         &
                                / (wood_psi_osmotic(ipft) / MPa2M * (1 - 0.07)) + 1. - 0.07)
         ! note there is a typo in the original equaiton, the last epsilon_x before fcap is extra
 
@@ -3733,7 +3748,7 @@ subroutine init_pft_hydro_params()
        !wood_Kmax(ipft)  = exp(2.11 - 20.05 * rho(ipft) / Amax_25) / MPa2m 
        !! This is estimated from Figure S2.2 in Christofferson et al. 2016 GMD
 
-       wood_Kmax = exp(2.32 - 2.27 * rho(ipft) - 0.48 * log(-wood_psi50(ipft) / MPa2m) + 0.5 * 0.89) / MPa2m
+       wood_Kmax(ipft) = exp(2.32 - 2.27 * rho(ipft) - 0.48 * log(-wood_psi50(ipft) / MPa2m) + 0.5 * 0.89) / MPa2m
        ! from analysis of the Gleason et al. and Xu et al. data.
        ! Again this makes more sense....
 
@@ -3812,7 +3827,11 @@ subroutine init_pft_hydro_params()
    ! using rho to determine stoma_lambda would generate unrealistically low gsw for hardwood species
    ! Try using an average value according to Lin et al. 2015
    stoma_lambda(1)               = 1200. * 0.5
-   stoma_lambda(2:4)             = 3000. !1200. 
+
+   ! 3000. is equivalent to a g1 of 3 in the model
+   ! the target g1 is 4.43 from Lin et al. 2015
+   ! g1 ~ 1/sqrt(lambda)
+   stoma_lambda(2:4)             = 3000. / (3.77 / 3.) ** 2
 
    stoma_beta(1:4)               = -0.13 / MPa2m
    
@@ -3963,7 +3982,7 @@ subroutine init_pft_leaf_params()
    !---------------------------------------------------------------------------------------!
 
    ! Other phenology-related parameters
-   high_psi_threshold(1:n_pft)   = 10    ! somewhat arbitrary
+   high_psi_threshold(1:n_pft)   = 15    ! somewhat arbitrary
    low_psi_threshold(1:n_pft)    = 10    ! somewhat arbitrary
    leaf_shed_rate(1:n_pft)       = 1./20.    ! somewhat arbitrary
    leaf_grow_rate(1:n_pft)       = 1./20.    ! somewhat arbitrary
@@ -4186,6 +4205,7 @@ subroutine init_pft_derived_params()
    real                              :: min_plant_dens
    logical                           :: print_zero_table
    character(len=str_len), parameter :: zero_table_fn    = 'pft_sizes.txt'
+   real, parameter                   :: k_pp_ref_lai = 4. ! reference lai for pheno-plasticity calculation
    !---------------------------------------------------------------------------------------!
    ! pheno-plasticity
    k_pp_sla(:) = 0. ! by default there is no pheno-plasticity
@@ -4197,12 +4217,10 @@ subroutine init_pft_derived_params()
        ! New Pan-tropical simulations
        ! from Panama data sets
        ! based on the newest analysis results
-       k_pp_sla(2:4) = - (0.214 * log(1./sla(2:4) * 2000.)          - 0.088) / 3.
-       k_pp_vm0(2:4) =   (0.811 * log(Vm0(2:4) * vm_q10(2:4))       - 2.22) / 3. !(0.0156 * (Vm0(2:4) * vm_q10(2:4)) + 0.3) / 4.
-       k_pp_rd0(2:4) =   (0.559 * log(Rd0(2:4) * rd_q10(2:4))       + 0.82) / 3.
-       !! now k_pp_rd0 actually means k_pp_rd2vc
-       !k_pp_rd0(2:4) =   (0.924 * log(dark_respiration_factor(2:4)) + 3.89 ) / 4.!(0.618 * log(dark_respiration_factor(2:4)) + 2.16) / 4.
-       k_pp_ll(2:4) =    (0.504 * log(Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 0.401) / 3.!(0.954 * (Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 1.17) / 4.
+       k_pp_sla(2:4) = - (0.214 * log(1./sla(2:4) * 2000.)          - 0.088) / k_pp_ref_lai
+       k_pp_vm0(2:4) =   (0.811 * log(Vm0(2:4) * vm_q10(2:4))       - 2.22) / k_pp_ref_lai !(0.0156 * (Vm0(2:4) * vm_q10(2:4)) + 0.3) / 4.
+       k_pp_rd0(2:4) =   (0.559 * log(Rd0(2:4) * rd_q10(2:4))       + 0.82) / k_pp_ref_lai
+       k_pp_ll(2:4) =    (0.504 * log(Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 0.401) / k_pp_ref_lai !(0.954 * (Vm0(2:4) * vm_q10(2:4) * sla(2:4) / 2000.) - 1.17) / 4.
 
        print*,k_pp_sla(2:4)
        print*,k_pp_vm0(2:4)
