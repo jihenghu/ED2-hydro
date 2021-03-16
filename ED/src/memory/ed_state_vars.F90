@@ -80,6 +80,18 @@ module ed_state_vars
       integer :: coglob_id
       !<Global index of the first cohort across all cohorts.
 
+      integer ,pointer,dimension(:) :: curr_coid_glob
+      !< The current cohort id across all cohorts.
+      !< This serves as a unique identifier for the cohort at current time step (monthly).
+      !< Together with prev_coid_glob, it will allow for cohort-level tracking through model output
+      !< (e.g. for tree ring comparison)
+      
+      integer ,pointer,dimension(:) :: prev_coid_glob
+      !< The previous cohort id across all cohorts.
+      !< This serves as a unique identifier for the cohort at previous time step (monthly).
+      !< Together with curr_coid_glob, it will allow for cohort-level tracking through model output
+      !< (e.g. for tree ring comparison)
+
 
       !------------------------------------------------------------------------------------!
       ! PFT | Name                                |  Grass | Tropical | Conifer |     Crop !
@@ -2609,6 +2621,8 @@ module ed_state_vars
       integer :: nsites_global !< total number of sites
       integer :: npatches_global !< total number of patches
       integer :: ncohorts_global !< total number of cohorts
+
+
 
       ! Index offsets for total counts of cohorts, patches
       ! and sites.  If this is the nth machine writing to
@@ -5562,6 +5576,8 @@ module ed_state_vars
       !------------------------------------------------------------------------------------!
 
 
+      allocate(cpatch%curr_coid_glob               (                    ncohorts))
+      allocate(cpatch%prev_coid_glob               (                    ncohorts))
       allocate(cpatch%pft                          (                    ncohorts))
       allocate(cpatch%nplant                       (                    ncohorts))
       allocate(cpatch%phenology_status             (                    ncohorts))
@@ -7769,6 +7785,8 @@ module ed_state_vars
       type(patchtype), target :: cpatch
       !------------------------------------------------------------------------------------!
 
+      nullify(cpatch%curr_coid_glob          )
+      nullify(cpatch%prev_coid_glob          )
       nullify(cpatch%pft                     )
       nullify(cpatch%nplant                  )
       nullify(cpatch%phenology_status        )
@@ -8942,6 +8960,8 @@ module ed_state_vars
     
       if (cpatch%ncohorts == 0) return
 
+      if(associated(cpatch%prev_coid_glob          )) deallocate(cpatch%prev_coid_glob          )
+      if(associated(cpatch%curr_coid_glob          )) deallocate(cpatch%curr_coid_glob          )
       if(associated(cpatch%pft                     )) deallocate(cpatch%pft                     )
       if(associated(cpatch%nplant                  )) deallocate(cpatch%nplant                  )
       if(associated(cpatch%phenology_status        )) deallocate(cpatch%phenology_status        )
@@ -11146,6 +11166,8 @@ module ed_state_vars
          ico = ico + 1
 
          !----- Scalars. ------------------------------------------------------------------!
+         opatch%curr_coid_glob          (oco) = ipatch%curr_coid_glob          (ico)
+         opatch%prev_coid_glob          (oco) = ipatch%prev_coid_glob          (ico)
          opatch%pft                     (oco) = ipatch%pft                     (ico)
          opatch%nplant                  (oco) = ipatch%nplant                  (ico)
          opatch%phenology_status        (oco) = ipatch%phenology_status        (ico)
@@ -11895,6 +11917,8 @@ module ed_state_vars
 
 
       !----- Scalars. ---------------------------------------------------------------------!
+      opatch%curr_coid_glob        (1:z) = pack(ipatch%curr_coid_glob            ,lmask)
+      opatch%prev_coid_glob        (1:z) = pack(ipatch%prev_coid_glob            ,lmask)
       opatch%pft                   (1:z) = pack(ipatch%pft                       ,lmask)
       opatch%nplant                (1:z) = pack(ipatch%nplant                    ,lmask)
       opatch%phenology_status      (1:z) = pack(ipatch%phenology_status          ,lmask)
@@ -28960,6 +28984,20 @@ module ed_state_vars
       ! (integers and scalars).                                                            !
       !------------------------------------------------------------------------------------!
       npts = cpatch%ncohorts
+
+      if (associated(cpatch%curr_coid_glob  )) then
+         nvar=nvar+1
+           call vtable_edio_i(npts,cpatch%curr_coid_glob  ,nvar,igr,init,cpatch%coglob_id, &
+           var_len,var_len_global,max_ptrs,'CURR_COID_GLOB :40:hist:anal:dial:mont:dcyc:year') 
+         call metadata_edio(nvar,igr,'Current global cohort ID','[-]','NA') 
+      end if
+
+      if (associated(cpatch%prev_coid_glob  )) then
+         nvar=nvar+1
+           call vtable_edio_i(npts,cpatch%prev_coid_glob  ,nvar,igr,init,cpatch%coglob_id, &
+           var_len,var_len_global,max_ptrs,'PREV_COID_GLOB :40:hist') 
+         call metadata_edio(nvar,igr,'Previous global cohort ID','[-]','NA') 
+      end if
 
 
 

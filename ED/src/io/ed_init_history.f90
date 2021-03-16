@@ -4941,6 +4941,10 @@ module ed_init_history
       memdims (1) = int(cpatch%ncohorts,8)
       memsize (1) = int(cpatch%ncohorts,8)
       memoffs (1) = 0_8
+      call hdf_getslab_i(cpatch%curr_coid_glob                                             &
+                        ,'CURR_COID_GLOB            ',dsetrank,iparallel,.true. ,foundvar)
+      call hdf_getslab_i(cpatch%prev_coid_glob                                             &
+                        ,'PREV_COID_GLOB            ',dsetrank,iparallel,.true. ,foundvar)
       call hdf_getslab_i(cpatch%pft                                                        &
                         ,'PFT                       ',dsetrank,iparallel,.true. ,foundvar)
       call hdf_getslab_i(cpatch%phenology_status                                           &

@@ -1671,7 +1671,8 @@ module fuse_fiss_utils
    !> than layer by layer.
    !---------------------------------------------------------------------------------------!
    subroutine split_cohorts(csite,ipa,green_leaf_factor,is_initial)
-      use update_derived_utils , only : update_cohort_extensive_props ! ! sub-routine
+      use update_derived_utils , only : update_cohort_extensive_props & ! sub-routine
+                                      , get_new_coid_glob             ! ! function
       use ed_state_vars        , only : sitetype                      & ! structure
                                       , patchtype                     & ! structure
                                       , copy_patchtype                ! ! sub-routine
@@ -1914,6 +1915,13 @@ module fuse_fiss_utils
                                              ,old_leaf_water,old_wood_water                &
                                              ,old_leaf_water_im2,old_wood_water_im2        &
                                              ,.true.,is_initial)
+                  !----- Update coid_glob -------------------------------------!
+                  ! we do not need to change the coid_glob for ico
+                  ! we need to assign a new coid for inew and set its prev_coid_glob to be the same as
+                  ! curr_coid_glob(ico)
+                  cpatch%curr_coid_glob(inew) = get_new_coid_glob()
+                  cpatch%prev_coid_glob(inew) = cpatch%curr_coid_glob(ico)
+
                   !----- Update the stability status. -------------------------------------!
                   call is_resolvable(csite,ipa,ico ,is_initial,.false.                     &
                                     ,'split_cohorts (old)')
@@ -2117,6 +2125,18 @@ module fuse_fiss_utils
       !------------------------------------------------------------------------------------!
 
 
+      !------------------------------------------------------------------------------------!
+      ! update coid_glob
+
+      ! always use the coid_glob from the cohort with more basal area
+      ! i.e. we will not be able to tracing growth history of cohorts with smaller basal area
+      ! this means we only update coid_glob when rba < 0.5
+      if (rba < 0.5) then
+          cpatch%curr_coid_glob(recc) = cpatch%curr_coid_glob(donc)
+          cpatch%prev_coid_glob(recc) = cpatch%prev_coid_glob(donc)
+      endif
+
+      !------------------------------------------------------------------------------------!
 
 
       !------------------------------------------------------------------------------------!

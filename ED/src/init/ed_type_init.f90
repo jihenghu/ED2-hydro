@@ -68,6 +68,14 @@ module ed_type_init
       real(kind=4)                       :: slpotfc    ! Matric potential of field cap.
       !----- External function. -----------------------------------------------------------!
       real(kind=4)           , external  :: sngloff ! Safe double -> single precision
+      
+      !------------------------------------------------------------------------------------!
+
+      ! Set all coid to be zero
+      cpatch%prev_coid_glob(ico) = 0
+      cpatch%curr_coid_glob(ico) = 0
+
+
       !------------------------------------------------------------------------------------!
 
 
