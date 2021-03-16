@@ -1295,9 +1295,22 @@ module structural_growth
       !------------------------------------------------------------------------------------!
       !      Allocation will depend on the structural growth option.  This option decides  !
       ! whether to allocate all storage available to growth to heartwood (option 0) or to  !
-      ! growth of heartwood and living tissues (option 1).                                 !
+      ! growth of heartwood and living tissues (option 1,2).                               !
       !------------------------------------------------------------------------------------!
       select case (istruct_growth_scheme)
+      case (2)
+         !----- Use the current fraction of bdead to total biomass to determine the final
+         ! fraction of carbon devoted for structural growth
+         !----- Given the fraction of bdead increases with size, this simple assumption
+         ! will underestimate dbh growth at monthly timescale (i.e. reserving too much for
+         ! potential new alive biomass). But the effect at annual time scale should be small
+         ! because the extra carbon will be quickly used for growth in the next month
+
+         f_bdeada   = f_growth * bdeada_in / bevery_in
+         f_bdeadb   = f_growth * bdeadb_in / bevery_in
+         f_bstorage = f_bstorage + f_growth - f_bdeada - f_bdeadb 
+         ! put the remainder back to bstorage
+
       case (1)
          !----- Find the new biomass with the storage inputs. -----------------------------!
          call expand_bevery(ipft,bevery_aim,dbh_aim,hite_aim,bleaf_aim,broot_aim           &
