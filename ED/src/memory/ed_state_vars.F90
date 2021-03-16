@@ -28988,14 +28988,14 @@ module ed_state_vars
       if (associated(cpatch%curr_coid_glob  )) then
          nvar=nvar+1
            call vtable_edio_i(npts,cpatch%curr_coid_glob  ,nvar,igr,init,cpatch%coglob_id, &
-           var_len,var_len_global,max_ptrs,'CURR_COID_GLOB :40:hist:anal:dial:mont:dcyc:year') 
+           var_len,var_len_global,max_ptrs,'CURR_COID_GLOB :40:hist:anal:dail:mont:dcyc:year') 
          call metadata_edio(nvar,igr,'Current global cohort ID','[-]','NA') 
       end if
 
       if (associated(cpatch%prev_coid_glob  )) then
          nvar=nvar+1
            call vtable_edio_i(npts,cpatch%prev_coid_glob  ,nvar,igr,init,cpatch%coglob_id, &
-           var_len,var_len_global,max_ptrs,'PREV_COID_GLOB :40:hist') 
+           var_len,var_len_global,max_ptrs,'PREV_COID_GLOB :40:hist:anal:dail:mont:dcyc:year') 
          call metadata_edio(nvar,igr,'Previous global cohort ID','[-]','NA') 
       end if
 
