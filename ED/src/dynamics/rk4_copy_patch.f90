@@ -941,6 +941,7 @@ module rk4_copy_patch
                                       , rk4max_veg_temp      & ! intent(in)
                                       , tiny_offset          & ! intent(in)
                                       , checkbudget          & ! intent(in)
+                                      , effarea_transp       & ! intent(int)
                                       , ibranch_thermo       ! ! intent(in)
       use ed_state_vars        , only : sitetype             & ! structure
                                       , patchtype            ! ! structure
@@ -949,6 +950,7 @@ module rk4_copy_patch
                                       , cpdry                & ! intent(in)
                                       , t3ple                & ! intent(in)
                                       , t3ple8               & ! intent(in)
+                                      , mmdryi               & ! intent(in)
                                       , wdns8                ! ! intent(in)
       use ed_misc_coms         , only : fast_diagnostics     & ! intent(in)
                                       , writing_long         & ! intent(in)
@@ -968,6 +970,8 @@ module rk4_copy_patch
                                       , qslif                ! ! function
       use phenology_coms       , only : spot_phen            ! ! intent(in)
       use physiology_coms      , only : plant_hydro_scheme   & ! intent(in)
+                                      , gbw_2_gbc            & ! intent(in)
+                                      , gsw_2_gsc            & ! intent(in)
                                       , gbh_2_gbw            ! ! intent(in)
       use allometry            , only : h2crownbh            ! ! function
       use disturb_coms         , only : include_fire         & ! intent(in)
@@ -1010,6 +1014,7 @@ module rk4_copy_patch
       real(kind=8)                    :: mcheight
       real(kind=4)                    :: step_waterdef
       real(kind=4)                    :: can_rvap
+      real(kind=4)                    :: lint_co2
       !----- Local contants ---------------------------------------------------------------!
       real        , parameter         :: tendays_sec    = 10. * day_sec
       real        , parameter         :: thirtydays_sec = 30. * day_sec
@@ -2141,6 +2146,29 @@ module rk4_copy_patch
          cpatch%fmean_leaf_gbw      (ico) = cpatch%fmean_leaf_gbw      (ico)               &
                                           + cpatch%leaf_gbw            (ico)               &
                                           * dtlsm_o_frqsum
+
+         ! caculate lint_co2
+         if (cpatch%A_open(ico) /= 0. .and. cpatch%leaf_gbw(ico) /= 0.                      &
+              .and. cpatch%leaf_gsw(ico) /= 0.)  then
+              lint_co2 = csite%can_co2(ipa)                                                 &
+                       - ( ( 1. - cpatch%fs_open (ico) )                                    &
+                         * cpatch%A_closed       (ico)                                      &
+                         + cpatch%fs_open        (ico)                                      &
+                         * cpatch%A_open         (ico) )                                    &
+                       * (1. / ( cpatch%leaf_gbw(ico) * mmdryi                              &
+                               * sngloff(effarea_transp(ipft),tiny_offset) * gbw_2_gbc)     &
+                         +1. / ( cpatch%leaf_gsw(ico) * mmdryi                              &
+                               * sngloff(effarea_transp(ipft),tiny_offset) * gsw_2_gsc)     &
+                         )
+          else
+              lint_co2 = csite%can_co2(ipa)
+          endif
+          cpatch%fmean_lint_co2      (ico) = cpatch%fmean_lint_co2      (ico)              &
+                                           + lint_co2                                      &
+                                           * dtlsm_o_frqsum
+
+
+
          cpatch%fmean_wood_gbw      (ico) = cpatch%fmean_wood_gbw      (ico)               &
                                           + cpatch%wood_gbw            (ico)               &
                                           * dtlsm_o_frqsum

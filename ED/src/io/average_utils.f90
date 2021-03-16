@@ -264,6 +264,10 @@ module average_utils
                                                   + cpatch%fmean_leaf_gbw      (ico)       &
                                                   * cpatch%lai                 (ico)       &
                                                   * patch_wgt
+                  cgrid%fmean_lint_co2      (ipy) = cgrid%fmean_lint_co2       (ipy)       &
+                                                  + cpatch%fmean_lint_co2      (ico)       &
+                                                  * cpatch%lai                 (ico)       &
+                                                  * patch_wgt
                   cgrid%fmean_wood_energy   (ipy) = cgrid%fmean_wood_energy    (ipy)       &
                                                   + cpatch%fmean_wood_energy   (ico)       &
                                                   * patch_wgt
@@ -797,6 +801,7 @@ module average_utils
             cgrid%fmean_leaf_vpdef(ipy) = cgrid%fmean_leaf_vpdef (ipy) / poly_lai
             cgrid%fmean_leaf_gsw  (ipy) = cgrid%fmean_leaf_gsw   (ipy) / poly_lai
             cgrid%fmean_leaf_gbw  (ipy) = cgrid%fmean_leaf_gbw   (ipy) / poly_lai
+            cgrid%fmean_lint_co2  (ipy) = cgrid%fmean_lint_co2   (ipy) / poly_lai
             cgrid%fmean_fs_open   (ipy) = cgrid%fmean_fs_open    (ipy) / poly_lai
             cgrid%fmean_fsw       (ipy) = cgrid%fmean_fsw        (ipy) / poly_lai
             cgrid%fmean_fsn       (ipy) = cgrid%fmean_fsn        (ipy) / poly_lai
@@ -804,6 +809,7 @@ module average_utils
             cgrid%fmean_leaf_vpdef(ipy) = cgrid%fmean_can_vpdef  (ipy)
             cgrid%fmean_leaf_gsw  (ipy) = 0.0
             cgrid%fmean_leaf_gbw  (ipy) = 0.0
+            cgrid%fmean_lint_co2  (ipy) = 0.0
             cgrid%fmean_fs_open   (ipy) = 0.5
             cgrid%fmean_fsw       (ipy) = 0.5
             cgrid%fmean_fsn       (ipy) = 0.5
@@ -1355,6 +1361,7 @@ module average_utils
          cgrid%fmean_leaf_fliq         (  ipy) = 0.0
          cgrid%fmean_leaf_gsw          (  ipy) = 0.0
          cgrid%fmean_leaf_gbw          (  ipy) = 0.0
+         cgrid%fmean_lint_co2          (  ipy) = 0.0
          cgrid%fmean_wood_energy       (  ipy) = 0.0
          cgrid%fmean_wood_water        (  ipy) = 0.0
          cgrid%fmean_wood_water_im2    (  ipy) = 0.0
@@ -1643,6 +1650,7 @@ module average_utils
                   cpatch%fmean_leaf_fliq         (ico) = 0.0
                   cpatch%fmean_leaf_gsw          (ico) = 0.0
                   cpatch%fmean_leaf_gbw          (ico) = 0.0
+                  cpatch%fmean_lint_co2          (ico) = 0.0
                   cpatch%fmean_wood_energy       (ico) = 0.0
                   cpatch%fmean_wood_water        (ico) = 0.0
                   cpatch%fmean_wood_hcap         (ico) = 0.0
@@ -1894,6 +1902,9 @@ module average_utils
                                           * frqsum_o_daysec
          cgrid%dmean_leaf_gbw       (ipy) = cgrid%dmean_leaf_gbw       (ipy)               &
                                           + cgrid%fmean_leaf_gbw       (ipy)               &
+                                          * frqsum_o_daysec
+         cgrid%dmean_lint_co2       (ipy) = cgrid%dmean_lint_co2       (ipy)               &
+                                          + cgrid%fmean_lint_co2       (ipy)               &
                                           * frqsum_o_daysec
          cgrid%dmean_wood_energy    (ipy) = cgrid%dmean_wood_energy    (ipy)               &
                                           + cgrid%fmean_wood_energy    (ipy)               &
@@ -2560,6 +2571,9 @@ module average_utils
                                                    * frqsum_o_daysec
                   cpatch%dmean_leaf_gbw      (ico) = cpatch%dmean_leaf_gbw      (ico)      &
                                                    + cpatch%fmean_leaf_gbw      (ico)      &
+                                                   * frqsum_o_daysec
+                  cpatch%dmean_lint_co2      (ico) = cpatch%dmean_lint_co2      (ico)      &
+                                                   + cpatch%fmean_lint_co2      (ico)      &
                                                    * frqsum_o_daysec
                   cpatch%dmean_wood_energy   (ico) = cpatch%dmean_wood_energy   (ico)      &
                                                    + cpatch%fmean_wood_energy   (ico)      &
@@ -3635,6 +3649,7 @@ module average_utils
          cgrid%dmean_leaf_fliq          (ipy) = 0.0
          cgrid%dmean_leaf_gsw           (ipy) = 0.0
          cgrid%dmean_leaf_gbw           (ipy) = 0.0
+         cgrid%dmean_lint_co2           (ipy) = 0.0
          cgrid%dmean_wood_energy        (ipy) = 0.0
          cgrid%dmean_wood_water         (ipy) = 0.0
          cgrid%dmean_wood_water_im2     (ipy) = 0.0
@@ -3901,6 +3916,7 @@ module average_utils
                   cpatch%dmean_leaf_fliq         (ico) = 0.0
                   cpatch%dmean_leaf_gsw          (ico) = 0.0
                   cpatch%dmean_leaf_gbw          (ico) = 0.0
+                  cpatch%dmean_lint_co2          (ico) = 0.0
                   cpatch%dmean_wood_energy       (ico) = 0.0
                   cpatch%dmean_wood_water        (ico) = 0.0
                   cpatch%dmean_wood_hcap         (ico) = 0.0
@@ -4243,6 +4259,9 @@ module average_utils
                                              * ndaysi
          cgrid%mmean_leaf_gbw          (ipy) = cgrid%mmean_leaf_gbw          (ipy)         &
                                              + cgrid%dmean_leaf_gbw          (ipy)         &
+                                             * ndaysi
+         cgrid%mmean_lint_co2          (ipy) = cgrid%mmean_lint_co2          (ipy)         &
+                                             + cgrid%dmean_lint_co2          (ipy)         &
                                              * ndaysi
          cgrid%mmean_wood_energy       (ipy) = cgrid%mmean_wood_energy       (ipy)         &
                                              + cgrid%dmean_wood_energy       (ipy)         &
@@ -5317,6 +5336,9 @@ module average_utils
                   cpatch%mmean_leaf_gbw        (ico) = cpatch%mmean_leaf_gbw        (ico)  &
                                                      + cpatch%dmean_leaf_gbw        (ico)  &
                                                      * ndaysi
+                  cpatch%mmean_lint_co2        (ico) = cpatch%mmean_lint_co2        (ico)  &
+                                                     + cpatch%dmean_lint_co2        (ico)  &
+                                                     * ndaysi
                   cpatch%mmean_wood_energy     (ico) = cpatch%mmean_wood_energy     (ico)  &
                                                      + cpatch%dmean_wood_energy     (ico)  &
                                                      * ndaysi
@@ -6019,6 +6041,7 @@ module average_utils
          cgrid%mmean_leaf_fliq            (ipy) = 0.0
          cgrid%mmean_leaf_gsw             (ipy) = 0.0
          cgrid%mmean_leaf_gbw             (ipy) = 0.0
+         cgrid%mmean_lint_co2             (ipy) = 0.0
          cgrid%mmean_wood_energy          (ipy) = 0.0
          cgrid%mmean_wood_water           (ipy) = 0.0
          cgrid%mmean_wood_water_im2       (ipy) = 0.0
@@ -6396,6 +6419,7 @@ module average_utils
                   cpatch%mmean_leaf_fliq          (ico) = 0.0
                   cpatch%mmean_leaf_gsw           (ico) = 0.0
                   cpatch%mmean_leaf_gbw           (ico) = 0.0
+                  cpatch%mmean_lint_co2           (ico) = 0.0
                   cpatch%mmean_wood_energy        (ico) = 0.0
                   cpatch%mmean_wood_water         (ico) = 0.0
                   cpatch%mmean_wood_hcap          (ico) = 0.0
@@ -6655,6 +6679,9 @@ module average_utils
                                                * ndaysi
          cgrid%qmean_leaf_gbw          (t,ipy) = cgrid%qmean_leaf_gbw          (t,ipy)     &
                                                + cgrid%fmean_leaf_gbw            (ipy)     &
+                                               * ndaysi
+         cgrid%qmean_lint_co2          (t,ipy) = cgrid%qmean_lint_co2          (t,ipy)     &
+                                               + cgrid%fmean_lint_co2            (ipy)     &
                                                * ndaysi
          cgrid%qmean_wood_energy       (t,ipy) = cgrid%qmean_wood_energy       (t,ipy)     &
                                                + cgrid%fmean_wood_energy         (ipy)     &
@@ -7482,6 +7509,9 @@ module average_utils
                   cpatch%qmean_leaf_gbw      (t,ico) = cpatch%qmean_leaf_gbw      (t,ico)  &
                                                      + cpatch%fmean_leaf_gbw        (ico)  &
                                                      * ndaysi
+                  cpatch%qmean_lint_co2      (t,ico) = cpatch%qmean_lint_co2      (t,ico)  &
+                                                     + cpatch%fmean_lint_co2        (ico)  &
+                                                     * ndaysi
                   cpatch%qmean_wood_energy   (t,ico) = cpatch%qmean_wood_energy   (t,ico)  &
                                                      + cpatch%fmean_wood_energy     (ico)  &
                                                      * ndaysi
@@ -8096,6 +8126,7 @@ module average_utils
          cgrid%qmean_leaf_fliq          (:,ipy) = 0.0
          cgrid%qmean_leaf_gsw           (:,ipy) = 0.0
          cgrid%qmean_leaf_gbw           (:,ipy) = 0.0
+         cgrid%qmean_lint_co2           (:,ipy) = 0.0
          cgrid%qmean_wood_energy        (:,ipy) = 0.0
          cgrid%qmean_wood_water         (:,ipy) = 0.0
          cgrid%qmean_wood_water_im2     (:,ipy) = 0.0
@@ -8400,6 +8431,7 @@ module average_utils
                   cpatch%qmean_leaf_fliq           (:,ico) = 0.0
                   cpatch%qmean_leaf_gsw            (:,ico) = 0.0
                   cpatch%qmean_leaf_gbw            (:,ico) = 0.0
+                  cpatch%qmean_lint_co2            (:,ico) = 0.0
                   cpatch%qmean_wood_energy         (:,ico) = 0.0
                   cpatch%qmean_wood_water          (:,ico) = 0.0
                   cpatch%qmean_wood_hcap           (:,ico) = 0.0

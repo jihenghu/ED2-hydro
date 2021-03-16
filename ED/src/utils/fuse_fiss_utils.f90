@@ -2878,6 +2878,8 @@ module fuse_fiss_utils
                                              + cpatch%fmean_leaf_gsw        (donc) * dlai
          cpatch%fmean_leaf_gbw        (recc) = cpatch%fmean_leaf_gbw        (recc) * rlai  &
                                              + cpatch%fmean_leaf_gbw        (donc) * dlai
+         cpatch%fmean_lint_co2        (recc) = cpatch%fmean_lint_co2        (recc) * rlai  &
+                                             + cpatch%fmean_lint_co2        (donc) * dlai
          cpatch%fmean_fs_open         (recc) = cpatch%fmean_fs_open         (recc) * rlai  &
                                              + cpatch%fmean_fs_open         (donc) * dlai
          cpatch%fmean_fsw             (recc) = cpatch%fmean_fsw             (recc) * rlai  &
@@ -3247,6 +3249,8 @@ module fuse_fiss_utils
                                              + cpatch%dmean_leaf_gsw        (donc) * dlai
          cpatch%dmean_leaf_gbw        (recc) = cpatch%dmean_leaf_gbw        (recc) * rlai  &
                                              + cpatch%dmean_leaf_gbw        (donc) * dlai
+         cpatch%dmean_lint_co2        (recc) = cpatch%dmean_lint_co2        (recc) * rlai  &
+                                             + cpatch%dmean_lint_co2        (donc) * dlai
          cpatch%dmean_fs_open         (recc) = cpatch%dmean_fs_open         (recc) * rlai  &
                                              + cpatch%dmean_fs_open         (donc) * dlai
          cpatch%dmean_fsw             (recc) = cpatch%dmean_fsw             (recc) * rlai  &
@@ -3733,6 +3737,8 @@ module fuse_fiss_utils
                                              + cpatch%mmean_leaf_gsw        (donc) * dlai
          cpatch%mmean_leaf_gbw        (recc) = cpatch%mmean_leaf_gbw        (recc) * rlai  &
                                              + cpatch%mmean_leaf_gbw        (donc) * dlai
+         cpatch%mmean_lint_co2        (recc) = cpatch%mmean_lint_co2        (recc) * rlai  &
+                                             + cpatch%mmean_lint_co2        (donc) * dlai
          cpatch%mmean_fs_open         (recc) = cpatch%mmean_fs_open         (recc) * rlai  &
                                              + cpatch%mmean_fs_open         (donc) * dlai
          cpatch%mmean_fsw             (recc) = cpatch%mmean_fsw             (recc) * rlai  &
@@ -4204,6 +4210,8 @@ module fuse_fiss_utils
                                              + cpatch%qmean_leaf_gsw      (:,donc) * dlai
          cpatch%qmean_leaf_gbw      (:,recc) = cpatch%qmean_leaf_gbw      (:,recc) * rlai  &
                                              + cpatch%qmean_leaf_gbw      (:,donc) * dlai
+         cpatch%qmean_lint_co2      (:,recc) = cpatch%qmean_lint_co2      (:,recc) * rlai  &
+                                             + cpatch%qmean_lint_co2      (:,donc) * dlai
          cpatch%qmean_fs_open       (:,recc) = cpatch%qmean_fs_open       (:,recc) * rlai  &
                                              + cpatch%qmean_fs_open       (:,donc) * dlai
          cpatch%qmean_fsw           (:,recc) = cpatch%qmean_fsw           (:,recc) * rlai  &

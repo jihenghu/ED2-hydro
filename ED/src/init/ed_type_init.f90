@@ -428,6 +428,7 @@ module ed_type_init
       cpatch%fmean_leaf_fliq         (ico) = 0.0
       cpatch%fmean_leaf_gsw          (ico) = 0.0
       cpatch%fmean_leaf_gbw          (ico) = 0.0
+      cpatch%fmean_lint_co2          (ico) = 0.0
       cpatch%fmean_wood_energy       (ico) = 0.0
       cpatch%fmean_wood_water        (ico) = 0.0
       cpatch%fmean_wood_hcap         (ico) = 0.0
@@ -532,6 +533,7 @@ module ed_type_init
          cpatch%dmean_leaf_fliq         (ico) = 0.0
          cpatch%dmean_leaf_gsw          (ico) = 0.0
          cpatch%dmean_leaf_gbw          (ico) = 0.0
+         cpatch%dmean_lint_co2          (ico) = 0.0
          cpatch%dmean_wood_energy       (ico) = 0.0
          cpatch%dmean_wood_water        (ico) = 0.0
          cpatch%dmean_wood_hcap         (ico) = 0.0
@@ -619,6 +621,7 @@ module ed_type_init
          cpatch%mmean_leaf_fliq           (ico) = 0.0
          cpatch%mmean_leaf_gsw            (ico) = 0.0
          cpatch%mmean_leaf_gbw            (ico) = 0.0
+         cpatch%mmean_lint_co2            (ico) = 0.0
          cpatch%mmean_wood_energy         (ico) = 0.0
          cpatch%mmean_wood_water          (ico) = 0.0
          cpatch%mmean_wood_hcap           (ico) = 0.0
@@ -749,6 +752,7 @@ module ed_type_init
          cpatch%qmean_leaf_fliq         (:,ico) = 0.0
          cpatch%qmean_leaf_gsw          (:,ico) = 0.0
          cpatch%qmean_leaf_gbw          (:,ico) = 0.0
+         cpatch%qmean_lint_co2          (:,ico) = 0.0
          cpatch%qmean_wood_energy       (:,ico) = 0.0
          cpatch%qmean_wood_water        (:,ico) = 0.0
          cpatch%qmean_wood_hcap         (:,ico) = 0.0
@@ -2012,6 +2016,7 @@ module ed_type_init
          cgrid%fmean_leaf_fliq            (ipy) = 0.0
          cgrid%fmean_leaf_gsw             (ipy) = 0.0
          cgrid%fmean_leaf_gbw             (ipy) = 0.0
+         cgrid%fmean_lint_co2             (ipy) = 0.0
          cgrid%fmean_wood_energy          (ipy) = 0.0
          cgrid%fmean_wood_water           (ipy) = 0.0
          cgrid%fmean_wood_water_im2       (ipy) = 0.0
@@ -2190,6 +2195,7 @@ module ed_type_init
             cgrid%dmean_leaf_fliq            (ipy) = 0.0
             cgrid%dmean_leaf_gsw             (ipy) = 0.0
             cgrid%dmean_leaf_gbw             (ipy) = 0.0
+            cgrid%dmean_lint_co2             (ipy) = 0.0
             cgrid%dmean_wood_energy          (ipy) = 0.0
             cgrid%dmean_wood_water           (ipy) = 0.0
             cgrid%dmean_wood_water_im2       (ipy) = 0.0
@@ -2347,6 +2353,7 @@ module ed_type_init
             cgrid%mmean_leaf_fliq            (ipy) = 0.0
             cgrid%mmean_leaf_gsw             (ipy) = 0.0
             cgrid%mmean_leaf_gbw             (ipy) = 0.0
+            cgrid%mmean_lint_co2             (ipy) = 0.0
             cgrid%mmean_wood_energy          (ipy) = 0.0
             cgrid%mmean_wood_water           (ipy) = 0.0
             cgrid%mmean_wood_water_im2       (ipy) = 0.0
@@ -2589,6 +2596,7 @@ module ed_type_init
             cgrid%qmean_leaf_fliq          (:,ipy) = 0.0
             cgrid%qmean_leaf_gsw           (:,ipy) = 0.0
             cgrid%qmean_leaf_gbw           (:,ipy) = 0.0
+            cgrid%qmean_lint_co2           (:,ipy) = 0.0
             cgrid%qmean_wood_energy        (:,ipy) = 0.0
             cgrid%qmean_wood_water         (:,ipy) = 0.0
             cgrid%qmean_wood_water_im2     (:,ipy) = 0.0
