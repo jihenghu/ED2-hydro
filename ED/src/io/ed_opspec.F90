@@ -1809,9 +1809,9 @@ end do
       ifaterr = ifaterr +1
    end if
 
-   if (istruct_growth_scheme < 0 .or. istruct_growth_scheme > 1) then
+   if (istruct_growth_scheme < 0 .or. istruct_growth_scheme > 2) then
       write (reason,fmt='(a,1x,i4,a)')                                                     &
-                    'Invalid ISTRUCT_GROWTH_SCHEME, it must be between 0 and 1. Yours is set to'   &
+                    'Invalid ISTRUCT_GROWTH_SCHEME, it must be between 0 and 2. Yours is set to'   &
                     ,istruct_growth_scheme,'...'
       call opspec_fatal(reason,'opspec_misc')
       ifaterr = ifaterr +1
