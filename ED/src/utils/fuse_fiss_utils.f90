@@ -1922,16 +1922,13 @@ module fuse_fiss_utils
                   ! [check dynamics/disturbance.f90]
                   if (cpatch%curr_coid_glob(ico) == 0) then
                       ! both cohorts are new
-                      ! set the prev coid to be same
+                      ! set the prev coid of inew to be same as ico
                       ! create new coid for each cohort
                       cpatch%prev_coid_glob(inew) = cpatch%prev_coid_glob(ico)
-                      cpatch%curr_coid_glob(ico) = init_coid_glob()
-                      cpatch%curr_coid_glob(inew) = init_coid_glob()
                   else
                       ! ico is a established cohort
                       ! we set the prev_coid of the new one to be curr_coid_glob(ico)
                       cpatch%prev_coid_glob(inew) = cpatch%curr_coid_glob(ico)
-                      cpatch%curr_coid_glob(inew) = init_coid_glob()
 
                   endif
 
@@ -1986,6 +1983,16 @@ module fuse_fiss_utils
          !---------------------------------------------------------------------------------!
       end do splitloop
       !------------------------------------------------------------------------------------!
+
+      ! We have finished cohort split for cpatch now
+      ! let's update curr_coid_glob (prev_coid_glob should be all set)
+      ! The main reason to update curr_coid_glob outside of the slitloop is that some cohorts that
+      ! are not splitting might also need initiaztion of coid (due to distrubance-induced new patch)
+      do ico= 1, cpatch%ncohorts
+          if (cpatch%curr_coid_glob(ico) == 0) then
+              cpatch%curr_coid_glob(ico) = init_coid_glob()
+          endif
+      enddo
 
       return
    end subroutine split_cohorts
