@@ -1671,8 +1671,7 @@ module fuse_fiss_utils
    !> than layer by layer.
    !---------------------------------------------------------------------------------------!
    subroutine split_cohorts(csite,ipa,green_leaf_factor,is_initial)
-      use update_derived_utils , only : update_cohort_extensive_props & ! sub-routine
-                                      , get_new_coid_glob             ! ! function
+      use update_derived_utils , only : update_cohort_extensive_props ! ! sub-routine
       use ed_state_vars        , only : sitetype                      & ! structure
                                       , patchtype                     & ! structure
                                       , copy_patchtype                ! ! sub-routine
@@ -1690,6 +1689,8 @@ module fuse_fiss_utils
       use stable_cohorts       , only : is_resolvable                 ! ! sub-routine
       use plant_hydro          , only : rwc2tw                        & ! sub-routine
                                       , twi2twe                       ! ! sub-routine
+      use ed_type_init         , only : init_coid_glob                ! ! function
+
       implicit none
       !----- Constants --------------------------------------------------------------------!
       real                   , parameter   :: epsilon=0.0001     ! Tweak factor...
@@ -1916,11 +1917,23 @@ module fuse_fiss_utils
                                              ,old_leaf_water_im2,old_wood_water_im2        &
                                              ,.true.,is_initial)
                   !----- Update coid_glob -------------------------------------!
-                  ! we do not need to change the coid_glob for ico
-                  ! we need to assign a new coid for inew and set its prev_coid_glob to be the same as
-                  ! curr_coid_glob(ico)
-                  cpatch%curr_coid_glob(inew) = get_new_coid_glob()
-                  cpatch%prev_coid_glob(inew) = cpatch%curr_coid_glob(ico)
+                  ! check whether curr_coid_glob is zero
+                  ! this would happen if ico is a new cohort in a new patch after disturbance 
+                  ! [check dynamics/disturbance.f90]
+                  if (cpatch%curr_coid_glob(ico) == 0) then
+                      ! both cohorts are new
+                      ! set the prev coid to be same
+                      ! create new coid for each cohort
+                      cpatch%prev_coid_glob(inew) = cpatch%prev_coid_glob(ico)
+                      cpatch%curr_coid_glob(ico) = init_coid_glob()
+                      cpatch%curr_coid_glob(inew) = init_coid_glob()
+                  else
+                      ! ico is a established cohort
+                      ! we set the prev_coid of the new one to be curr_coid_glob(ico)
+                      cpatch%prev_coid_glob(inew) = cpatch%curr_coid_glob(ico)
+                      cpatch%curr_coid_glob(inew) = init_coid_glob()
+
+                  endif
 
                   !----- Update the stability status. -------------------------------------!
                   call is_resolvable(csite,ipa,ico ,is_initial,.false.                     &

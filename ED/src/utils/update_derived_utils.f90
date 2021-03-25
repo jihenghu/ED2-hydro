@@ -88,7 +88,6 @@ module update_derived_utils
       real                        :: bleaf_max
       integer                     :: ipft
       integer                     :: elapsed_months
-      integer                     :: coid_new
       logical                     :: census_time
       !------------------------------------------------------------------------------------!
 
@@ -196,16 +195,6 @@ module update_derived_utils
       !if new root depth is smaller keep the old one
 
 
-
-      !------------------------------------------------------------------------------------!
-      !     Update cohort id if they are not assigned (zero)
-      !------------------------------------------------------------------------------------!
-      if (cpatch%curr_coid_glob(ico) == 0) then
-          coid_new = get_new_coid_glob()
-          cpatch%curr_coid_glob(ico) = coid_new
-          cpatch%prev_coid_glob(ico) = coid_new
-
-      endif
 
       return
    end subroutine update_cohort_derived_props
@@ -2100,32 +2089,6 @@ module update_derived_utils
    end subroutine update_cohort_extensive_props
    !=======================================================================================!
    !=======================================================================================!
-   integer function get_new_coid_glob()
-      implicit none
-
-      !----- Arguments --------------------------------------------------------------------!
-      !------------------------------------------------------------------------------------!
-
-      !----- Local Variable --------------------------------------------------------------------!
-      integer, save :: coid_counter = 0
-      ! counter for total coid used
-      ! this will be saved throughout the simulation
-
-      !------------------------------------------------------------------------------------!
-
-      coid_counter = coid_counter + 1
-
-
-      ! always return the coid larger than existing maximum
-      ! this will avoid conflict in coid values
-      get_new_coid_glob = coid_counter
-
-      return
-   end function get_new_coid_glob
-   !=======================================================================================!
-
-   !=======================================================================================!
-
 
 
 

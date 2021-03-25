@@ -71,9 +71,9 @@ module ed_type_init
       
       !------------------------------------------------------------------------------------!
 
-      ! Set all coid to be zero
-      cpatch%prev_coid_glob(ico) = 0
-      cpatch%curr_coid_glob(ico) = 0
+      ! Set init the curr coid, set the prev the same as curr
+      cpatch%curr_coid_glob(ico) = init_coid_glob()
+      cpatch%prev_coid_glob(ico) = cpatch%curr_coid_glob(ico)
 
 
       !------------------------------------------------------------------------------------!
@@ -2959,6 +2959,48 @@ module ed_type_init
    end subroutine ed_init_viable
    !=======================================================================================!
    !=======================================================================================!
+
+   
+   !=======================================================================================!
+   ! Create new global cohort id when new cohorts are created
+   ! Currently, there are 4 pathways for new cohort creation:
+   ! (1) new cohort from model initialization
+   ! (2) new cohort from reproduction
+   ! (3) new cohort from patch disturbance due to new patch
+   ! (4) new cohort from cohort split
+   ! (1) & (2) both call init_ed_cohort_vars()
+   ! (3) and (4) will both call cohort_split [NOTE: has to mannully set coid to zero under case (3)]
+   ! Therefore, we only need to call init_coid_glob in the two key subroutines ->
+   ! init_ed_cohort_vars and cohort_split
+   !=======================================================================================!
+   integer function init_coid_glob()
+      implicit none
+
+      !----- Arguments --------------------------------------------------------------------!
+      !------------------------------------------------------------------------------------!
+
+      !----- Local Variable --------------------------------------------------------------------!
+      integer, save :: coid_counter = 0
+      ! counter for total coid used
+      ! this will be saved throughout the simulation
+
+      !------------------------------------------------------------------------------------!
+
+      coid_counter = coid_counter + 1
+
+
+      ! always return the coid larger than existing maximum
+      ! this will avoid conflict in coid values
+      init_coid_glob = coid_counter
+
+      return
+   end function init_coid_glob
+   !=======================================================================================!
+
+   !=======================================================================================!
+
+
+
 end module ed_type_init
 !==========================================================================================!
 !==========================================================================================!

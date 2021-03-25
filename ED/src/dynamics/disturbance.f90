@@ -882,6 +882,14 @@ module disturbance
                      end select
                      call terminate_cohorts(csite,onsp+new_lu,cmet,.false.                 &
                                            ,elim_nplant,elim_lai)
+                     ! since this is a new patch and thus all cohorts should be treated as new...
+
+                     ! first record the current coid using prev_coid
+                     qpatch%prev_coid_glob(:) = qpatch%curr_coid_glob(:)
+                     ! second, change curr_coid to zero
+                     qpatch%curr_coid_glob(:) = 0
+
+                     ! new coid will be created in split_cohorts below
                      call split_cohorts(csite,onsp+new_lu, cpoly%green_leaf_factor(:,isi)  &
                                        ,.false.)
                   end if
