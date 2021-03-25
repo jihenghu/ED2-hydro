@@ -1917,6 +1917,11 @@ module fuse_fiss_utils
                                              ,old_leaf_water_im2,old_wood_water_im2        &
                                              ,.true.,is_initial)
                   !----- Update coid_glob -------------------------------------!
+
+                  ! first always set the curr_coid_glob(inew) to zero
+                  ! new cohort
+                  cpatch%curr_coid_glob(inew) = 0
+
                   ! check whether curr_coid_glob is zero
                   ! this would happen if ico is a new cohort in a new patch after disturbance 
                   ! [check dynamics/disturbance.f90]

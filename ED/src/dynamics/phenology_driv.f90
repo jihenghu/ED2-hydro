@@ -171,6 +171,8 @@ module phenology_driv
       real                                  :: pat_broot_in
       real                                  :: pat_bstorage_in
       real                                  :: pat_carbon_miss
+      real                                  :: cohort_water_status
+      real                                  :: leaf_psi_threshold
       !----- Variables used only for debugging purposes. ----------------------------------!
       logical                  , parameter  :: printphen=.false.
       logical, dimension(n_pft), save       :: first_time=.true.
@@ -628,7 +630,7 @@ module phenology_driv
                   !------------------------------------------------------------------------!
                end if
                !---------------------------------------------------------------------------!
-            case (5) 
+            case (5,6) 
                !---------------------------------------------------------------------------!
                !    Drought deciduous driven by plant hydrodynamics.  We track the number  !
                ! of consecutive wet days and dry days.  We then modify the phenology       !
@@ -637,8 +639,19 @@ module phenology_driv
                !---------------------------------------------------------------------------!
 
 
+
                !----- Update consecutive dry days. ----------------------------------------!
-               if (cpatch%dmax_leaf_psi(ico) < leaf_psi_tlp(ipft)) then
+               if (phenology(ipft) == 5) then
+                   cohort_water_status = cpatch%dmax_leaf_psi(ico) ! XX16 assumption
+                   leaf_psi_threshold = leaf_psi_tlp(ipft)
+               elseif (phenology(ipft) == 6) then
+                   cohort_water_status = (cpatch%dmax_leaf_psi(ico) + cpatch%dmin_leaf_psi(ico)) / 2.
+                   ! use the average of max and min water potential
+                   ! based on experimental drought study by B. Wolfe et al. 2017
+                   leaf_psi_threshold = leaf_psi_tlp(ipft)
+               endif
+
+               if (cohort_water_status < leaf_psi_threshold) then
                   !---- Another dry day. --------------------------------------------------!
                   cpatch%low_leaf_psi_days(ico) = cpatch%low_leaf_psi_days(ico) + 1
                   !------------------------------------------------------------------------!
@@ -651,7 +664,19 @@ module phenology_driv
 
 
                !----- Update consecutive wet days. ----------------------------------------!
-               if (cpatch%dmax_leaf_psi(ico) >= 0.5 * leaf_psi_tlp(ipft)) then
+               if (phenology(ipft) == 5) then
+                   cohort_water_status = cpatch%dmax_leaf_psi(ico) ! XX16 assumption
+                   leaf_psi_threshold = 0.5 * leaf_psi_tlp(ipft)
+               elseif (phenology(ipft) == 6) then
+                   cohort_water_status = (cpatch%dmax_leaf_psi(ico) + cpatch%dmin_leaf_psi(ico)) / 2.
+                   ! use the average of max and min water potential
+                   ! based on experimental drought study by B. Wolfe et al. 2017
+                   leaf_psi_threshold = 0.75 * leaf_psi_tlp(ipft)
+                   ! a little lower otherwise plants will not be able to regrow
+               endif
+
+
+               if (cpatch%dmax_leaf_psi(ico) >= leaf_psi_threshold) then
                   !---- Another wet day. --------------------------------------------------!
                   cpatch%high_leaf_psi_days(ico) = cpatch%high_leaf_psi_days(ico) + 1
                   !------------------------------------------------------------------------!
