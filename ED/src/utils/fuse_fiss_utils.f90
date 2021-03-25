@@ -1988,7 +1988,7 @@ module fuse_fiss_utils
       ! let's update curr_coid_glob (prev_coid_glob should be all set)
       ! The main reason to update curr_coid_glob outside of the slitloop is that some cohorts that
       ! are not splitting might also need initiaztion of coid (due to distrubance-induced new patch)
-      do ico= 1, cpatch%ncohorts
+      do ico = 1, cpatch%ncohorts
           if (cpatch%curr_coid_glob(ico) == 0) then
               cpatch%curr_coid_glob(ico) = init_coid_glob()
           endif
