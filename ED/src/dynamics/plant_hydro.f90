@@ -59,6 +59,7 @@ module plant_hydro
       use pft_coms             , only : C2B                    & ! intent(in)
                                       , leaf_water_cap         & ! intent(in)
                                       , leaf_psi_min           & ! intent(in)
+                                      , wood_psi_min           & ! intent(in)
                                       , small_psi_min          ! ! intent(in)
 
       implicit none
@@ -245,8 +246,12 @@ module plant_hydro
                error_flag(1) = isnan_real(cpatch%leaf_psi(ico)) ! NaN values
                error_flag(2) = cpatch%leaf_psi(ico) > 0.        ! Positive potential
                error_flag(3) = merge( cpatch%leaf_psi(ico) < small_psi_min(ipft)           &
-                                    , cpatch%leaf_psi(ico) < leaf_psi_min (ipft)           &
-                                    , cpatch%is_small(ico)                        )
+                                    , merge( cpatch%leaf_psi(ico) < leaf_psi_min (ipft)    &
+                                           , cpatch%leaf_psi(ico) < ( wood_psi_min (ipft)  &
+                                                                    - cpatch%hite(ico)   ) &
+                                           , c_leaf > 0.)                                  &
+                                    , cpatch%is_small(ico)                                 &
+                                    ) ! too negative depending on cohort status
                if ((debug_flag .and. (dco == 0 .or. ico == dco)) .or. any(error_flag)) then
                   write (unit=*,fmt='(a)') ' '
                   write (unit=*,fmt='(92a)') ('=',k=1,92)
@@ -936,12 +941,23 @@ module plant_hydro
       !     c.  Current leaf/wood potential is positive
       !     d.  Projected leaf/wood potential is less than minimum acceptable
       !     e.  Current leaf/wood potential is less than minimum acceptable
+      !     For, d/e, use wood_psi_min_d - hite_d when c_leaf = 0 (no leaf)
       !------------------------------------------------------------------------------------!
       error_flag(1) = isnan(wflux_wl_d)              .or. isnan(wflux_gw_d)
       error_flag(2) = proj_leaf_psi > 0.             .or. proj_wood_psi > 0.
       error_flag(3) = leaf_psi_d    > 0.             .or. wood_psi_d    > 0.
-      error_flag(4) = proj_leaf_psi < leaf_psi_min_d .or. proj_wood_psi < wood_psi_min_d
-      error_flag(5) = leaf_psi_d    < leaf_psi_min_d .or. wood_psi_d    < wood_psi_min_d
+      error_flag(4) = merge(                                                    &
+                            proj_leaf_psi < leaf_psi_min_d                      &
+                       .or. proj_wood_psi < wood_psi_min_d                      &
+                           ,proj_leaf_psi < (wood_psi_min_d - hite_d)           &
+                       .or. proj_wood_psi < wood_psi_min_d                      &
+                           , c_leaf > 0.)
+      error_flag(5) = merge(                                                    &
+                            leaf_psi_d < leaf_psi_min_d                         &
+                       .or. wood_psi_d < wood_psi_min_d                         &
+                           ,leaf_psi_d < (wood_psi_min_d - hite_d)              &
+                       .or. wood_psi_d < wood_psi_min_d                         &
+                           , c_leaf > 0.)
 
       if ( (debug_flag .and. (dco == 0 .or. ico == dco)) .or. any(error_flag)) then
          write (unit=*,fmt='(a)') ' '

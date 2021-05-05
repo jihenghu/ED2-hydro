@@ -676,7 +676,7 @@ module phenology_driv
                endif
 
 
-               if (cpatch%dmax_leaf_psi(ico) >= leaf_psi_threshold) then
+               if (cohort_water_status >= leaf_psi_threshold) then
                   !---- Another wet day. --------------------------------------------------!
                   cpatch%high_leaf_psi_days(ico) = cpatch%high_leaf_psi_days(ico) + 1
                   !------------------------------------------------------------------------!
