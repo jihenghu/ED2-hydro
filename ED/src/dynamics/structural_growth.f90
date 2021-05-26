@@ -1159,6 +1159,20 @@ module structural_growth
       ! / bstorage to maintain compatibility with previous versions (bstorage_reserve = 0.)
       f_bstorage = max(1.0 - f_bseeds - f_growth, bstorage_reserve / bstorage)
 
+
+      ! [XX] New NSC-driven Carbon Allocation Scheme [test]
+      ! Rationale: Fraction of NSC (bstorage) allocated for growth/reproduction depends on
+      !            the amount of total NSC.
+      !            When NSC is very low, store new carbon as NSC and devote very little (or zero)  
+      !            for growth/reproduction
+      !            When NSC is very high, devote a lot for growth/reproduction
+      !            TODO: need to find ecophysiologicla justificaiton or is there any?
+      ! Formulation and Parameters:
+      !            nsc_ref_rel : relative NSC level under referencef conditions (5% of total biomass)
+      !            bstorage_low_rel : relative level of bstorage at which f_bstorage = 1. (50% of nsc_ref_rel)
+      !                               From NSC deviation levels reporeted in Adams et al. 2017 Nature E&E 
+      !            bstorage_
+
       ! we need to modify f_bseeds and f_growth accordingly if f_bseeds+f_growth is non-zero
       if (f_bseeds + f_growth > 0.0) then
           f_bgi    = 1.0 / (f_bseeds + f_growth)

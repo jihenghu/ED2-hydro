@@ -3043,8 +3043,7 @@ subroutine init_pft_alloc_params()
    !                                                                                       !
    !---------------------------------------------------------------------------------------!
    real, dimension(2)    , parameter :: c14f15_bl_xx  = (/ 0.46769540,0.6410495 /)
-   !real, dimension(3)    , parameter :: c14f15_la_wd  = (/-0.5874,0.5679,0.5476 /)
-   real, dimension(3)    , parameter :: c14f15_la_wd  = (/-0.5711,0.6104,0.5122 /)
+   real, dimension(3)    , parameter :: c14f15_la_wd  = (/-0.5874,0.5679,0.5476 /)
    real, dimension(3)    , parameter :: c14f15_ht_xx  = (/0.5709,-0.1007,0.6734 /)
    real, dimension(2)    , parameter :: c14f15_bs_tf  = (/ 0.06080334,1.0044785 /)
    real, dimension(2)    , parameter :: c14f15_bs_sv  = (/ 0.05602791,1.0093501 /)

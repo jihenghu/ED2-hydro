@@ -958,6 +958,7 @@ module average_utils
                               , press2exner        & ! function
                               , extheta2temp       ! ! function
       use consts_coms  , only : t00                & ! intent(in)
+                              , umols_2_kgCyr      & ! intent(in)
                               , wdns               ! ! intent(in)
       use soil_coms    , only : tiny_sfcwater_mass & ! intent(in)
                               , soil               & ! intent(in)
@@ -1236,6 +1237,16 @@ module average_utils
 
                   cpatch%fmean_npp   (ico) = cpatch%fmean_gpp         (ico)                &
                                            - cpatch%fmean_plresp      (ico)
+                  !------------------------------------------------------------------------!
+
+                  
+                  !------------------------------------------------------------------------!
+                  !   Normalize fmean_lint_co2 with fmean_gpp (need to convert to umol/s   !
+                  
+                  cpatch%fmean_lint_co2(ico) = merge(                                      &
+                        cpatch%fmean_lint_co2(ico) / cpatch%fmean_gpp(ico) * umols_2_kgCyr &
+                       ,0., cpatch%fmean_gpp(ico) > 0.) 
+
                   !------------------------------------------------------------------------!
 
 
@@ -2572,9 +2583,6 @@ module average_utils
                   cpatch%dmean_leaf_gbw      (ico) = cpatch%dmean_leaf_gbw      (ico)      &
                                                    + cpatch%fmean_leaf_gbw      (ico)      &
                                                    * frqsum_o_daysec
-                  cpatch%dmean_lint_co2      (ico) = cpatch%dmean_lint_co2      (ico)      &
-                                                   + cpatch%fmean_lint_co2      (ico)      &
-                                                   * frqsum_o_daysec
                   cpatch%dmean_wood_energy   (ico) = cpatch%dmean_wood_energy   (ico)      &
                                                    + cpatch%fmean_wood_energy   (ico)      &
                                                    * frqsum_o_daysec
@@ -2679,6 +2687,11 @@ module average_utils
                   cpatch%dmean_wflux_gw_layer(:,ico)=cpatch%dmean_wflux_gw_layer(:,ico)    &
                                                    + cpatch%fmean_wflux_gw_layer(:,ico)    &
                                                    * frqsum_o_daysec
+                  
+                  ! normalize by gpp
+                  cpatch%dmean_lint_co2      (ico) = cpatch%dmean_lint_co2      (ico)      &
+                                                   + cpatch%fmean_lint_co2      (ico)      &
+                                                   * cpatch%fmean_gpp(ico) * frqsum_o_daysec
                   !------------------------------------------------------------------------!
                end do cohortloop
                !---------------------------------------------------------------------------!
@@ -3265,6 +3278,12 @@ module average_utils
                         cpatch%dmean_wood_fliq(ico) = 0.0
                      end if
                   end if
+                  !------------------------------------------------------------------------!
+                  !------------------------------------------------------------------------!
+                  ! normalize lint_co2 with gpp
+                  cpatch%dmean_lint_co2(ico) = merge(                                      &
+                        cpatch%dmean_lint_co2(ico) / cpatch%dmean_gpp(ico)                 &
+                       ,0., cpatch%dmean_gpp(ico) > 0.) 
                   !------------------------------------------------------------------------!
                end do cohortloop
                !---------------------------------------------------------------------------!
@@ -5336,9 +5355,6 @@ module average_utils
                   cpatch%mmean_leaf_gbw        (ico) = cpatch%mmean_leaf_gbw        (ico)  &
                                                      + cpatch%dmean_leaf_gbw        (ico)  &
                                                      * ndaysi
-                  cpatch%mmean_lint_co2        (ico) = cpatch%mmean_lint_co2        (ico)  &
-                                                     + cpatch%dmean_lint_co2        (ico)  &
-                                                     * ndaysi
                   cpatch%mmean_wood_energy     (ico) = cpatch%mmean_wood_energy     (ico)  &
                                                      + cpatch%dmean_wood_energy     (ico)  &
                                                      * ndaysi
@@ -5558,6 +5574,10 @@ module average_utils
                                                 + isqu_ftz(cpatch%dmean_vapor_wc    (ico)) &
                                                 * ndaysi
                   !------------------------------------------------------------------------!
+                  ! Normalize by gpp
+                  cpatch%mmean_lint_co2        (ico) = cpatch%mmean_lint_co2        (ico)  &
+                                                     + cpatch%dmean_lint_co2        (ico)  &
+                                                     * ndaysi * cpatch%dmean_gpp(ico)
                end do cohortloop
                !---------------------------------------------------------------------------!
             end do patchloop
@@ -5792,6 +5812,10 @@ module average_utils
                      end if
                   end if
                   !------------------------------------------------------------------------!
+                  ! normalize lint_co2 with gpp
+                  cpatch%mmean_lint_co2(ico) = merge(                                      &
+                        cpatch%mmean_lint_co2(ico) / cpatch%mmean_gpp(ico)                 &
+                       ,0., cpatch%mmean_gpp(ico) > 0.) 
                end do cohortloop
                !---------------------------------------------------------------------------!
 
@@ -7509,9 +7533,6 @@ module average_utils
                   cpatch%qmean_leaf_gbw      (t,ico) = cpatch%qmean_leaf_gbw      (t,ico)  &
                                                      + cpatch%fmean_leaf_gbw        (ico)  &
                                                      * ndaysi
-                  cpatch%qmean_lint_co2      (t,ico) = cpatch%qmean_lint_co2      (t,ico)  &
-                                                     + cpatch%fmean_lint_co2        (ico)  &
-                                                     * ndaysi
                   cpatch%qmean_wood_energy   (t,ico) = cpatch%qmean_wood_energy   (t,ico)  &
                                                      + cpatch%fmean_wood_energy     (ico)  &
                                                      * ndaysi
@@ -7694,6 +7715,10 @@ module average_utils
                                                   + isqu_ftz(cpatch%fmean_vapor_wc  (ico)) &
                                                   * ndaysi
                   !------------------------------------------------------------------------!
+                  ! normalize by gpp
+                  cpatch%qmean_lint_co2      (t,ico) = cpatch%qmean_lint_co2      (t,ico)  &
+                                                     + cpatch%fmean_lint_co2        (ico)  &
+                                                     * cpatch%fmean_gpp(ico) * ndaysi
                end do cohortloop
                !---------------------------------------------------------------------------!
             end do patchloop
@@ -7931,6 +7956,10 @@ module average_utils
                         !------------------------------------------------------------------!
                      end if
                      !---------------------------------------------------------------------!
+                     ! normalize lint_co2 with gpp
+                     cpatch%qmean_lint_co2(t,ico) = merge(                                 &
+                        cpatch%qmean_lint_co2(t,ico) / cpatch%qmean_gpp(t,ico)             &
+                       ,0., cpatch%qmean_gpp(t,ico) > 0.) 
                   end do
                   !------------------------------------------------------------------------!
                end do cohortloop

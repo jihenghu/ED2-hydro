@@ -2148,6 +2148,13 @@ module rk4_copy_patch
                                           * dtlsm_o_frqsum
 
          ! caculate lint_co2
+         ! by the time of execution here
+         ! gpp of this time step is already calculated in canopy_photosynthesis in
+         ! photosyn_drive.f90
+         ! cpatch%gpp(ico)  umol/m2g/s
+         ! cpatch%fmean_gpp(ico) is in kgC/plant/yr
+         ! we need to weight lint_CO2 with gpp then normalize it every fast time scale analysis in
+         ! normalize_ed_fmean_vars
          if (cpatch%A_open(ico) /= 0. .and. cpatch%leaf_gbw(ico) /= 0.                      &
               .and. cpatch%leaf_gsw(ico) /= 0.)  then
               lint_co2 = csite%can_co2(ipa)                                                 &
@@ -2163,9 +2170,10 @@ module rk4_copy_patch
           else
               lint_co2 = csite%can_co2(ipa)
           endif
+
           cpatch%fmean_lint_co2      (ico) = cpatch%fmean_lint_co2      (ico)              &
                                            + lint_co2                                      &
-                                           * dtlsm_o_frqsum
+                                           * cpatch%gpp(ico) / cpatch%nplant(ico) * dtlsm_o_frqsum ! umols/pl/s
 
 
 
