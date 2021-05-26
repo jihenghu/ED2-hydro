@@ -2890,6 +2890,7 @@ subroutine init_pft_alloc_params()
                              , qbark                 & ! intent(out)
                              , qrhob                 & ! intent(out)
                              , SRA                   & ! intent(out)
+                             , eSRA_c                & ! intent(out)
                              , root_beta             & ! intent(out)
                              , init_density          & ! intent(out)
                              , init_laimax           & ! intent(out)
@@ -3042,7 +3043,8 @@ subroutine init_pft_alloc_params()
    !                                                                                       !
    !---------------------------------------------------------------------------------------!
    real, dimension(2)    , parameter :: c14f15_bl_xx  = (/ 0.46769540,0.6410495 /)
-   real, dimension(3)    , parameter :: c14f15_la_wd  = (/-0.5874,0.5679,0.5476 /)
+   !real, dimension(3)    , parameter :: c14f15_la_wd  = (/-0.5874,0.5679,0.5476 /)
+   real, dimension(3)    , parameter :: c14f15_la_wd  = (/-0.5711,0.6104,0.5122 /)
    real, dimension(3)    , parameter :: c14f15_ht_xx  = (/0.5709,-0.1007,0.6734 /)
    real, dimension(2)    , parameter :: c14f15_bs_tf  = (/ 0.06080334,1.0044785 /)
    real, dimension(2)    , parameter :: c14f15_bs_sv  = (/ 0.05602791,1.0093501 /)
@@ -3445,6 +3447,26 @@ subroutine init_pft_alloc_params()
    !    doi:10.1007/s11104-008-9670-9.                                                     !
    !---------------------------------------------------------------------------------------!
    SRA(:)   = 24. * 2. ! m2/kgC --> this is from Amazon
+
+
+   ! ---------------------------------------------------------------!
+   ! XX  05/2021
+   ! equivalent specific root area for coarse root
+   ! Consider a cylindral root with a diameter of d and length of l
+   ! The surface area (excluding two ends) is pi * d * l
+   ! The total mass is pi / 4 * d^2 * l * rho
+   ! Therefore the specific surface area becomes
+   ! pi * d * l / (pi / 4 * d^2 * l * rho) = 4 / (d * rho)
+   
+   ! Here we use an average d of 0.05m.
+   ! I also apply an  multiplier of 0.01 because the surface of coarse
+   ! root is likely way less permeable as fine root
+
+   ! This eSRA_c acts as a small baseline water conductance and will ensure 
+   ! plants can absorb some water in plant_hydro even when broot is zero.
+   eSRA_c(:)    =    4. / (0.05 * rho(:) * 1000. / C2B) * 0.01 ! m2/kgC
+   ! ---------------------------------------------------------------!
+
    !---------------------------------------------------------------------------------------!
 
 
