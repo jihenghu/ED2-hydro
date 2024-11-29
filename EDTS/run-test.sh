@@ -19,7 +19,7 @@ DATA_COMMON="common"
 if [ ! -d "$DATA_COMMON" ]; then
     echo "Downloading common data"
     wget "https://github.com/ashiklom/edts-datasets/releases/download/common/common.tar.gz"
-    tar -xf "$DATA_COMMON.tar.gz"
+    tar -xzvf "$DATA_COMMON.tar.gz"
 else
     echo "Common data $DATA_COMMON already exists"
 fi
@@ -35,7 +35,7 @@ SITE=${TESTNAME%.*}
 if [ ! -d "$SITE" ]; then
     echo "Downloading data for site $SITE"
     wget "https://github.com/ashiklom/edts-datasets/releases/download/$SITE/$SITE.tar.gz"
-    tar -xf "$SITE.tar.gz"
+    tar -xzvf "$SITE.tar.gz"
 else
     echo "Data for site $SITE already exists"
 fi
